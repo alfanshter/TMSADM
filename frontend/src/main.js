@@ -1,24 +1,17 @@
-import './assets/main.css'
 import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router'
-import { createPinia } from 'pinia'
-// ⬇️ Tambahkan ini
-import 'vuetify/styles'
-import { createVuetify } from 'vuetify'
-import * as components from 'vuetify/components'
-import * as directives from 'vuetify/directives'
+import App from '@/App.vue'
+import { registerPlugins } from '@core/utils/plugins'
 
-const vuetify = createVuetify({
-    components,
-    directives,
-  })
+// Styles
+import '@core/scss/template/index.scss'
+import '@styles/styles.scss'
 
-  
+// Create vue app
 const app = createApp(App)
 
-app.use(createPinia())
-app.use(router)
-app.use(vuetify) // ⬅️ Registrasi Vuetify di sini
 
+// Register plugins
+registerPlugins(app)
+
+// Mount vue app
 app.mount('#app')

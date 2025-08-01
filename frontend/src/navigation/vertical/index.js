@@ -9,4 +9,11 @@ export default [
     to: { name: 'second-page' },
     icon: { icon: 'ri-file-text-line' },
   },
+
+  {
+    title: 'Muhib noob',
+    to: { name: 'second-page' },
+    icon: { icon: 'ri-file-text-line' },
+  },
+
 ]

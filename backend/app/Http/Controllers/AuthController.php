@@ -5,56 +5,56 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
     public function login(Request $request)
     {
-        // Validasi request
-        $request->validate([
+        // Validasi input
+        $validator = Validator::make($request->all(), [
             'email' => 'required|email',
-            'password' => 'required'
+            'password' => 'required|string|min:6',
         ]);
-
+    
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 0,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+    
         // Ambil user berdasarkan email
         $user = User::where('email', $request->email)->first();
-
-        // Cek user dan password cocok
+    
+        // Cek apakah user ditemukan dan password cocok
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
-                'message' => 'Email atau password salah.'
+                'status' => 0,
+                'message' => 'Email atau password salah'
             ], 401);
         }
-
-         // Buat token login (Sanctum)
+    
+        // Buat token baru
         $token = $user->createToken('api-token')->plainTextToken;
-
-        // Jika role admin, berikan respons khusus
-        if ($user->role === 'admin') {
-            return response()->json([
-                'message' => 'Hi, saya admin',
-                'token' => $token,
-                'user' => $user
-            ]);
-        }
-
-        // Untuk role lainnya, berikan respons umum
-         // Respons login sukses
+    
         return response()->json([
             'status' => 1,
             'message' => $user->role === 'admin'
                 ? 'Hi, saya admin'
                 : 'Hi, anda login sebagai ' . $user->role,
-            'data' => $user,
-            'token' => $token
+            'data' => [
+                'user' => $user,
+                'token' => $token
+            ]
         ]);
-}
+    }
 
     public function logout(Request $request)
     {
 
-    $request->user()->currentAccessToken()->delete();
-    return response()->json(['message' => 'Logged out']);
-
+        $request->user()->currentAccessToken()->delete();
+        return response()->json(['message' => 'Logged out']);
     }
 }

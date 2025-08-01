@@ -522,10 +522,18 @@ class ComposerStaticInitc7846695e316e8adffb3e9eaf1b37dc4
     );
 
     public static $classMap = array (
+        'App\\Http\\Controllers\\ActivityTmsController' => __DIR__ . '/../..' . '/app/Http/Controllers/ActivityTmsController.php',
         'App\\Http\\Controllers\\AuthController' => __DIR__ . '/../..' . '/app/Http/Controllers/AuthController.php',
         'App\\Http\\Controllers\\Controller' => __DIR__ . '/../..' . '/app/Http/Controllers/Controller.php',
+        'App\\Http\\Controllers\\ItemMachineController' => __DIR__ . '/../..' . '/app/Http/Controllers/ItemMachineController.php',
+        'App\\Http\\Controllers\\MaintenanceController' => __DIR__ . '/../..' . '/app/Http/Controllers/MaintenanceController.php',
+        'App\\Http\\Controllers\\ProfileController' => __DIR__ . '/../..' . '/app/Http/Controllers/ProfileController.php',
+        'App\\Http\\Controllers\\TeamLeaderController' => __DIR__ . '/../..' . '/app/Http/Controllers/TeamLeaderController.php',
         'App\\Http\\Middleware\\Authenticate' => __DIR__ . '/../..' . '/app/Http/Middleware/Authenticate.php',
         'App\\Http\\Middleware\\RoleMiddleware' => __DIR__ . '/../..' . '/app/Http/Middleware/RoleMiddleware.php',
+        'App\\Models\\ActivityTMS' => __DIR__ . '/../..' . '/app/Models/ActivityTMS.php',
+        'App\\Models\\ItemMachine' => __DIR__ . '/../..' . '/app/Models/ItemMachine.php',
+        'App\\Models\\MaintenanceType' => __DIR__ . '/../..' . '/app/Models/MaintenanceType.php',
         'App\\Models\\User' => __DIR__ . '/../..' . '/app/Models/User.php',
         'App\\Providers\\AppServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AppServiceProvider.php',
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
@@ -648,6 +656,7 @@ class ComposerStaticInitc7846695e316e8adffb3e9eaf1b37dc4
         'Database\\Factories\\UserFactory' => __DIR__ . '/../..' . '/database/factories/UserFactory.php',
         'Database\\Seeders\\AdminSeeder' => __DIR__ . '/../..' . '/database/seeders/AdminSeeder.php',
         'Database\\Seeders\\DatabaseSeeder' => __DIR__ . '/../..' . '/database/seeders/DatabaseSeeder.php',
+        'Database\\Seeders\\MaintenanceTypeSeeder' => __DIR__ . '/../..' . '/database/seeders/MaintenanceTypeSeeder.php',
         'DateError' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateError.php',
         'DateException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateException.php',
         'DateInvalidOperationException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateInvalidOperationException.php',

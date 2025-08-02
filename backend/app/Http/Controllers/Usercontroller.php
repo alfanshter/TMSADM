@@ -40,7 +40,11 @@ class UserController extends Controller
             'created_by' => $request->user()->id,
         ]);
 
-        return response()->json($user, 201);
+        return response()->json([
+            'status' => 1,
+            'message' => 'tambah user berhasil',
+            'data' => $user
+        ], 201);
     }
 
     // Ambil detail user

@@ -15,6 +15,10 @@ return new class extends Migration
         $table->id();
         $table->date('date');
         $table->foreignId('item_machine_id')->constrained('item_machines')->onDelete('cascade');
+        $table->string('jsa_file_cleaning_criticals')->nullable();      
+        $table->string('jsa_file_just_cleaning')->nullable();      
+        $table->string('jsa_file_replacement_part')->nullable();      
+        $table->string('jsa_file_preventive')->nullable();      
         $table->timestamps();
 });
 

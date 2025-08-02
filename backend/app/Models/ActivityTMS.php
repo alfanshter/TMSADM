@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,22 +11,39 @@ class ActivityTMS extends Model
 
     protected $table = 'activity_tms'; //  Tambahkan ini!
 
-    protected $fillable = [
-        'date',
-        'item_machine_id',
-        'maintenance_type_id',
-        'photo_before',
-        'photo_after',
-        'jsa_file',
+    protected $guarded = [
+        'id'
     ];
+
 
     public function itemMachine()
     {
         return $this->belongsTo(ItemMachine::class);
     }
 
-    public function maintenanceType()
+    public function cleaningCriticals()
     {
-        return $this->belongsTo(MaintenanceType::class);
+        return $this->hasMany(CleaningCritical::class, 'activity_tms_id');
     }
+
+    public function justCleaning()
+    {
+        return $this->hasMany(JustCleaning::class , 'activity_tms_id');
+    }
+
+    public function preventive()
+    {
+        return $this->hasMany(Preventive::class , 'activity_tms_id');
+    }
+
+    public function replacementPart()
+    {
+        return $this->hasMany(ReplacementPart::class ,'activity_tms_id');
+    }
+
+
+    // public function maintenanceType()
+    // {
+    //     return $this->belongsTo(MaintenanceType::class);
+    // }
 }

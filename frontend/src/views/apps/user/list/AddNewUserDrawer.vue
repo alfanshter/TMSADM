@@ -1,67 +1,112 @@
 <script setup>
-import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
+import { ENDPOINTS } from "@/config/api";
+import axios from "axios";
+import { nextTick, ref } from "vue";
 
-const props = defineProps({
-  isDrawerOpen: {
-    type: Boolean,
-    required: true,
-  },
-})
+// Props dan emit
+const props = defineProps({ isDrawerOpen: Boolean });
+const emit = defineEmits(["update:isDrawerOpen", "userData"]);
 
-const emit = defineEmits([
-  'update:isDrawerOpen',
-  'userData',
-])
+// Refs
+const refForm = ref();
+const isFormValid = ref(false);
+const previewImage = ref(null);
+const selectedFile = ref([]);
 
-const isFormValid = ref(false)
-const refForm = ref()
-const fullName = ref('')
-const userName = ref('')
-const email = ref('')
-const company = ref('')
-const country = ref()
-const contact = ref('')
-const role = ref()
-const plan = ref()
-const status = ref()
+// Form state
+const form = ref({
+  name: "",
+  email: "",
+  password: "",
+  role: "",
+  phone: "",
+  avatar: "", // URL hasil upload
+});
 
-// 👉 drawer close
-const closeNavigationDrawer = () => {
-  emit('update:isDrawerOpen', false)
-  nextTick(() => {
-    refForm.value?.reset()
-    refForm.value?.resetValidation()
-  })
-}
+// 👉 Upload avatar → kirim ke Laravel backend
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
 
-const onSubmit = () => {
-  refForm.value?.validate().then(({ valid }) => {
-    if (valid) {
-      emit('userData', {
-        id: 0,
-        fullName: fullName.value,
-        company: company.value,
-        role: role.value,
-        username: userName.value,
-        country: country.value,
-        contact: contact.value,
-        email: email.value,
-        currentPlan: plan.value,
-        status: status.value,
-        avatar: '',
-      })
-      emit('update:isDrawerOpen', false)
-      nextTick(() => {
-        refForm.value?.reset()
-        refForm.value?.resetValidation()
-      })
+  previewImage.value = URL.createObjectURL(file);
+  selectedFile.value = file;
+};
+
+// 👉 Submit user data
+const onSubmit = async () => {
+  refForm.value?.validate().then(async ({ valid }) => {
+    if (!valid) return;
+
+    try {
+      let avatarUrl = "";
+      const token = localStorage.getItem("token");
+
+      // Upload avatar jika ada
+      if (selectedFile.value) {
+        const uploadData = new FormData();
+        uploadData.append("avatar", selectedFile.value);
+
+        const uploadRes = await axios.post(
+          `${ENDPOINTS.users}/upload-avatar`,
+          uploadData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        avatarUrl = uploadRes.data.url;
+      }
+
+      // Kirim data user
+      const res = await axios.post(
+        ENDPOINTS.users,
+        {
+          name: form.value.name,
+          email: form.value.email,
+          password: form.value.password,
+          role: form.value.role.toLowerCase(),
+          phone: form.value.phone,
+          avatar: avatarUrl,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      emit("userData", res.data.data);
+      emit("update:isDrawerOpen", false);
+      resetForm();
+    } catch (err) {
+      console.error("Gagal tambah user:", err.response?.data || err.message);
     }
-  })
-}
+  });
+};
 
-const handleDrawerModelValueUpdate = val => {
-  emit('update:isDrawerOpen', val)
-}
+// 👉 Reset form
+const resetForm = () => {
+  nextTick(() => {
+    refForm.value?.reset();
+    refForm.value?.resetValidation();
+    previewImage.value = null;
+    selectedFile.value = null;
+    form.value.avatar = "";
+  });
+};
+
+const closeNavigationDrawer = () => {
+  emit("update:isDrawerOpen", false);
+  resetForm();
+};
+
+const handleDrawerModelValueUpdate = (val) => {
+  emit("update:isDrawerOpen", val);
+};
 </script>
 
 <template>
@@ -73,127 +118,81 @@ const handleDrawerModelValueUpdate = val => {
     :model-value="props.isDrawerOpen"
     @update:model-value="handleDrawerModelValueUpdate"
   >
-    <!-- 👉 Title -->
     <AppDrawerHeaderSection
-      title="Add User"
+      title="Tambah User"
       @cancel="closeNavigationDrawer"
     />
-
     <VDivider />
 
     <PerfectScrollbar :options="{ wheelPropagation: false }">
       <VCard flat>
         <VCardText>
-          <!-- 👉 Form -->
-          <VForm
-            ref="refForm"
-            v-model="isFormValid"
-            @submit.prevent="onSubmit"
-          >
+          <VForm ref="refForm" v-model="isFormValid" @submit.prevent="onSubmit">
             <VRow>
-              <!-- 👉 Full name -->
               <VCol cols="12">
                 <VTextField
-                  v-model="fullName"
-                  :rules="[requiredValidator]"
-                  label="Full Name"
+                  v-model="form.name"
+                  label="Nama Lengkap"
                   placeholder="John Doe"
-                />
-              </VCol>
-
-              <!-- 👉 Username -->
-              <VCol cols="12">
-                <VTextField
-                  v-model="userName"
                   :rules="[requiredValidator]"
-                  label="Username"
-                  placeholder="Johndoe"
                 />
               </VCol>
 
-              <!-- 👉 Email -->
               <VCol cols="12">
                 <VTextField
-                  v-model="email"
-                  :rules="[requiredValidator, emailValidator]"
+                  v-model="form.email"
                   label="Email"
-                  placeholder="johndoe@email.com"
+                  placeholder="johndoe@mail.com"
+                  :rules="[requiredValidator, emailValidator]"
                 />
               </VCol>
 
-              <!-- 👉 company -->
               <VCol cols="12">
                 <VTextField
-                  v-model="company"
-                  :rules="[requiredValidator]"
-                  label="Company"
-                  placeholder="Pixinvent"
+                  v-model="form.password"
+                  label="Password"
+                  placeholder="Min 6 karakter"
+                  type="password"
+                  :rules="[
+                    requiredValidator,
+                    (v) => v.length >= 6 || 'Minimal 6 karakter',
+                  ]"
                 />
               </VCol>
 
-              <!-- 👉 Country -->
-              <VCol cols="12">
-                <VSelect
-                  v-model="country"
-                  label="Select Country"
-                  placeholder="Select Country"
-                  :rules="[requiredValidator]"
-                  :items="['United States', 'United Kingdom', 'France']"
-                />
-              </VCol>
-
-              <!-- 👉 Contact -->
               <VCol cols="12">
                 <VTextField
-                  v-model="contact"
-                  type="number"
-                  :rules="[requiredValidator]"
-                  label="Contact"
-                  placeholder="+1-541-754-3010"
+                  v-model="form.phone"
+                  label="Nomor Telepon"
+                  placeholder="08xxxxxxxx"
                 />
               </VCol>
 
-              <!-- 👉 Role -->
               <VCol cols="12">
                 <VSelect
-                  v-model="role"
-                  label="Select Role"
-                  placeholder="Select Role"
+                  v-model="form.role"
+                  label="Pilih Role"
+                  :items="['admin', 'supervisor', 'team_leader']"
                   :rules="[requiredValidator]"
-                  :items="['Admin', 'Author', 'Editor', 'Maintainer', 'Subscriber']"
+                  placeholder="Pilih Role"
                 />
               </VCol>
 
-              <!-- 👉 Plan -->
               <VCol cols="12">
-                <VSelect
-                  v-model="plan"
-                  label="Select Plan"
-                  placeholder="Select Plan"
+                <VFileInput
+                  v-model="selectedFile"
+                  label="Upload Foto Profil"
+                  accept="image/*"
+                  prepend-icon="mdi-camera"
+                  show-size
+                  chips
                   :rules="[requiredValidator]"
-                  :items="['Basic', 'Company', 'Enterprise', 'Team']"
+                  @change="handleFileUpload"
                 />
               </VCol>
 
-              <!-- 👉 Status -->
-              <VCol cols="12">
-                <VSelect
-                  v-model="status"
-                  label="Select Status"
-                  placeholder="Select Status"
-                  :rules="[requiredValidator]"
-                  :items="[{ title: 'Active', value: 'Active' }, { title: 'Inactive', value: 'Inactive' }, { title: 'Pending', value: 'Pending' }]"
-                />
-              </VCol>
-
-              <!-- 👉 Submit and Cancel -->
-              <VCol cols="12">
-                <VBtn
-                  type="submit"
-                  class="me-4"
-                >
-                  Submit
-                </VBtn>
+              <VCol cols="12" class="d-flex gap-2">
+                <VBtn type="submit" class="me-2">Submit</VBtn>
                 <VBtn
                   type="reset"
                   variant="outlined"

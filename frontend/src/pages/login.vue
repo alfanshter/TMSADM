@@ -1,31 +1,68 @@
 <script setup>
-import { useGenerateImageVariant } from '@/@core/composable/useGenerateImageVariant'
-import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
-import authV2LoginIllustrationBorderedDark from '@images/pages/auth-v2-login-illustration-bordered-dark.png'
-import authV2LoginIllustrationBorderedLight from '@images/pages/auth-v2-login-illustration-bordered-light.png'
-import authV2LoginIllustrationDark from '@images/pages/auth-v2-login-illustration-dark.png'
-import authV2LoginIllustrationLight from '@images/pages/auth-v2-login-illustration-light.png'
-import authV2LoginMaskDark from '@images/pages/auth-v2-login-mask-dark.png'
-import authV2LoginMaskLight from '@images/pages/auth-v2-login-mask-light.png'
-import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
-import { themeConfig } from '@themeConfig'
+import { useGenerateImageVariant } from "@/@core/composable/useGenerateImageVariant";
+import { ENDPOINTS } from "@/config/api";
+import AuthProvider from "@/views/pages/authentication/AuthProvider.vue";
+import authV2LoginIllustrationBorderedDark from "@images/pages/auth-v2-login-illustration-bordered-dark.png";
+import authV2LoginIllustrationBorderedLight from "@images/pages/auth-v2-login-illustration-bordered-light.png";
+import authV2LoginIllustrationDark from "@images/pages/auth-v2-login-illustration-dark.png";
+import authV2LoginIllustrationLight from "@images/pages/auth-v2-login-illustration-light.png";
+import authV2LoginMaskDark from "@images/pages/auth-v2-login-mask-dark.png";
+import authV2LoginMaskLight from "@images/pages/auth-v2-login-mask-light.png";
+import { VNodeRenderer } from "@layouts/components/VNodeRenderer";
+import { themeConfig } from "@themeConfig";
+import axios from "axios";
+import { useRouter } from "vue-router";
 
 definePage({
   meta: {
-    layout: 'blank',
+    layout: "blank",
     public: true,
   },
-})
+});
 
+const router = useRouter();
 const form = ref({
-  email: '',
-  password: '',
+  email: "",
+  password: "",
   remember: false,
-})
+});
 
-const isPasswordVisible = ref(false)
-const authV2LoginMask = useGenerateImageVariant(authV2LoginMaskLight, authV2LoginMaskDark)
-const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationLight, authV2LoginIllustrationDark, authV2LoginIllustrationBorderedLight, authV2LoginIllustrationBorderedDark, true)
+const handleLogin = async () => {
+  try {
+    const response = await axios.post(`${ENDPOINTS.login}`, {
+      email: form.value.email,
+      password: form.value.password,
+    });
+
+    console.log("Response Login:", response.data);
+
+    const token = response.data.data.token;
+    if (token) {
+      localStorage.setItem("token", token);
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`; // << WAJIB
+      alert("Login berhasil!");
+      router.push("/");
+    } else {
+      alert("Login gagal: token tidak ditemukan.");
+    }
+  } catch (error) {
+    alert("Email atau password salah!");
+    console.error(error);
+  }
+};
+
+const isPasswordVisible = ref(false);
+const authV2LoginMask = useGenerateImageVariant(
+  authV2LoginMaskLight,
+  authV2LoginMaskDark
+);
+const authV2LoginIllustration = useGenerateImageVariant(
+  authV2LoginIllustrationLight,
+  authV2LoginIllustrationDark,
+  authV2LoginIllustrationBorderedLight,
+  authV2LoginIllustrationBorderedDark,
+  true
+);
 </script>
 
 <template>
@@ -38,10 +75,7 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
     </div>
   </a>
 
-  <VRow
-    no-gutters
-    class="auth-wrapper"
-  >
+  <VRow no-gutters class="auth-wrapper">
     <VCol
       md="8"
       class="d-none d-md-flex align-center justify-center position-relative"
@@ -51,7 +85,7 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
           :src="authV2LoginIllustration"
           class="auth-illustration w-100"
           alt="auth-illustration"
-        >
+        />
       </div>
       <VImg
         :src="authV2LoginMask"
@@ -63,16 +97,13 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
       cols="12"
       md="4"
       class="auth-card-v2 d-flex align-center justify-center"
-      style="background-color: rgb(var(--v-theme-surface));"
+      style="background-color: rgb(var(--v-theme-surface))"
     >
-      <VCard
-        flat
-        :max-width="500"
-        class="mt-12 mt-sm-0 pa-5 pa-lg-7"
-      >
+      <VCard flat :max-width="500" class="mt-12 mt-sm-0 pa-5 pa-lg-7">
         <VCardText>
           <h4 class="text-h4 mb-1">
-            Welcome to <span class="text-capitalize">{{ themeConfig.app.title }}! 👋🏻</span>
+            Welcome to
+            <span class="text-capitalize">{{ themeConfig.app.title }}! 👋🏻</span>
           </h4>
 
           <p class="mb-0">
@@ -81,7 +112,7 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
         </VCardText>
 
         <VCardText>
-          <VForm @submit.prevent="() => {}">
+          <VForm @submit.prevent="handleLogin">
             <VRow>
               <!-- email -->
               <VCol cols="12">
@@ -101,42 +132,30 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
                   label="Password"
                   placeholder="············"
                   :type="isPasswordVisible ? 'text' : 'password'"
-                  :append-inner-icon="isPasswordVisible ? 'ri-eye-off-line' : 'ri-eye-line'"
+                  :append-inner-icon="
+                    isPasswordVisible ? 'ri-eye-off-line' : 'ri-eye-line'
+                  "
                   @click:append-inner="isPasswordVisible = !isPasswordVisible"
                 />
 
                 <!-- remember me checkbox -->
-                <div class="d-flex align-center justify-space-between flex-wrap my-6 gap-x-2">
-                  <VCheckbox
-                    v-model="form.remember"
-                    label="Remember me"
-                  />
+                <div
+                  class="d-flex align-center justify-space-between flex-wrap my-6 gap-x-2"
+                >
+                  <VCheckbox v-model="form.remember" label="Remember me" />
 
-                  <a
-                    class="text-primary"
-                    href="javascript:void(0)"
-                  >
+                  <a class="text-primary" href="javascript:void(0)">
                     Forgot Password?
                   </a>
                 </div>
 
                 <!-- login button -->
-                <VBtn
-                  block
-                  type="submit"
-                >
-                  Login
-                </VBtn>
+                <VBtn block @click="handleLogin"> Login </VBtn>
               </VCol>
 
               <!-- create account -->
-              <VCol
-                cols="12"
-                class="text-body-1 text-center"
-              >
-                <span class="d-inline-block">
-                  New on our platform?
-                </span>
+              <VCol cols="12" class="text-body-1 text-center">
+                <span class="d-inline-block"> New on our platform? </span>
                 <a
                   class="text-primary ms-1 d-inline-block text-body-1"
                   href="javascript:void(0)"
@@ -145,20 +164,14 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
                 </a>
               </VCol>
 
-              <VCol
-                cols="12"
-                class="d-flex align-center"
-              >
+              <VCol cols="12" class="d-flex align-center">
                 <VDivider />
                 <span class="mx-4 text-high-emphasis">or</span>
                 <VDivider />
               </VCol>
 
               <!-- auth providers -->
-              <VCol
-                cols="12"
-                class="text-center"
-              >
+              <VCol cols="12" class="text-center">
                 <AuthProvider />
               </VCol>
             </VRow>

@@ -1,218 +1,99 @@
 <script setup>
-import AddNewUserDrawer from '@/views/apps/user/list/AddNewUserDrawer.vue'
+import { ENDPOINTS } from "@/config/api";
+import AddNewUserDrawer from "@/views/apps/user/list/AddNewUserDrawer.vue";
+import axios from "axios";
+import { onMounted, ref } from "vue";
 
-// 👉 Store
-const searchQuery = ref('')
-const selectedRole = ref()
-const selectedPlan = ref()
-const selectedStatus = ref()
+// State
+const users = ref([]);
+const totalUsers = ref(0);
 
-// Data table options
-const itemsPerPage = ref(10)
-const page = ref(1)
-const sortBy = ref()
-const orderBy = ref()
-const selectedRows = ref([])
+const searchQuery = ref("");
+const selectedRole = ref();
 
-const updateOptions = options => {
-  page.value = options.page
-  sortBy.value = options.sortBy[0]?.key
-  orderBy.value = options.sortBy[0]?.order
-}
-
-// Headers
+const itemsPerPage = ref(10);
+const page = ref(1);
+const isLoading = ref(false);
+// Headers sesuai data backend
 const headers = [
-  {
-    title: 'User',
-    key: 'user',
-  },
-  {
-    title: 'Email',
-    key: 'email',
-  },
-  {
-    title: 'Role',
-    key: 'role',
-  },
-  {
-    title: 'Plan',
-    key: 'plan',
-  },
-  {
-    title: 'Status',
-    key: 'status',
-  },
-  {
-    title: 'Actions',
-    key: 'actions',
-    sortable: false,
-  },
-]
-
-// 👉 search filters
+  { title: "Nama Lengkap", key: "name" },
+  { title: "Role", key: "role" },
+  { title: "Nomor Telepon", key: "phone" },
+  { title: "Status", key: "status" },
+  { title: "Actions", key: "actions", sortable: false },
+];
 const roles = [
   {
-    title: 'Admin',
-    value: 'admin',
+    title: "Admin",
+    value: "admin",
   },
   {
-    title: 'Author',
-    value: 'author',
+    title: "TeamLeader",
+    value: "teamleader",
   },
   {
-    title: 'Editor',
-    value: 'editor',
+    title: "Supervisor",
+    value: "supervisor",
   },
-  {
-    title: 'Maintainer',
-    value: 'maintainer',
-  },
-  {
-    title: 'Subscriber',
-    value: 'subscriber',
-  },
-]
+];
 
-const plans = [
-  {
-    title: 'Basic',
-    value: 'basic',
-  },
-  {
-    title: 'Company',
-    value: 'company',
-  },
-  {
-    title: 'Enterprise',
-    value: 'enterprise',
-  },
-  {
-    title: 'Team',
-    value: 'team',
-  },
-]
+// Ambil data user
+const fetchUsers = async () => {
+  try {
+    const res = await axios.get(ENDPOINTS.users);
 
-const status = [
-  {
-    title: 'Pending',
-    value: 'Pending',
-  },
-  {
-    title: 'Active',
-    value: 'Active',
-  },
-  {
-    title: 'Inactive',
-    value: 'Inactive',
-  },
-]
+    // Asumsikan data langsung array
+    users.value = res.data;
+    console.log("Daftar Data users:", users.value);
 
-const resolveUserRoleVariant = role => {
-  const roleLowerCase = role.toLowerCase()
-  if (roleLowerCase === 'subscriber')
-    return {
-      color: 'success',
-      icon: 'ri-user-line',
-    }
-  if (roleLowerCase === 'author')
-    return {
-      color: 'error',
-      icon: 'ri-computer-line',
-    }
-  if (roleLowerCase === 'maintainer')
-    return {
-      color: 'info',
-      icon: 'ri-pie-chart-line',
-    }
-  if (roleLowerCase === 'editor')
-    return {
-      color: 'warning',
-      icon: 'ri-edit-box-line',
-    }
-  if (roleLowerCase === 'admin')
-    return {
-      color: 'primary',
-      icon: 'ri-vip-crown-line',
-    }
-  
-  return {
-    color: 'success',
-    icon: 'ri-user-line',
+    // Validasi agar tidak error
+    users.value = users.value;
+    totalUsers.value = Array.isArray(users.value) ? users.value.length : 0;
+  } catch (error) {
+    console.error("Error fetching users:", error);
   }
-}
+};
 
-const resolveUserStatusVariant = stat => {
-  const statLowerCase = stat.toLowerCase()
-  if (statLowerCase === 'pending')
-    return 'warning'
-  if (statLowerCase === 'active')
-    return 'success'
-  if (statLowerCase === 'inactive')
-    return 'secondary'
-  
-  return 'primary'
-}
+// Run saat component mounted
+onMounted(() => {
+  fetchUsers();
+});
 
-const isAddNewUserDrawerVisible = ref(false)
+// Tambah user
+const addNewUser = async (userData) => {
+  try {
+    const res = await axios.post(ENDPOINTS.users, userData);
+    console.log("User berhasil ditambahkan:", res.data);
+    fetchUsers(); // refresh data setelah tambah user
+  } catch (error) {
+    console.error("Error adding user:", error);
+  }
+};
 
-const addNewUser = async userData => {
+// Delete user
+const deleteUser = async (id) => {
+  try {
+    await axios.delete(`${ENDPOINTS.users}/${id}`);
+    fetchUsers();
+  } catch (error) {
+    console.error("Error deleting user:", error);
+  }
+};
 
-  // userListStore.addUser(userData)
-  await $api('/apps/users', {
-    method: 'POST',
-    body: userData,
-  })
+// Dummy resolveRole (supaya role tampil icon-nya)
+const resolveUserRoleVariant = (role) => {
+  return {
+    icon: "ri-user-line",
+    color: "primary",
+  };
+};
 
-  // Refetch User
-  fetchUsers()
-}
+// Dummy resolve status (jika status boolean)
+const resolveUserStatusVariant = (status) => {
+  return status ? "success" : "error";
+};
 
-const deleteUser = async id => {
-  await $api(`/apps/users/${ id }`, { method: 'DELETE' })
-
-  // Delete from selectedRows
-  const index = selectedRows.value.findIndex(row => row === id)
-  if (index !== -1)
-    selectedRows.value.splice(index, 1)
-
-  // Refetch User
-  fetchUsers()
-}
-
-const widgetData = ref([
-  {
-    title: 'Session',
-    value: '21,459',
-    change: 29,
-    desc: 'Total Users',
-    icon: 'ri-group-line',
-    iconColor: 'primary',
-  },
-  {
-    title: 'Paid Users',
-    value: '4,567',
-    change: 18,
-    desc: 'Last Week Analytics',
-    icon: 'ri-user-add-line',
-    iconColor: 'error',
-  },
-  {
-    title: 'Active Users',
-    value: '19,860',
-    change: -14,
-    desc: 'Last Week Analytics',
-    icon: 'ri-user-follow-line',
-    iconColor: 'success',
-  },
-  {
-    title: 'Pending Users',
-    value: '237',
-    change: 42,
-    desc: 'Last Week Analytics',
-    icon: 'ri-user-search-line',
-    iconColor: 'warning',
-  },
-])
+const isAddNewUserDrawerVisible = ref(false);
 </script>
 
 <template>
@@ -220,26 +101,22 @@ const widgetData = ref([
     <!-- 👉 Widgets -->
     <div class="d-flex mb-6">
       <VRow>
-        <template
-          v-for="(data, id) in widgetData"
-          :key="id"
-        >
-          <VCol
-            cols="12"
-            md="3"
-            sm="6"
-          >
+        <template v-for="(data, id) in widgetData" :key="id">
+          <VCol cols="12" md="3" sm="6">
             <VCard>
               <VCardText>
                 <div class="d-flex justify-space-between">
                   <div class="d-flex flex-column gap-y-1">
-                    <span class="text-base text-high-emphasis">{{ data.title }}</span>
+                    <span class="text-base text-high-emphasis">{{
+                      data.title
+                    }}</span>
                     <h4 class="text-h4 d-flex align-center gap-2">
                       {{ data.value }}
                       <span
                         class="text-base font-weight-regular"
                         :class="data.change > 0 ? 'text-success' : 'text-error'"
-                      >({{ prefixWithPlus(data.change) }}%)</span>
+                        >({{ prefixWithPlus(data.change) }}%)</span
+                      >
                     </h4>
 
                     <p class="text-sm mb-0">
@@ -252,10 +129,7 @@ const widgetData = ref([
                     rounded
                     size="42"
                   >
-                    <VIcon
-                      :icon="data.icon"
-                      size="26"
-                    />
+                    <VIcon :icon="data.icon" size="26" />
                   </VAvatar>
                 </div>
               </VCardText>
@@ -272,43 +146,12 @@ const widgetData = ref([
       <VCardText>
         <VRow>
           <!-- 👉 Select Role -->
-          <VCol
-            cols="12"
-            sm="4"
-          >
+          <VCol cols="12" sm="4">
             <VSelect
               v-model="selectedRole"
               label="Select Role"
               placeholder="Select Role"
               :items="roles"
-              clearable
-              clear-icon="ri-close-line"
-            />
-          </VCol>
-          <!-- 👉 Select Plan -->
-          <VCol
-            cols="12"
-            sm="4"
-          >
-            <VSelect
-              v-model="selectedPlan"
-              label="Select Plan"
-              placeholder="Select Plan"
-              :items="plans"
-              clearable
-              clear-icon="ri-close-line"
-            />
-          </VCol>
-          <!-- 👉 Select Status -->
-          <VCol
-            cols="12"
-            sm="4"
-          >
-            <VSelect
-              v-model="selectedStatus"
-              label="Select Status"
-              placeholder="Select Status"
-              :items="status"
               clearable
               clear-icon="ri-close-line"
             />
@@ -338,39 +181,34 @@ const widgetData = ref([
             />
           </div>
           <!-- 👉 Add user button -->
-          <VBtn @click="isAddNewUserDrawerVisible = true">
-            Add New User
-          </VBtn>
+          <VBtn @click="isAddNewUserDrawerVisible = true"> Add New User </VBtn>
         </div>
       </VCardText>
 
       <!-- SECTION datatable -->
-      <VDataTableServer
-        v-model:model-value="selectedRows"
-        v-model:items-per-page="itemsPerPage"
+      <VDataTable
         v-model:page="page"
-        :items="users"
-        item-value="id"
-        :items-length="totalUsers"
         :headers="headers"
-        show-select
+        :items="users"
+        :loading="isLoading"
         class="text-no-wrap rounded-0"
-        @update:options="updateOptions"
+        :items-per-page="itemsPerPage"
       >
         <!-- User -->
-        <template #item.user="{ item }">
+        <template #item.name="{ item }">
           <div class="d-flex align-center">
             <VAvatar
               size="34"
               :variant="!item.avatar ? 'tonal' : undefined"
-              :color="!item.avatar ? resolveUserRoleVariant(item.role).color : undefined"
+              :color="
+                !item.avatar
+                  ? resolveUserRoleVariant(item.role).color
+                  : undefined
+              "
               class="me-3"
             >
-              <VImg
-                v-if="item.avatar"
-                :src="item.avatar"
-              />
-              <span v-else>{{ avatarText(item.fullName) }}</span>
+              <VImg v-if="item.avatar" :src="item.avatar" />
+              <span v-else>{{ item.name.charAt(0).toUpperCase() }}</span>
             </VAvatar>
 
             <div class="d-flex flex-column">
@@ -378,13 +216,14 @@ const widgetData = ref([
                 :to="{ name: 'apps-user-view-id', params: { id: item.id } }"
                 class="text-link text-base font-weight-medium"
               >
-                {{ item.fullName }}
+                {{ item.name }}
               </RouterLink>
 
-              <span class="text-sm text-medium-emphasis">@{{ item.username }}</span>
+              <span class="text-sm text-medium-emphasis">{{ item.email }}</span>
             </div>
           </div>
         </template>
+
         <!-- Role -->
         <template #item.role="{ item }">
           <div class="d-flex gap-2">
@@ -393,30 +232,31 @@ const widgetData = ref([
               :color="resolveUserRoleVariant(item.role).color"
               size="22"
             />
-            <span class="text-capitalize text-high-emphasis">{{ item.role }}</span>
+            <span class="text-capitalize text-high-emphasis">{{
+              item.role
+            }}</span>
           </div>
         </template>
-        <!-- Plan -->
-        <template #item.plan="{ item }">
-          <span class="text-capitalize text-high-emphasis">{{ item.currentPlan }}</span>
+
+        <!-- Nomor Telepon -->
+        <template #item.phone="{ item }">
+          <span>{{ item.phone }}</span>
         </template>
+
         <!-- Status -->
         <template #item.status="{ item }">
           <VChip
-            :color="resolveUserStatusVariant(item.status)"
+            :color="resolveUserStatusVariant(item.status === 1)"
             size="small"
             class="text-capitalize"
           >
-            {{ item.status }}
+            {{ item.status === 1 ? "Aktif" : "Tidak Aktif" }}
           </VChip>
         </template>
 
         <!-- Actions -->
         <template #item.actions="{ item }">
-          <IconBtn
-            size="small"
-            @click="deleteUser(item.id)"
-          >
+          <IconBtn size="small" @click="deleteUser(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>
 
@@ -427,10 +267,7 @@ const widgetData = ref([
             <VIcon icon="ri-eye-line" />
           </IconBtn>
 
-          <IconBtn
-            size="small"
-            color="medium-emphasis"
-          >
+          <IconBtn size="small" color="medium-emphasis">
             <VIcon icon="ri-more-2-line" />
 
             <VMenu activator="parent">
@@ -457,7 +294,9 @@ const widgetData = ref([
           <VDivider />
 
           <div class="d-flex justify-end flex-wrap gap-x-6 px-2 py-1">
-            <div class="d-flex align-center gap-x-2 text-medium-emphasis text-base">
+            <div
+              class="d-flex align-center gap-x-2 text-medium-emphasis text-base"
+            >
               Rows Per Page:
               <VSelect
                 v-model="itemsPerPage"
@@ -467,7 +306,9 @@ const widgetData = ref([
               />
             </div>
 
-            <p class="d-flex align-center text-base text-high-emphasis me-2 mb-0">
+            <p
+              class="d-flex align-center text-base text-high-emphasis me-2 mb-0"
+            >
               {{ paginationMeta({ page, itemsPerPage }, totalUsers) }}
             </p>
 
@@ -479,7 +320,7 @@ const widgetData = ref([
                 density="comfortable"
                 color="high-emphasis"
                 :disabled="page <= 1"
-                @click="page <= 1 ? page = 1 : page--"
+                @click="page <= 1 ? (page = 1) : page--"
               />
 
               <VBtn
@@ -489,12 +330,16 @@ const widgetData = ref([
                 variant="text"
                 color="high-emphasis"
                 :disabled="page >= Math.ceil(totalUsers / itemsPerPage)"
-                @click="page >= Math.ceil(totalUsers / itemsPerPage) ? page = Math.ceil(totalUsers / itemsPerPage) : page++ "
+                @click="
+                  page >= Math.ceil(totalUsers / itemsPerPage)
+                    ? (page = Math.ceil(totalUsers / itemsPerPage))
+                    : page++
+                "
               />
             </div>
           </div>
         </template>
-      </VDataTableServer>
+      </VDataTable>
       <!-- SECTION -->
     </VCard>
     <!-- 👉 Add New User -->

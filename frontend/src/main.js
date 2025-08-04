@@ -2,6 +2,9 @@ import App from "@/App.vue";
 import { registerPlugins } from "@core/utils/plugins";
 import axios from "axios";
 import { createApp } from "vue";
+import "vue-loading-overlay/dist/css/index.css";
+import VueToast from "vue-toast-notification";
+import "vue-toast-notification/dist/theme-sugar.css";
 
 // Styles
 import "@core/scss/template/index.scss";
@@ -19,6 +22,9 @@ const app = createApp(App);
 
 // Register plugins
 registerPlugins(app);
+
+//vue-toast-notification
+app.use(VueToast);
 
 // Mount vue app
 app.mount("#app");

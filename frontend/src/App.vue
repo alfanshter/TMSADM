@@ -1,29 +1,46 @@
 <script setup>
-import { useTheme } from 'vuetify'
-import ScrollToTop from '@core/components/ScrollToTop.vue'
-import initCore from '@core/initCore'
-import {
-  initConfigStore,
-  useConfigStore,
-} from '@core/stores/config'
-import { hexToRgb } from '@core/utils/colorConverter'
+import ScrollToTop from "@core/components/ScrollToTop.vue";
+import initCore from "@core/initCore";
+import { initConfigStore, useConfigStore } from "@core/stores/config";
+import { hexToRgb } from "@core/utils/colorConverter";
+import { provide, ref } from "vue";
+import { useTheme } from "vuetify";
 
-const { global } = useTheme()
+// Import vue-loading-overlay
+import Loading from "vue-loading-overlay";
+import "vue-loading-overlay/dist/css/index.css";
 
-// ℹ️ Sync current theme with initial loader theme
-initCore()
-initConfigStore()
+const { global } = useTheme();
 
-const configStore = useConfigStore()
+// Sync current theme with initial loader theme
+initCore();
+initConfigStore();
+const configStore = useConfigStore();
+
+// Global loading state
+const isLoading = ref(false);
+
+// Provide global loading functions
+provide("globalLoading", {
+  show: () => (isLoading.value = true),
+  hide: () => (isLoading.value = false),
+});
 </script>
 
 <template>
   <VLocaleProvider :rtl="configStore.isAppRTL">
-    <!-- ℹ️ This is required to set the background color of active nav link based on currently active global theme's primary -->
-    <VApp :style="`--v-global-theme-primary: ${hexToRgb(global.current.value.colors.primary)}`">
+    <!-- Background color based on active global theme -->
+    <VApp
+      :style="`--v-global-theme-primary: ${hexToRgb(
+        global.current.value.colors.primary
+      )}`"
+    >
       <RouterView />
 
       <ScrollToTop />
+
+      <!-- Global Loading Overlay -->
+      <Loading v-model:active="isLoading" :is-full-page="true" />
     </VApp>
   </VLocaleProvider>
 </template>

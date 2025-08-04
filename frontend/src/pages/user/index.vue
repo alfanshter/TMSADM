@@ -212,12 +212,6 @@ const isAddNewUserDrawerVisible = ref(false);
             </VAvatar>
 
             <div class="d-flex flex-column">
-              <RouterLink
-                :to="{ name: 'apps-user-view-id', params: { id: item.id } }"
-                class="text-link text-base font-weight-medium"
-              >
-                {{ item.name }}
-              </RouterLink>
 
               <span class="text-sm text-medium-emphasis">{{ item.email }}</span>
             </div>
@@ -262,7 +256,6 @@ const isAddNewUserDrawerVisible = ref(false);
 
           <IconBtn
             size="small"
-            :to="{ name: 'apps-user-view-id', params: { id: item.id } }"
           >
             <VIcon icon="ri-eye-line" />
           </IconBtn>

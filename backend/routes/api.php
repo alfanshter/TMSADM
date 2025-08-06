@@ -33,7 +33,7 @@ Route::middleware(['auth:sanctum', 'role:team_leader,admin'])->group(function ()
 });
 
 // Maintenance API Routes
-Route::middleware(['auth:sanctum', 'role:team_leader'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:team_leader,admin'])->group(function () {
     Route::get('/activity-tms-all', [ActivityTmsController::class, 'getAllActivityTms']);
     Route::get('/activity-tms', [ActivityTmsController::class, 'getActivityTms']);
     Route::post('/activity-tms', [ActivityTmsController::class, 'storeActivityTms']);

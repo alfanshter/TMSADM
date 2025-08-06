@@ -19,8 +19,17 @@ export default [
   },
 
   {
-    title: "TMS",
+    title: "ItemMachine",
     to: { name: "tms" },
     icon: { icon: "ri-settings-2-line" },
+  },
+
+  {
+    title: "Activity TMS",
+    children: [
+      { title: "List", to: "activitytms" },
+      { title: "Add", to: "activitytms-form" },
+    ],
+    icon: { icon: "ri-pulse-line" },
   },
 ];

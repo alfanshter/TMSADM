@@ -5,4 +5,5 @@ export const ENDPOINTS = {
   login: `${API_BASE_URL}/login`,
   users: `${API_BASE_URL}/users`,
   itemMachines: `${API_BASE_URL}/item-machines`,
+  activityTms: `${API_BASE_URL}/activity-tms-all`,
 };

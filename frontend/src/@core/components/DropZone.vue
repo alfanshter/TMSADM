@@ -1,42 +1,81 @@
 <script setup>
 import { useDropZone, useFileDialog, useObjectUrl } from "@vueuse/core";
+import { ref, watch } from "vue";
 
-import { ref } from "vue";
+// Props dan emit
+const props = defineProps({
+  label: String,
+  modelValue: Array,
+});
+const emit = defineEmits(["update:modelValue"]);
 
+// Setup
 const dropZoneRef = ref();
 const fileData = ref([]);
+
+// Inisialisasi jika ada modelValue dari luar
+watch(
+  () => props.modelValue,
+  (val) => {
+    if (Array.isArray(val)) {
+      fileData.value = val.map((file) => ({
+        file,
+        url: useObjectUrl(file).value ?? "",
+      }));
+    }
+  },
+  { immediate: true }
+);
+
+// File dialog
 const { open, onChange } = useFileDialog({ accept: "image/*" });
 
-function onDrop(DroppedFiles) {
-  DroppedFiles?.forEach((file) => {
-    if (file.type.slice(0, 6) !== "image/") {
-      alert("Only image files are allowed");
-      return;
+// Tambah file
+function addFiles(files) {
+  const validFiles = [];
+  files?.forEach((file) => {
+    if (file.type.startsWith("image/")) {
+      const fileObj = {
+        file,
+        url: useObjectUrl(file).value ?? "",
+      };
+      fileData.value.push(fileObj);
+      validFiles.push(fileObj);
     }
-    fileData.value.push({
-      file,
-      url: useObjectUrl(file).value ?? "",
-    });
   });
+
+  emit(
+    "update:modelValue",
+    fileData.value.map((f) => f.file)
+  );
+}
+
+function onDrop(droppedFiles) {
+  addFiles(droppedFiles);
 }
 
 onChange((selectedFiles) => {
   if (!selectedFiles) return;
-  for (const file of selectedFiles) {
-    fileData.value.push({
-      file,
-      url: useObjectUrl(file).value ?? "",
-    });
-  }
+  addFiles(Array.from(selectedFiles));
 });
 
 useDropZone(dropZoneRef, onDrop);
 </script>
+
 <template>
-  <div class="flex">
+  <div class="flex flex-col gap-2">
+    <!-- ✅ Tampilkan label -->
+    <div
+      v-if="label"
+      class="text-subtitle-1 font-weight-medium mb-2"
+      :style="{ color: label === 'BEFORE' ? '#f44336' : '#4caf50' }"
+    >
+      {{ label }}
+    </div>
+
     <div class="w-full h-auto relative">
       <div ref="dropZoneRef" class="cursor-pointer" @click="() => open()">
-        <!-- Jika belum ada gambar -->
+        <!-- Dropzone kosong -->
         <div
           v-if="fileData.length === 0"
           class="d-flex flex-column justify-center align-center gap-y-2 pa-12 border-dashed drop-zone"
@@ -49,7 +88,7 @@ useDropZone(dropZoneRef, onDrop);
           <VBtn variant="outlined" size="small">Browse Images</VBtn>
         </div>
 
-        <!-- Jika ada gambar -->
+        <!-- Dropzone ada file -->
         <div
           v-else
           class="d-flex justify-center align-center gap-3 pa-8 border-dashed drop-zone flex-wrap"
@@ -71,18 +110,15 @@ useDropZone(dropZoneRef, onDrop);
                     cover
                   />
 
-                  <!-- Label Before / After -->
                   <div class="text-center mt-2 font-weight-bold text-uppercase">
                     <VChip
-                      v-if="index % 2 === 0 || index % 2 === 1"
-                      :color="index % 2 === 0 ? 'error' : 'success'"
+                      :color="label === 'BEFORE' ? 'error' : 'success'"
                       size="small"
                     >
-                      {{ index % 2 === 0 ? "Before" : "After" }}
+                      {{ label }}
                     </VChip>
                   </div>
 
-                  <!-- File info -->
                   <div class="mt-2 text-center">
                     <span class="clamp-text text-wrap">{{
                       item.file.name
@@ -104,6 +140,19 @@ useDropZone(dropZoneRef, onDrop);
               </VCard>
             </VCol>
           </VRow>
+
+          <!-- Icon Add Image -->
+          <div class="w-full flex justify-center mt-4">
+            <VBtn
+              variant="outlined"
+              color="primary"
+              icon
+              @click.stop="open()"
+              title="Tambah Gambar"
+            >
+              <VIcon icon="ri-add-line" />
+            </VBtn>
+          </div>
         </div>
       </div>
     </div>

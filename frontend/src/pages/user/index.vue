@@ -17,6 +17,10 @@ const itemsPerPage = ref(10);
 const page = ref(1);
 const isLoading = ref(false);
 
+// Snackbar state
+const isSnackbarTopEndVisible = ref(false);
+const snackbarMessage = ref("Add New User Success!");
+
 const headers = [
   { title: "Nama Lengkap", key: "name" },
   { title: "Role", key: "role" },
@@ -51,6 +55,10 @@ onMounted(() => {
 const addNewUser = (userBaru) => {
   users.value.unshift(userBaru);
   totalUsers.value++;
+
+  // Tampilkan snackbar
+  snackbarMessage.value = "Add New User Success!";
+  isSnackbarTopEndVisible.value = true;
 };
 
 // Edit user
@@ -73,8 +81,15 @@ const deleteUser = async (id) => {
     globalLoading?.show();
     await axios.delete(`${ENDPOINTS.users}/${id}`);
     await fetchUsers(); // Refresh list
+
+    // Tampilkan snackbar
+    snackbarMessage.value = "Delete User Completed!";
+    isSnackbarTopEndVisible.value = true;
   } catch (error) {
     console.error("Error deleting user:", error);
+    // Tampilkan snackbar error
+    snackbarMessage.value = "Delete User Failed!";
+    isSnackbarTopEndVisible.value = true;
   } finally {
     globalLoading?.hide();
   }
@@ -98,6 +113,15 @@ const isAddNewUserDrawerVisible = ref(false);
 
 <template>
   <section>
+    <!-- ✅ Snackbar for success -->
+    <VSnackbar
+      v-model="isSnackbarTopEndVisible"
+      location="top end"
+      :color="snackbarMessage.includes('Delete') ? 'error' : 'success'"
+      timeout="3000"
+    >
+      {{ snackbarMessage }}
+    </VSnackbar>
     <!-- 👉 Widgets -->
     <div class="d-flex mb-6">
       <VRow>

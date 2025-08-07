@@ -69,14 +69,15 @@ const updateItemMachine = (updatedItemMachine) => {
   if (index !== -1) itemMachines.value[index] = updatedItemMachine;
 };
 
-// Delete item machine
-const deleteItemMachine = async (id) => {
+// Delete activity TMS
+const deleteActivityTms = async (id) => {
+  console.log("ID untuk delete:", id);
   try {
     globalLoading?.show();
-    await axios.delete(`${ENDPOINTS.itemMachines}/${id}`);
-    await fetchItemMachines(); // Refresh list
+    await axios.delete(`${ENDPOINTS.addactivityTms}/${id}`);
+    await fetchActivityTms(); // Refresh list
   } catch (error) {
-    console.error("Error deleting item machine:", error);
+    console.error("Error deleting activity TMS:", error);
   } finally {
     globalLoading?.hide();
   }
@@ -94,8 +95,6 @@ const resolveUserRoleVariant = (role) => {
 const resolveUserStatusVariant = (status) => {
   return status ? "success" : "error";
 };
-
-const isAddNewActivityTmsDrawerVisible = ref(false);
 </script>
 
 <template>
@@ -235,9 +234,59 @@ const isAddNewActivityTmsDrawerVisible = ref(false);
 
         <!-- Maintenance Type -->
         <template #item.maintenance_type="{ item }">
-          <span class="text-capitalize text-high-emphasis">{{
-            item.maintenance_type
-          }}</span>
+          <div class="d-flex flex-column gap-1">
+            <VBtn
+              v-if="item.cleaning_criticals.length"
+              variant="text"
+              @click="
+                $emit('lihatDetail', {
+                  type: 'cleaning_criticals',
+                  data: item.cleaning_criticals,
+                })
+              "
+            >
+              Cleaning Critical
+            </VBtn>
+
+            <VBtn
+              v-if="item.just_cleaning.length"
+              variant="text"
+              @click="
+                $emit('lihatDetail', {
+                  type: 'just_cleaning',
+                  data: item.just_cleaning,
+                })
+              "
+            >
+              Just Cleaning
+            </VBtn>
+
+            <VBtn
+              v-if="item.preventive.length"
+              variant="text"
+              @click="
+                $emit('lihatDetail', {
+                  type: 'preventive',
+                  data: item.preventive,
+                })
+              "
+            >
+              Preventive
+            </VBtn>
+
+            <VBtn
+              v-if="item.replacement_part.length"
+              variant="text"
+              @click="
+                $emit('lihatDetail', {
+                  type: 'replacement_part',
+                  data: item.replacement_part,
+                })
+              "
+            >
+              Replacement Part
+            </VBtn>
+          </div>
         </template>
 
         <!-- date -->
@@ -261,7 +310,7 @@ const isAddNewActivityTmsDrawerVisible = ref(false);
         <!-- Actions -->
         <template #item.actions="{ item }">
           <!-- Delete button -->
-          <IconBtn size="small" @click="deleteItemMachine(item.id)">
+          <IconBtn size="small" @click="deleteActivityTms(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>
 

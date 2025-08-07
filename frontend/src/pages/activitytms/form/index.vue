@@ -2,18 +2,26 @@
 import { ENDPOINTS } from "@/config/api";
 import axios from "axios";
 import { ref, watch } from "vue";
-const content = ref(`<p>
-      This is a radically reduced version of tiptap. It has support for a document, with paragraphs and text. That's it. It's probably too much for real minimalists though.
-    </p>
-    <p>
-      The paragraph extension is not really required, but you need at least one node. Sure, that node can be something different.
-    </p>`);
 
-const activeTab = ref("Restock");
-
-const selectedAttrs = ref(["Biodegradable", "Expiry Date"]);
-const selectedMaintenanceTypes = ref([]);
+const selectedMaintenanceTypesCleaningCritical = ref([]);
+const selectedMaintenanceTypesJustCleaning = ref([]);
+const selectedMaintenanceTypesReplacementPart = ref([]);
+const selectedMaintenanceTypesPreventivePM = ref([]);
 const birthDate = ref("");
+
+//file foto
+const cleaningCriticalBeforeFiles = ref([]);
+const cleaningCriticalAfterFiles = ref([]);
+const justCleaningBeforeFiles = ref([]);
+const justCleaningAfterFiles = ref([]);
+const replacementPartBeforeFiles = ref([]);
+const replacementPartAfterFiles = ref([]);
+const preventivePmBeforeFiles = ref([]);
+const preventivePmAfterFiles = ref([]);
+const cleaningCriticalJsa = ref([]);
+const justCleaningJsa = ref([]);
+const replacementJsa = ref(null);
+const preventiveJsa = ref(null);
 
 const code = ref("");
 const location = ref("");
@@ -22,7 +30,14 @@ const scopeOfWork = ref("");
 const itemMachines = ref([]);
 const totalItemMachines = ref(0);
 const selectedItemMachine = ref(null);
+const maintenanceOptions = [
+  { label: "Cleaning Critical", value: "cleaning_critical" },
+  { label: "Just Cleaning", value: "just_cleaning" },
+  { label: "Replacement Part", value: "replacement_part" },
+  { label: "Preventive PM", value: "preventive_pm" },
+];
 
+// Fetch item machines from API
 const fetchItemMachines = async () => {
   try {
     const res = await axios.get(ENDPOINTS.itemMachines);
@@ -52,6 +67,73 @@ watch(selectedItemMachine, (newVal) => {
   }
 });
 
+//fungsi untuk menambah data ke activity tms API
+
+const submitForm = async () => {
+  const formData = new FormData();
+
+  formData.append("item_machine_id", selectedItemMachine.value);
+  formData.append("code", code.value);
+  formData.append("location", location.value);
+  formData.append("scope_of_work", scopeOfWork.value);
+  formData.append("date", birthDate.value);
+
+  // Format yang diminta backend: prefix_foto_status[]
+  cleaningCriticalBeforeFiles.value.forEach((file) => {
+    formData.append("cleaning_criticals_foto_before[]", file);
+  });
+  cleaningCriticalAfterFiles.value.forEach((file) => {
+    formData.append("cleaning_criticals_foto_after[]", file);
+  });
+
+  justCleaningBeforeFiles.value.forEach((file) => {
+    formData.append("just_cleaning_foto_before[]", file);
+  });
+  justCleaningAfterFiles.value.forEach((file) => {
+    formData.append("just_cleaning_foto_after[]", file);
+  });
+
+  replacementPartBeforeFiles.value.forEach((file) => {
+    formData.append("replacement_part_foto_before[]", file);
+  });
+  replacementPartAfterFiles.value.forEach((file) => {
+    formData.append("replacement_part_foto_after[]", file);
+  });
+
+  preventivePmBeforeFiles.value.forEach((file) => {
+    formData.append("preventive_foto_before[]", file);
+  });
+  preventivePmAfterFiles.value.forEach((file) => {
+    formData.append("preventive_foto_after[]", file);
+  });
+
+  // JSA files (tidak perlu diubah)
+  if (replacementJsa.value) {
+    formData.append("replacement_jsa", replacementJsa.value);
+  }
+  if (cleaningCriticalJsa.value) {
+    formData.append("cleaning_critical_jsa", cleaningCriticalJsa.value);
+  }
+  if (justCleaningJsa.value) {
+    formData.append("just_cleaning_jsa", justCleaningJsa.value);
+  }
+  if (preventiveJsa.value) {
+    formData.append("preventive_pm_jsa", preventiveJsa.value);
+  }
+
+  try {
+    const res = await axios.post(ENDPOINTS.addactivityTms, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    console.log("Sukses:", res.data);
+  } catch (error) {
+    console.error("Gagal kirim data:", error);
+  }
+};
+
 onMounted(() => {
   fetchItemMachines();
 });
@@ -67,7 +149,7 @@ onMounted(() => {
       <div class="d-flex gap-4 align-center flex-wrap">
         <VBtn variant="outlined" color="secondary"> Discard </VBtn>
         <VBtn variant="outlined" color="primary"> Save Draft </VBtn>
-        <VBtn>Publish Product</VBtn>
+        <VBtn @click="submitForm">Publish Activity TMS</VBtn>
       </div>
     </div>
 
@@ -131,32 +213,133 @@ onMounted(() => {
 
             <!-- Checkbox -->
             <div class="d-flex flex-column mt-2">
+              <!-- Cleaning Critical -->
               <VCheckbox
                 label="Cleaning Critical"
                 value="cleaning_critical"
-                v-model="selectedMaintenanceTypes"
+                v-model="selectedMaintenanceTypesCleaningCritical"
               />
+              <template v-if="selectedMaintenanceTypesCleaningCritical.length">
+                <VCardText class="d-flex gap-4">
+                  <div style="flex: 1">
+                    <DropZone
+                      label="BEFORE"
+                      v-model="cleaningCriticalBeforeFiles"
+                    />
+                  </div>
+                  <div style="flex: 1">
+                    <DropZone
+                      label="AFTER"
+                      v-model="cleaningCriticalAfterFiles"
+                    />
+                  </div>
+                </VCardText>
+                <VCardText>
+                  <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
+                  <VFileInput
+                    v-model="cleaningCriticalJsa"
+                    label="Pilih file dokumen"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                    prepend-icon="ri-upload-2-line"
+                    show-size
+                  />
+                </VCardText>
+              </template>
+
+              <!-- Just Cleaning -->
               <VCheckbox
                 label="Just Cleaning"
                 value="just_cleaning"
-                v-model="selectedMaintenanceTypes"
+                v-model="selectedMaintenanceTypesJustCleaning"
               />
+              <template v-if="selectedMaintenanceTypesJustCleaning.length">
+                <VCardText class="d-flex gap-4">
+                  <div style="flex: 1">
+                    <DropZone
+                      label="BEFORE"
+                      v-model="justCleaningBeforeFiles"
+                    />
+                  </div>
+                  <div style="flex: 1">
+                    <DropZone label="AFTER" v-model="justCleaningAfterFiles" />
+                  </div>
+                </VCardText>
+                <VCardText>
+                  <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
+                  <VFileInput
+                    v-model="justCleaningJsa"
+                    label="Pilih file dokumen"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                    prepend-icon="ri-upload-2-line"
+                    show-size
+                  />
+                </VCardText>
+              </template>
+
+              <!-- Replacement Part -->
               <VCheckbox
                 label="Replacement Part"
                 value="replacement_part"
-                v-model="selectedMaintenanceTypes"
+                v-model="selectedMaintenanceTypesReplacementPart"
               />
+              <template v-if="selectedMaintenanceTypesReplacementPart.length">
+                <VCardText class="d-flex gap-4">
+                  <div style="flex: 1">
+                    <DropZone
+                      label="BEFORE"
+                      v-model="replacementPartBeforeFiles"
+                    />
+                  </div>
+                  <div style="flex: 1">
+                    <DropZone
+                      label="AFTER"
+                      v-model="replacementPartAfterFiles"
+                    />
+                  </div>
+                </VCardText>
+                <VCardText>
+                  <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
+                  <VFileInput
+                    v-model="replacementJsa"
+                    label="Pilih file dokumen"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                    prepend-icon="ri-upload-2-line"
+                    show-size
+                  />
+                </VCardText>
+              </template>
+
+              <!-- Preventive PM -->
               <VCheckbox
                 label="Preventive PM"
                 value="preventive_pm"
-                v-model="selectedMaintenanceTypes"
+                v-model="selectedMaintenanceTypesPreventivePM"
               />
+              <template v-if="selectedMaintenanceTypesPreventivePM.length">
+                <VCardText class="d-flex gap-4">
+                  <div style="flex: 1">
+                    <DropZone
+                      label="BEFORE"
+                      v-model="preventivePmBeforeFiles"
+                    />
+                  </div>
+                  <div style="flex: 1">
+                    <DropZone label="AFTER" v-model="preventivePmAfterFiles" />
+                  </div>
+                </VCardText>
+                <VCardText>
+                  <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
+                  <VFileInput
+                    v-model="preventiveJsa"
+                    label="Pilih file dokumen"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                    prepend-icon="ri-upload-2-line"
+                    show-size
+                  />
+                </VCardText>
+              </template>
             </div>
           </VCardItem>
-
-          <VCardText>
-            <DropZone />
-          </VCardText>
         </VCard>
       </VCol>
 

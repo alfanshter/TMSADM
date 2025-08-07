@@ -6,10 +6,6 @@ import { hexToRgb } from "@core/utils/colorConverter";
 import { provide, ref } from "vue";
 import { useTheme } from "vuetify";
 
-// Import vue-loading-overlay
-import Loading from "vue-loading-overlay";
-import "vue-loading-overlay/dist/css/index.css";
-
 const { global } = useTheme();
 
 // Sync current theme with initial loader theme
@@ -35,12 +31,21 @@ provide("globalLoading", {
         global.current.value.colors.primary
       )}`"
     >
+      <!-- Router View -->
       <RouterView />
 
+      <!-- Scroll to top button -->
       <ScrollToTop />
 
-      <!-- Global Loading Overlay -->
-      <Loading v-model:active="isLoading" :is-full-page="true" />
+      <!-- Custom Global Loading Overlay -->
+      <VOverlay
+        v-if="isLoading"
+        :model-value="true"
+        class="d-flex align-center justify-center"
+        persistent
+      >
+        <VProgressCircular :size="60" color="primary" indeterminate />
+      </VOverlay>
     </VApp>
   </VLocaleProvider>
 </template>

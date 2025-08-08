@@ -1,16 +1,56 @@
 <script setup>
 import { ENDPOINTS } from "@/config/api";
 import axios from "axios";
-import { inject, onMounted, ref } from "vue";
+import { computed, inject, onMounted, ref, watch } from "vue";
 
 // Inject global loading
 const globalLoading = inject("globalLoading");
 
-// State
+// filter
+const selectedScopeOfWork = ref(null);
+
+// baseURL untuk gambar & file
+const baseURL = "http://localhost:8000/storage/";
+
+// State untuk dialog foto/JSA
+const isDialogVisible = ref(false);
+const selectedType = ref("");
+const selectedData = ref([]);
+
+const typeLabels = {
+  cleaning_criticals: "Cleaning Critical",
+  just_cleaning: "Just Cleaning",
+  preventive: "Preventive",
+  replacement_part: "Replacement Part",
+};
+
+// Foto before
+const beforePhotos = computed(() =>
+  selectedData.value.filter((item) => item.status === "before")
+);
+
+// Foto after
+const afterPhotos = computed(() =>
+  selectedData.value.filter((item) => item.status === "after")
+);
+
+// File JSA
+const jsaFile = computed(() => {
+  const found = selectedData.value.find((d) => d.jsa_file);
+  return found ? baseURL + found.jsa_file : null;
+});
+
+// Fungsi buka dialog
+function openDialog(type, data) {
+  selectedType.value = type;
+  selectedData.value = data;
+  isDialogVisible.value = true;
+}
+
+// State tabel
 const activityTms = ref([]);
 const totalActivityTms = ref(0);
 const searchQuery = ref("");
-const selected = ref();
 const itemsPerPage = ref(10);
 const page = ref(1);
 const isLoading = ref(false);
@@ -30,52 +70,31 @@ const scope_of_work = [
   { title: "Production", value: "production" },
 ];
 
-// Ambil data item activity TMS
+// Ambil data dari backend Laravel
 const fetchActivityTms = async () => {
   try {
+    isLoading.value = true;
     const res = await axios.get(ENDPOINTS.activityTms);
     const result = res.data.data ?? res.data;
-    console.log("Ambil data activity TMS:", result);
     activityTms.value = result;
     totalActivityTms.value = Array.isArray(result) ? result.length : 0;
   } catch (error) {
     console.error("Error fetching activity TMS:", error);
+  } finally {
+    isLoading.value = false;
   }
 };
 
-// Run saat component mounted
 onMounted(() => {
   fetchActivityTms();
 });
 
-const addNewActivityTms = (activityTmsBaru) => {
-  activityTms.value.unshift(activityTmsBaru);
-  totalActivityTms.value++;
-};
-
-// Edit item machine
-const isEditItemMachineDrawerVisible = ref(false);
-const editedItemMachine = ref(null);
-
-const openEditDrawer = (itemMachine) => {
-  editedItemMachine.value = { ...itemMachine };
-  isEditItemMachineDrawerVisible.value = true;
-};
-
-const updateItemMachine = (updatedItemMachine) => {
-  const index = itemMachines.value.findIndex(
-    (u) => u.id === updatedItemMachine.id
-  );
-  if (index !== -1) itemMachines.value[index] = updatedItemMachine;
-};
-
-// Delete activity TMS
+// Delete activity
 const deleteActivityTms = async (id) => {
-  console.log("ID untuk delete:", id);
   try {
     globalLoading?.show();
     await axios.delete(`${ENDPOINTS.addactivityTms}/${id}`);
-    await fetchActivityTms(); // Refresh list
+    await fetchActivityTms();
   } catch (error) {
     console.error("Error deleting activity TMS:", error);
   } finally {
@@ -83,206 +102,118 @@ const deleteActivityTms = async (id) => {
   }
 };
 
-// Dummy resolveRole
-const resolveUserRoleVariant = (role) => {
-  return {
-    icon: "ri-settings-2-line",
-    color: "primary",
-  };
-};
-
 // Dummy resolve status
 const resolveUserStatusVariant = (status) => {
   return status ? "success" : "error";
 };
+
+// Filter
+const filteredActivityTms = computed(() => {
+  return activityTms.value.filter((item) => {
+    const machine = item.item_machine || {};
+    const matchesScope = selectedScopeOfWork.value
+      ? machine.scope_of_work === selectedScopeOfWork.value
+      : true;
+    const matchesSearch = searchQuery.value
+      ? machine.name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        machine.code?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        machine.location
+          ?.toLowerCase()
+          .includes(searchQuery.value.toLowerCase())
+      : true;
+    return matchesScope && matchesSearch;
+  });
+});
+
+watch(selectedScopeOfWork, () => {
+  page.value = 1;
+});
 </script>
 
 <template>
   <section>
-    <!-- 👉 Widgets -->
-    <div class="d-flex mb-6">
-      <VRow>
-        <template v-for="(data, id) in widgetData" :key="id">
-          <VCol cols="12" md="3" sm="6">
-            <VCard>
-              <VCardText>
-                <div class="d-flex justify-space-between">
-                  <div class="d-flex flex-column gap-y-1">
-                    <span class="text-base text-high-emphasis">{{
-                      data.title
-                    }}</span>
-                    <h4 class="text-h4 d-flex align-center gap-2">
-                      {{ data.value }}
-                      <span
-                        class="text-base font-weight-regular"
-                        :class="data.change > 0 ? 'text-success' : 'text-error'"
-                        >({{ prefixWithPlus(data.change) }}%)</span
-                      >
-                    </h4>
-
-                    <p class="text-sm mb-0">
-                      {{ data.desc }}
-                    </p>
-                  </div>
-                  <VAvatar
-                    :color="data.iconColor"
-                    variant="tonal"
-                    rounded
-                    size="42"
-                  >
-                    <VIcon :icon="data.icon" size="26" />
-                  </VAvatar>
-                </div>
-              </VCardText>
-            </VCard>
-          </VCol>
-        </template>
-      </VRow>
-    </div>
-
-    <VCard class="mb-6">
-      <VCardItem class="pb-4">
-        <VCardTitle>Filters</VCardTitle>
-      </VCardItem>
+    <VCard>
+      <VCardTitle>Filters</VCardTitle>
       <VCardText>
-        <VRow>
-          <!-- 👉 Select Role -->
-          <VCol cols="12" sm="4">
+        <VRow dense>
+          <VCol cols="12" sm="6">
             <VSelect
               v-model="selectedScopeOfWork"
               label="Select Scope of Work"
-              placeholder="Select Scope of Work"
               :items="scope_of_work"
               clearable
-              clear-icon="ri-close-line"
+              density="compact"
+            />
+          </VCol>
+          <VCol cols="12" sm="6">
+            <VTextField
+              v-model="searchQuery"
+              placeholder="Search Item Machine"
+              density="compact"
             />
           </VCol>
         </VRow>
       </VCardText>
 
-      <VDivider />
-
-      <VCardText class="d-flex flex-wrap gap-4 align-center">
-        <!-- 👉 Export button -->
-        <VBtn
-          variant="outlined"
-          color="secondary"
-          prepend-icon="ri-upload-2-line"
-        >
-          Export
-        </VBtn>
-        <VSpacer />
-        <div class="d-flex align-center gap-4 flex-wrap">
-          <!-- 👉 Search  -->
-          <div class="app-user-search-filter">
-            <VTextField
-              v-model="searchQuery"
-              placeholder="Search User"
-              density="compact"
-            />
-          </div>
-        </div>
-      </VCardText>
-
-      <!-- SECTION datatable -->
       <VDataTable
         v-model:page="page"
         :headers="headers"
-        :items="activityTms"
+        :items="filteredActivityTms"
         :loading="isLoading"
-        class="text-no-wrap rounded-0"
         :items-per-page="itemsPerPage"
+        class="text-no-wrap"
       >
         <!-- nama mesin -->
         <template #item.name="{ item }">
-          <div class="d-flex align-center">
-            <div class="d-flex flex-column">
-              <span class="text-capitalize text-high-emphasis">{{
-                item.item_machine?.name
-              }}</span>
-            </div>
-          </div>
+          {{ item.item_machine?.name }}
         </template>
 
         <!-- Code -->
         <template #item.code="{ item }">
-          <div class="d-flex gap-2">
-            <VIcon
-              :icon="resolveUserRoleVariant(item.code).icon"
-              :color="resolveUserRoleVariant(item.code).color"
-              size="22"
-            />
-            <span class="text-capitalize text-high-emphasis">{{
-              item.item_machine?.code
-            }}</span>
-          </div>
+          {{ item.item_machine?.code }}
         </template>
 
         <!-- Lokasi -->
         <template #item.location="{ item }">
-          <span class="text-capitalize text-high-emphasis">{{
-            item.item_machine?.location
-          }}</span>
+          {{ item.item_machine?.location }}
         </template>
 
         <!-- Scope of Work -->
         <template #item.scope_of_work="{ item }">
-          <span class="text-capitalize text-high-emphasis">{{
-            item.item_machine?.scope_of_work
-          }}</span>
+          {{ item.item_machine?.scope_of_work }}
         </template>
 
         <!-- Maintenance Type -->
         <template #item.maintenance_type="{ item }">
           <div class="d-flex flex-column gap-1">
             <VBtn
-              v-if="item.cleaning_criticals.length"
+              v-if="item.cleaning_criticals?.length"
               variant="text"
-              @click="
-                $emit('lihatDetail', {
-                  type: 'cleaning_criticals',
-                  data: item.cleaning_criticals,
-                })
-              "
+              @click="openDialog('cleaning_criticals', item.cleaning_criticals)"
             >
               Cleaning Critical
             </VBtn>
 
             <VBtn
-              v-if="item.just_cleaning.length"
+              v-if="item.just_cleaning?.length"
               variant="text"
-              @click="
-                $emit('lihatDetail', {
-                  type: 'just_cleaning',
-                  data: item.just_cleaning,
-                })
-              "
+              @click="openDialog('just_cleaning', item.just_cleaning)"
             >
               Just Cleaning
             </VBtn>
 
             <VBtn
-              v-if="item.preventive.length"
+              v-if="item.preventive?.length"
               variant="text"
-              @click="
-                $emit('lihatDetail', {
-                  type: 'preventive',
-                  data: item.preventive,
-                })
-              "
+              @click="openDialog('preventive', item.preventive)"
             >
               Preventive
             </VBtn>
 
             <VBtn
-              v-if="item.replacement_part.length"
+              v-if="item.replacement_part?.length"
               variant="text"
-              @click="
-                $emit('lihatDetail', {
-                  type: 'replacement_part',
-                  data: item.replacement_part,
-                })
-              "
+              @click="openDialog('replacement_part', item.replacement_part)"
             >
               Replacement Part
             </VBtn>
@@ -291,9 +222,7 @@ const resolveUserStatusVariant = (status) => {
 
         <!-- date -->
         <template #item.date="{ item }">
-          <span class="text-capitalize text-high-emphasis">{{
-            item.date
-          }}</span>
+          {{ item.date }}
         </template>
 
         <!-- Status -->
@@ -301,7 +230,6 @@ const resolveUserStatusVariant = (status) => {
           <VChip
             :color="resolveUserStatusVariant(item.status === 1)"
             size="small"
-            class="text-capitalize"
           >
             {{ item.status === 1 ? "Aktif" : "Tidak Aktif" }}
           </VChip>
@@ -309,99 +237,84 @@ const resolveUserStatusVariant = (status) => {
 
         <!-- Actions -->
         <template #item.actions="{ item }">
-          <!-- Delete button -->
           <IconBtn size="small" @click="deleteActivityTms(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>
-
-          <!-- View button (opsional, bisa kamu hubungkan ke modal nanti) -->
-          <IconBtn size="small">
-            <VIcon icon="ri-eye-line" />
-          </IconBtn>
-
-          <!-- More menu -->
-          <IconBtn size="small" color="medium-emphasis">
-            <VIcon icon="ri-more-2-line" />
-
-            <VMenu activator="parent">
-              <VList>
-                <VListItem link>
-                  <template #prepend>
-                    <VIcon icon="ri-download-line" />
-                  </template>
-                  <VListItemTitle>Download</VListItemTitle>
-                </VListItem>
-
-                <!-- Edit item -->
-                <VListItem link @click="openEditDrawer(item)">
-                  <template #prepend>
-                    <VIcon icon="ri-edit-box-line" />
-                  </template>
-                  <VListItemTitle>Edit</VListItemTitle>
-                </VListItem>
-              </VList>
-            </VMenu>
-          </IconBtn>
-        </template>
-
-        <!-- Pagination -->
-        <template #bottom>
-          <VDivider />
-
-          <div class="d-flex justify-end flex-wrap gap-x-6 px-2 py-1">
-            <div
-              class="d-flex align-center gap-x-2 text-medium-emphasis text-base"
-            >
-              Rows Per Page:
-              <VSelect
-                v-model="itemsPerPage"
-                class="per-page-select"
-                variant="plain"
-                :items="[10, 20, 25, 50, 100]"
-              />
-            </div>
-
-            <p
-              class="d-flex align-center text-base text-high-emphasis me-2 mb-0"
-            >
-              {{ paginationMeta({ page, itemsPerPage }, totalUsers) }}
-            </p>
-
-            <div class="d-flex gap-x-2 align-center me-2">
-              <VBtn
-                class="flip-in-rtl"
-                icon="ri-arrow-left-s-line"
-                variant="text"
-                density="comfortable"
-                color="high-emphasis"
-                :disabled="page <= 1"
-                @click="page <= 1 ? (page = 1) : page--"
-              />
-
-              <VBtn
-                class="flip-in-rtl"
-                icon="ri-arrow-right-s-line"
-                density="comfortable"
-                variant="text"
-                color="high-emphasis"
-                :disabled="page >= Math.ceil(totalItemMachines / itemsPerPage)"
-                @click="
-                  page >= Math.ceil(totalItemMachines / itemsPerPage)
-                    ? (page = Math.ceil(totalItemMachines / itemsPerPage))
-                    : page++
-                "
-              />
-            </div>
-          </div>
         </template>
       </VDataTable>
-      <!-- SECTION -->
     </VCard>
+
+    <!-- Dialog Foto Before/After & JSA -->
+    <VDialog v-model="isDialogVisible" max-width="800px">
+      <VCard>
+        <!-- Judul Dialog -->
+        <VCardTitle class="bg-primary text-white">
+          {{ typeLabels[selectedType] }}
+        </VCardTitle>
+
+        <VCardText>
+          <!-- BEFORE -->
+          <VChip color="error" text-color="red" class="mb-2 font-weight-bold">
+            BEFORE
+          </VChip>
+          <VRow v-if="beforePhotos.length">
+            <VCol
+              v-for="(photo, i) in beforePhotos"
+              :key="'before-' + i"
+              cols="6"
+            >
+              <VImg
+                :src="baseURL + photo.foto"
+                aspect-ratio="1"
+                class="rounded border"
+                cover
+              />
+            </VCol>
+          </VRow>
+          <div v-else class="text-grey">Tidak ada foto sebelum</div>
+
+          <!-- AFTER -->
+          <VChip
+            color="success"
+            text-color="white"
+            class="font-weight-bold mt-2 mb-2"
+          >
+            AFTER
+          </VChip>
+          <VRow v-if="afterPhotos.length">
+            <VCol
+              v-for="(photo, i) in afterPhotos"
+              :key="'after-' + i"
+              cols="6"
+            >
+              <VImg
+                :src="baseURL + photo.foto"
+                aspect-ratio="1"
+                class="rounded border"
+                cover
+              />
+            </VCol>
+          </VRow>
+          <div v-else class="text-grey">Tidak ada foto sesudah</div>
+
+          <!-- FILE JSA -->
+          <div class="mt-6">
+            <h4 class="mb-2">JSA File</h4>
+            <div v-if="jsaFile">
+              <VBtn :href="jsaFile" target="_blank" color="primary">
+                📄 Download JSA
+              </VBtn>
+            </div>
+            <div v-else class="text-grey">Tidak ada file JSA</div>
+          </div>
+        </VCardText>
+
+        <!-- Tombol Close -->
+        <VCardActions>
+          <VSpacer />
+          <VBtn color="secondary" @click="isDialogVisible = false">Tutup</VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </section>
 </template>
-
-<style lang="scss" scoped>
-.app-user-search-filter {
-  inline-size: 15.625rem;
-}
-</style>

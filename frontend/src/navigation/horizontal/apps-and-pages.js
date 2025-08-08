@@ -32,4 +32,16 @@ export default [
     ],
     icon: { icon: "ri-pulse-line" },
   },
+
+  {
+    title: "FAW Report",
+    to: { name: "fawreport" },
+    icon: { icon: "ri-settings-2-line" },
+  },
+
+  {
+    title: "Leakage Report",
+    to: { name: "leakagereport" },
+    icon: { icon: "ri-alarm-warning-fill" },
+  },
 ];

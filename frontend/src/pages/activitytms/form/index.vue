@@ -27,6 +27,10 @@ const code = ref("");
 const location = ref("");
 const scopeOfWork = ref("");
 
+// Snackbar state
+const isSnackbarTopEndVisible = ref(false);
+const snackbarMessage = ref("Add New Activity TMS Success!");
+
 const itemMachines = ref([]);
 const totalItemMachines = ref(0);
 const selectedItemMachine = ref(null);
@@ -127,6 +131,10 @@ const submitForm = async () => {
         "Content-Type": "multipart/form-data",
       },
     });
+
+    // Tampilkan snackbar
+    snackbarMessage.value = "Add New Activity TMS Success!";
+    isSnackbarTopEndVisible.value = true;
 
     console.log("Sukses:", res.data);
   } catch (error) {
@@ -345,6 +353,16 @@ onMounted(() => {
 
       <VCol md="4" cols="12"> </VCol>
     </VRow>
+
+    <!-- Snackbar -->
+    <VSnackbar
+      v-model="isSnackbarTopEndVisible"
+      :timeout="3000"
+      location="top end"
+      color="success"
+    >
+      {{ snackbarMessage }}
+    </VSnackbar>
   </div>
 </template>
 

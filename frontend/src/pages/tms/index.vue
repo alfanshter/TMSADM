@@ -17,6 +17,13 @@ const itemsPerPage = ref(10);
 const page = ref(1);
 const isLoading = ref(false);
 
+// Filter scope of work
+const selectedScopeOfWork = ref(null);
+
+// Snackbar state
+const isSnackbarTopEndVisible = ref(false);
+const snackbarMessage = ref("Add New Item Machine Success!");
+
 const headers = [
   { title: "Nama Mesin", key: "name" },
   { title: "Code", key: "code" },
@@ -50,6 +57,10 @@ onMounted(() => {
 const addNewItemMachine = (itemMachineBaru) => {
   itemMachines.value.unshift(itemMachineBaru);
   totalItemMachines.value++;
+
+  // Tampilkan snackbar
+  snackbarMessage.value = "Add New Item Machine Success!";
+  isSnackbarTopEndVisible.value = true;
 };
 
 // Edit item machine
@@ -66,6 +77,9 @@ const updateItemMachine = (updatedItemMachine) => {
     (u) => u.id === updatedItemMachine.id
   );
   if (index !== -1) itemMachines.value[index] = updatedItemMachine;
+  // Tampilkan snackbar
+  snackbarMessage.value = "Update Item Machine Completed!";
+  isSnackbarTopEndVisible.value = true;
 };
 
 // Delete item machine
@@ -74,6 +88,10 @@ const deleteItemMachine = async (id) => {
     globalLoading?.show();
     await axios.delete(`${ENDPOINTS.itemMachines}/${id}`);
     await fetchItemMachines(); // Refresh list
+
+    // Tampilkan snackbar
+    snackbarMessage.value = "Delete Item Machine Completed!";
+    isSnackbarTopEndVisible.value = true;
   } catch (error) {
     console.error("Error deleting item machine:", error);
   } finally {
@@ -95,10 +113,38 @@ const resolveUserStatusVariant = (status) => {
 };
 
 const isAddNewItemMachinesDrawerVisible = ref(false);
+
+const filteredItemMachines = computed(() => {
+  return itemMachines.value.filter((item) => {
+    const matchesScope = selectedScopeOfWork.value
+      ? item.scope_of_work === selectedScopeOfWork.value
+      : true;
+
+    const matchesSearch = searchQuery.value
+      ? item.name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        item.code?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        item.location?.toLowerCase().includes(searchQuery.value.toLowerCase())
+      : true;
+
+    return matchesScope && matchesSearch;
+  });
+});
+
+watch(selectedScopeOfWork, () => {
+  page.value = 1;
+});
 </script>
 
 <template>
   <section>
+    <VSnackbar
+      v-model="isSnackbarTopEndVisible"
+      location="top end"
+      :color="snackbarMessage.includes('Delete') ? 'error' : 'success'"
+      timeout="3000"
+    >
+      {{ snackbarMessage }}
+    </VSnackbar>
     <!-- 👉 Widgets -->
     <div class="d-flex mb-6">
       <VRow>
@@ -192,7 +238,7 @@ const isAddNewItemMachinesDrawerVisible = ref(false);
       <VDataTable
         v-model:page="page"
         :headers="headers"
-        :items="itemMachines"
+        :items="filteredItemMachines"
         :loading="isLoading"
         class="text-no-wrap rounded-0"
         :items-per-page="itemsPerPage"

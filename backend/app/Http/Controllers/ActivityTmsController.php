@@ -151,18 +151,12 @@ class ActivityTmsController extends Controller
 
     public function updateActivityTms(Request $request, $id)
     {
-        $activity = ActivityTMS::find($id);
+        $activity = ActivityTMS::findOrFail($id);
 
-        if (!$activity) {
-            return response()->json([
-                'status' => 0,
-                'message' => 'Data aktivitas TMS tidak ditemukan.',
-            ], 404);
-        }
 
         $validator = Validator::make($request->all(), [
-            'item_machine_id' => 'sometimes|required|exists:item_machines,id',
-            'date' => 'sometimes|required|date',
+            'item_machine_id' => 'required|exists:item_machines,id',
+            'date' => 'required|date',
 
             // JSA file uploads
             'jsa_file_cleaning_criticals' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
@@ -191,33 +185,32 @@ class ActivityTmsController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => 0,
-                'message' => collect($validator->errors()->all())->first(),
+                'message' => $validator->errors()->first(),
             ], 422);
         }
 
-        // Simpan file JSA jika dikirim
-        $jsa_cleaning = $request->file('jsa_file_cleaning_criticals')?->store('jsa_files', 'public');
-        $jsa_just = $request->file('jsa_file_just_cleaning')?->store('jsa_files', 'public');
-        $jsa_replacement = $request->file('jsa_file_replacement_part')?->store('jsa_files', 'public');
-        $jsa_preventive = $request->file('jsa_file_preventive')?->store('jsa_files', 'public');
+        // Update JSA file, hapus lama jika ada file baru
+        $jsaFiles = [
+            'jsa_file_cleaning_criticals',
+            'jsa_file_just_cleaning',
+            'jsa_file_replacement_part',
+            'jsa_file_preventive'
+        ];
 
-        // Update data utama
-        $activity->update([
-            'item_machine_id' => $request->item_machine_id ?? $activity->item_machine_id,
-            'date' => $request->date ?? $activity->date,
-            'jsa_file_cleaning_criticals' => $jsa_cleaning ?? $activity->jsa_file_cleaning_criticals,
-            'jsa_file_just_cleaning' => $jsa_just ?? $activity->jsa_file_just_cleaning,
-            'jsa_file_replacement_part' => $jsa_replacement ?? $activity->jsa_file_replacement_part,
-            'jsa_file_preventive' => $jsa_preventive ?? $activity->jsa_file_preventive,
-        ]);
+        foreach ($jsaFiles as $field) {
+            if ($request->hasFile($field)) {
+                if ($activity->$field) {
+                    Storage::disk('public')->delete($activity->$field);
+                }
+                $activity->$field = $request->file($field)->store('jsa_files', 'public');
+            }
+        }
 
-        // Hapus foto lama jika perlu (optional: kamu bisa modifikasi ini jika ingin keep yang lama)
-        $activity->cleaningCriticals()->delete();
-        $activity->justCleaning()->delete();
-        $activity->preventive()->delete();
-        $activity->replacementPart()->delete();
+        $activity->item_machine_id = $request->item_machine_id;
+        $activity->date = $request->date;
+        $activity->save();
 
-        // Simpan ulang foto jika ada kiriman baru
+        // Update foto relasi
         $fotoGroups = [
             'cleaning_criticals' => $activity->cleaningCriticals(),
             'just_cleaning' => $activity->justCleaning(),
@@ -227,29 +220,45 @@ class ActivityTmsController extends Controller
 
         foreach ($fotoGroups as $prefix => $relation) {
             foreach (['before', 'after'] as $status) {
-                $files = $request->file("{$prefix}_foto_{$status}", []);
-                foreach ($files as $file) {
-                    $path = $file->store('photos', 'public');
-                    $relation->create([
-                        'foto' => $path,
-                        'status' => $status,
-                    ]);
+        
+                // Kalau field tidak ada di request → skip (tidak hapus, tidak tambah)
+                if (!$request->has("{$prefix}_foto_{$status}")) {
+                    continue;
+                }
+        
+                $files = $request->file("{$prefix}_foto_{$status}");
+        
+                if ($files && count($files) > 0) {
+                    // Hapus lama & simpan baru
+                    $oldPhotos = $relation->where('status', $status)->get();
+                    foreach ($oldPhotos as $photo) {
+                        Storage::disk('public')->delete($photo->foto);
+                        $photo->delete();
+                    }
+                    foreach ($files as $file) {
+                        $path = $file->store('photos', 'public');
+                        $relation->create([
+                            'foto' => $path,
+                            'status' => $status,
+                        ]);
+                    }
+                } else {
+                    // Field ada tapi kosong → hapus semua lama
+                    $oldPhotos = $relation->where('status', $status)->get();
+                    foreach ($oldPhotos as $photo) {
+                        Storage::disk('public')->delete($photo->foto);
+                        $photo->delete();
+                    }
                 }
             }
         }
 
         return response()->json([
             'status' => 1,
-            'message' => 'Activity TMS berhasil diperbarui.',
-            'data' => $activity->fresh()->load([
-                'itemMachine',
-                'cleaningCriticals',
-                'justCleaning',
-                'preventive',
-                'replacementPart',
-            ])
-        ]);
+            'message' => 'Activity TMS berhasil diupdate.',
+        ], 200);
     }
+
 
     public function destroyActivityTms($id)
     {
@@ -301,6 +310,4 @@ class ActivityTmsController extends Controller
             'message' => 'Activity TMS berhasil dihapus.',
         ]);
     }
-
-    
 }

@@ -40,4 +40,5 @@ Route::middleware(['auth:sanctum', 'role:team_leader,admin'])->group(function ()
     Route::delete('/activity-tms/{id}', [ActivityTmsController::class, 'destroyActivityTms']);
     Route::get('/maintenance-types', [ActivityTmsController::class, 'getMaintenanceTypes']);
     Route::post('/maintenance', [ActivityTmsController::class, 'storeMaintenance']);
+    Route::post('/activity-tms-update/{id}', [ActivityTmsController::class, 'updateActivityTms']);
 });

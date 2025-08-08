@@ -44,4 +44,10 @@ export default [
     to: { name: "leakagereport" },
     icon: { icon: "ri-alarm-warning-fill" },
   },
+
+  {
+    title: "Schedule",
+    children: [{ title: "List", to: "schedule" }],
+    icon: { icon: "ri-survey-line" },
+  },
 ];

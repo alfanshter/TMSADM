@@ -1,0 +1,6 @@
+# Jangan upload node_modules di frontend
+frontend/node_modules/
+
+# Kalau ada node_modules di backend juga
+backend/node_modules/
+

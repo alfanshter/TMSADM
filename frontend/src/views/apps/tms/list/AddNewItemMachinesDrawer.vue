@@ -1,48 +1,28 @@
 <script setup>
 import { ENDPOINTS } from "@/config/api";
 import axios from "axios";
-import { nextTick, ref, watch } from "vue";
+import { nextTick, ref } from "vue";
 
 // Props dan emit
-const props = defineProps({
-  isDrawerOpen: Boolean,
-  user: Object, // user yang akan diedit
-});
-const emit = defineEmits(["update:isDrawerOpen", "update-user"]);
+const props = defineProps({ isDrawerOpen: Boolean });
+const emit = defineEmits(["update:isDrawerOpen", "userData"]);
 // Inject global loading
 const globalLoading = inject("globalLoading");
 
 // Refs
 const refForm = ref();
 const isFormValid = ref(false);
+const isSubmitting = ref(false); // ⬅️ Loading state baru
 
 // Form state
 const form = ref({
-  id: null,
   name: "",
-  email: "",
-  role: "",
-  phone: "",
+  code: "",
+  location: "",
+  scope_of_work: "",
 });
 
-// Auto-set form ketika props.user berubah
-watch(
-  () => props.user,
-  (newVal) => {
-    if (newVal) {
-      form.value = {
-        id: newVal.id,
-        name: newVal.name,
-        email: newVal.email,
-        role: newVal.role,
-        phone: newVal.phone,
-      };
-    }
-  },
-  { immediate: true }
-);
-
-// 👉 Submit update
+// 👉 Submit machines data
 const onSubmit = async () => {
   refForm.value?.validate().then(async ({ valid }) => {
     if (!valid) return;
@@ -51,13 +31,13 @@ const onSubmit = async () => {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await axios.put(
-        `${ENDPOINTS.users}/${form.value.id}`,
+      const res = await axios.post(
+        ENDPOINTS.itemMachines,
         {
           name: form.value.name,
-          email: form.value.email,
-          role: form.value.role,
-          phone: form.value.phone,
+          code: form.value.code,
+          location: form.value.location,
+          scope_of_work: form.value.scope_of_work,
         },
         {
           headers: {
@@ -67,11 +47,14 @@ const onSubmit = async () => {
         }
       );
 
-      emit("update-user", res.data.data ?? res.data);
+      emit("item-data", res.data.data);
       emit("update:isDrawerOpen", false);
       resetForm();
     } catch (err) {
-      console.error("Gagal update user:", err.response?.data || err.message);
+      console.error(
+        "Gagal tambah Item machines:",
+        err.response?.data || err.message
+      );
     } finally {
       globalLoading?.hide();
     }
@@ -105,7 +88,10 @@ const handleDrawerModelValueUpdate = (val) => {
     :model-value="props.isDrawerOpen"
     @update:model-value="handleDrawerModelValueUpdate"
   >
-    <AppDrawerHeaderSection title="Edit User" @cancel="closeNavigationDrawer" />
+    <AppDrawerHeaderSection
+      title="Tambah Item Machines"
+      @cancel="closeNavigationDrawer"
+    />
     <VDivider />
 
     <PerfectScrollbar :options="{ wheelPropagation: false }">
@@ -116,46 +102,55 @@ const handleDrawerModelValueUpdate = (val) => {
               <VCol cols="12">
                 <VTextField
                   v-model="form.name"
-                  label="Nama Lengkap"
-                  placeholder="John Doe"
+                  label="Nama Mesin"
+                  placeholder="Nama Mesin"
                   :rules="[requiredValidator]"
                 />
               </VCol>
 
               <VCol cols="12">
                 <VTextField
-                  v-model="form.email"
-                  label="Email"
-                  placeholder="johndoe@mail.com"
-                  :rules="[requiredValidator, emailValidator]"
+                  v-model="form.code"
+                  label="Code"
+                  placeholder="Masukkan Kode"
+                  :rules="[requiredValidator]"
                 />
               </VCol>
 
               <VCol cols="12">
                 <VTextField
-                  v-model="form.phone"
-                  label="Nomor Telepon"
-                  placeholder="08xxxxxxxx"
+                  v-model="form.location"
+                  label="Lokasi"
+                  placeholder="Masukkan Lokasi"
+                  :rules="[requiredValidator]"
                 />
               </VCol>
 
               <VCol cols="12">
                 <VSelect
-                  v-model="form.role"
-                  label="Pilih Role"
-                  :items="['admin', 'supervisor', 'team_leader']"
+                  v-model="form.scope_of_work"
+                  label="Pilih Scope of Work"
+                  :items="['safety', 'production']"
                   :rules="[requiredValidator]"
-                  placeholder="Pilih Role"
+                  placeholder="Pilih Scope of Work"
                 />
               </VCol>
 
               <VCol cols="12" class="d-flex gap-2">
-                <VBtn type="submit" class="me-2">Update</VBtn>
+                <VBtn
+                  type="submit"
+                  class="me-2"
+                  :loading="isSubmitting"
+                  :disabled="isSubmitting"
+                >
+                  Submit
+                </VBtn>
                 <VBtn
                   type="reset"
                   variant="outlined"
                   color="error"
                   @click="closeNavigationDrawer"
+                  :disabled="isSubmitting"
                 >
                   Cancel
                 </VBtn>

@@ -6,9 +6,9 @@ import { nextTick, ref, watch } from "vue";
 // Props dan emit
 const props = defineProps({
   isDrawerOpen: Boolean,
-  user: Object, // user yang akan diedit
+  itemMachines: Object, // item machines yang akan diedit
 });
-const emit = defineEmits(["update:isDrawerOpen", "update-user"]);
+const emit = defineEmits(["update:isDrawerOpen", "update-itemMachines"]);
 // Inject global loading
 const globalLoading = inject("globalLoading");
 
@@ -20,22 +20,22 @@ const isFormValid = ref(false);
 const form = ref({
   id: null,
   name: "",
-  email: "",
-  role: "",
-  phone: "",
+  code: "",
+  location: "",
+  scope_of_work: "",
 });
 
-// Auto-set form ketika props.user berubah
+// Auto-set form ketika props.itemMachines berubah
 watch(
-  () => props.user,
+  () => props.itemMachines,
   (newVal) => {
     if (newVal) {
       form.value = {
         id: newVal.id,
         name: newVal.name,
-        email: newVal.email,
-        role: newVal.role,
-        phone: newVal.phone,
+        code: newVal.code,
+        location: newVal.location,
+        scope_of_work: newVal.scope_of_work,
       };
     }
   },
@@ -52,12 +52,12 @@ const onSubmit = async () => {
       const token = localStorage.getItem("token");
 
       const res = await axios.put(
-        `${ENDPOINTS.users}/${form.value.id}`,
+        `${ENDPOINTS.itemMachines}/${form.value.id}`,
         {
           name: form.value.name,
-          email: form.value.email,
-          role: form.value.role,
-          phone: form.value.phone,
+          code: form.value.code,
+          location: form.value.location,
+          scope_of_work: form.value.scope_of_work,
         },
         {
           headers: {
@@ -67,11 +67,14 @@ const onSubmit = async () => {
         }
       );
 
-      emit("update-user", res.data.data ?? res.data);
+      emit("update-itemMachines", res.data.data ?? res.data);
       emit("update:isDrawerOpen", false);
       resetForm();
     } catch (err) {
-      console.error("Gagal update user:", err.response?.data || err.message);
+      console.error(
+        "Gagal update item machines:",
+        err.response?.data || err.message
+      );
     } finally {
       globalLoading?.hide();
     }
@@ -105,7 +108,10 @@ const handleDrawerModelValueUpdate = (val) => {
     :model-value="props.isDrawerOpen"
     @update:model-value="handleDrawerModelValueUpdate"
   >
-    <AppDrawerHeaderSection title="Edit User" @cancel="closeNavigationDrawer" />
+    <AppDrawerHeaderSection
+      title="Edit Item Machines"
+      @cancel="closeNavigationDrawer"
+    />
     <VDivider />
 
     <PerfectScrollbar :options="{ wheelPropagation: false }">
@@ -116,36 +122,37 @@ const handleDrawerModelValueUpdate = (val) => {
               <VCol cols="12">
                 <VTextField
                   v-model="form.name"
-                  label="Nama Lengkap"
-                  placeholder="John Doe"
+                  label="Nama Mesin"
+                  placeholder="Nama Mesin"
                   :rules="[requiredValidator]"
                 />
               </VCol>
 
               <VCol cols="12">
                 <VTextField
-                  v-model="form.email"
-                  label="Email"
-                  placeholder="johndoe@mail.com"
-                  :rules="[requiredValidator, emailValidator]"
+                  v-model="form.code"
+                  label="Code"
+                  placeholder="Masukkan Kode"
+                  :rules="[requiredValidator]"
                 />
               </VCol>
 
               <VCol cols="12">
                 <VTextField
-                  v-model="form.phone"
-                  label="Nomor Telepon"
-                  placeholder="08xxxxxxxx"
+                  v-model="form.location"
+                  label="Lokasi"
+                  placeholder="Masukkan Lokasi"
+                  :rules="[requiredValidator]"
                 />
               </VCol>
 
               <VCol cols="12">
                 <VSelect
-                  v-model="form.role"
-                  label="Pilih Role"
-                  :items="['admin', 'supervisor', 'team_leader']"
+                  v-model="form.scope_of_work"
+                  label="Pilih Scope of Work"
+                  :items="['safety', 'production']"
                   :rules="[requiredValidator]"
-                  placeholder="Pilih Role"
+                  placeholder="Pilih Scope of Work"
                 />
               </VCol>
 

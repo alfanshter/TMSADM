@@ -7,4 +7,5 @@ export const ENDPOINTS = {
   itemMachines: `${API_BASE_URL}/item-machines`,
   activityTms: `${API_BASE_URL}/activity-tms-all`,
   addactivityTms: `${API_BASE_URL}/activity-tms`,
+  fawreport: `${API_BASE_URL}/faw-reports`,
 };

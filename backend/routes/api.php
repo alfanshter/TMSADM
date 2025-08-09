@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ActivityTmsController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\FawReportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ItemMachineController;
@@ -33,10 +34,17 @@ Route::middleware(['auth:sanctum', 'role:team_leader,admin'])->group(function ()
 });
 
 // Maintenance API Routes
-Route::middleware(['auth:sanctum', 'role:team_leader'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:team_leader,admin'])->group(function () {
     Route::get('/activity-tms-all', [ActivityTmsController::class, 'getAllActivityTms']);
-    Route::get('/activity-tms', [ActivityTmsController::class, 'getActivityTms']);
+    Route::get('/activity-tms/{id}', [ActivityTmsController::class, 'getActivityTmsById']);
     Route::post('/activity-tms', [ActivityTmsController::class, 'storeActivityTms']);
+    Route::delete('/activity-tms/{id}', [ActivityTmsController::class, 'destroyActivityTms']);
     Route::get('/maintenance-types', [ActivityTmsController::class, 'getMaintenanceTypes']);
     Route::post('/maintenance', [ActivityTmsController::class, 'storeMaintenance']);
+    Route::post('/activity-tms-update/{id}', [ActivityTmsController::class, 'updateActivityTms']);
+});
+
+//FAW REPORT
+Route::middleware(['auth:sanctum', 'role:team_leader,admin'])->group(function () {
+    Route::apiResource('faw-reports', FawReportController::class);
 });

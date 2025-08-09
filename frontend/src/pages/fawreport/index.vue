@@ -1,46 +1,15 @@
 <script setup>
-import mesin1 from "@/assets/images/mesin/mesin1.jpg";
-import mesin2 from "@/assets/images/mesin/mesin2.jpg";
-import { computed, ref } from "vue";
+import { ENDPOINTS } from "@/config/api";
+import axios from "axios";
+import { computed, onMounted, ref } from "vue";
 
 // Snackbar
 const isSnackbarTopEndVisible = ref(false);
-const snackbarMessage = ref("Add New FAW Report Success!");
+const snackbarMessage = ref("");
 
 // State
-const fawReports = ref([
-  {
-    id: 1,
-    description: "Maintenance check completed successfully",
-    result: "Done",
-    date: "2025-08-01",
-    image: mesin1,
-  },
-  {
-    id: 2,
-    description: "Machine inspection revealed minor issues",
-    result: "Pending",
-    date: "2025-08-05",
-    image: mesin2,
-  },
-
-  {
-    id: 3,
-    description: "Machine inspection revealed leakage issues",
-    result: "Pending",
-    date: "2025-08-05",
-    image: "",
-  },
-
-  {
-    id: 4,
-    description: "Machine replacement part revealed leakage issues",
-    result: "Pending",
-    date: "2025-08-05",
-    image: "",
-  },
-]);
-const totalFawReports = ref(fawReports.value.length);
+const fawReports = ref([]);
+const totalFawReports = ref(0);
 const searchQuery = ref("");
 const page = ref(1);
 const itemsPerPage = ref(10);
@@ -59,13 +28,60 @@ const headers = [
   { title: "Actions", key: "actions", sortable: false },
 ];
 
-// Add report
-const addNewFawReport = (newReport) => {
-  newReport.id = Date.now();
-  fawReports.value.unshift(newReport);
-  totalFawReports.value++;
-  snackbarMessage.value = "Add New FAW Report Success!";
-  isSnackbarTopEndVisible.value = true;
+// Fungsi untuk hilangkan tag HTML
+const stripHtml = (html) => {
+  if (!html) return "";
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = html;
+  return tempDiv.textContent || tempDiv.innerText || "";
+};
+
+// Ambil data dari backend
+const fetchFawReports = async () => {
+  isLoading.value = true;
+  try {
+    const res = await axios.get(ENDPOINTS.fawreport);
+    console.log("Data dari backend:", res.data);
+    fawReports.value = res.data.data.map((r) => ({
+      id: r.id,
+      description: stripHtml(r.description),
+      result: stripHtml(r.result),
+      date: r.date,
+      image: r.photos?.[0] ? `/storage/${r.photos[0].photo_path}` : "",
+    }));
+    totalFawReports.value = fawReports.value.length;
+  } catch (err) {
+    console.error("Gagal fetch FAW reports:", err);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Add report ke backend
+const addNewFawReport = async (formData) => {
+  try {
+    const res = await axios.post(ENDPOINTS.fawreport, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    console.log("FAW Report berhasil ditambahkan:", res.data);
+
+    const newReport = res.data.data;
+    fawReports.value.unshift({
+      id: newReport.id,
+      description: stripHtml(newReport.description),
+      result: stripHtml(newReport.result),
+      date: newReport.date,
+      image: newReport.photos?.[0]
+        ? `/storage/${newReport.photos[0].photo_path}`
+        : "",
+    });
+
+    totalFawReports.value++;
+    snackbarMessage.value = "FAW Report berhasil dipublish!";
+    isSnackbarTopEndVisible.value = true;
+  } catch (err) {
+    console.error("Gagal tambah FAW report:", err);
+  }
 };
 
 // Edit report
@@ -74,19 +90,17 @@ const openEditDrawer = (report) => {
   isEditFawReportDrawerVisible.value = true;
 };
 
-const updateFawReport = (updatedReport) => {
-  const index = fawReports.value.findIndex((u) => u.id === updatedReport.id);
-  if (index !== -1) fawReports.value[index] = updatedReport;
-  snackbarMessage.value = "Update FAW Report Completed!";
-  isSnackbarTopEndVisible.value = true;
-};
-
 // Delete report
-const deleteFawReport = (id) => {
-  fawReports.value = fawReports.value.filter((r) => r.id !== id);
-  totalFawReports.value = fawReports.value.length;
-  snackbarMessage.value = "Delete FAW Report Completed!";
-  isSnackbarTopEndVisible.value = true;
+const deleteFawReport = async (id) => {
+  try {
+    await axios.delete(`${ENDPOINTS.fawreport}/${id}`);
+    fawReports.value = fawReports.value.filter((r) => r.id !== id);
+    totalFawReports.value = fawReports.value.length;
+    snackbarMessage.value = "Delete FAW Report Completed!";
+    isSnackbarTopEndVisible.value = true;
+  } catch (err) {
+    console.error("Gagal hapus FAW report:", err);
+  }
 };
 
 // Filter data
@@ -101,6 +115,10 @@ const filteredFawReports = computed(() => {
       item.date?.toLowerCase().includes(searchQuery.value.toLowerCase())
     );
   });
+});
+
+onMounted(() => {
+  fetchFawReports();
 });
 </script>
 
@@ -127,7 +145,7 @@ const filteredFawReports = computed(() => {
           density="compact"
         />
         <VSpacer />
-        <VBtn @click="isAddNewFawReportDrawerVisible = true">
+        <VBtn @click="$router.push('/fawreport/form')">
           Add New FAW Report
         </VBtn>
       </VCardText>
@@ -142,7 +160,7 @@ const filteredFawReports = computed(() => {
       >
         <!-- Description -->
         <template #item.description="{ item }">
-          <span v-html="item.description"></span>
+          <span>{{ item.description }}</span>
         </template>
 
         <!-- Result -->

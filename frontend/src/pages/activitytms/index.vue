@@ -237,6 +237,12 @@ watch(selectedScopeOfWork, () => {
 
         <!-- Actions -->
         <template #item.actions="{ item }">
+          <!-- Tombol Edit -->
+          <IconBtn size="small" @click="editActivityTms(item)">
+            <VIcon icon="ri-edit-box-line" />
+          </IconBtn>
+
+          <!-- Tombol Delete -->
           <IconBtn size="small" @click="deleteActivityTms(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>

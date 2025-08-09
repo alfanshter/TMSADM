@@ -35,13 +35,19 @@ export default [
 
   {
     title: "FAW Report",
-    to: { name: "fawreport" },
+    children: [
+      { title: "List", to: "fawreport" },
+      { title: "Add", to: "fawreport-form" },
+    ],
     icon: { icon: "ri-settings-2-line" },
   },
 
   {
     title: "Leakage Report",
-    to: { name: "leakagereport" },
+    children: [
+      { title: "List", to: "leakagereport" },
+      { title: "Add", to: "leakagereport-form" },
+    ],
     icon: { icon: "ri-alarm-warning-fill" },
   },
 

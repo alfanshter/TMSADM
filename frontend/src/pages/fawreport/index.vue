@@ -1,58 +1,187 @@
 <script setup>
-const firstName = ref("");
-const email = ref("");
-const mobile = ref();
-const password = ref();
-const checkbox = ref(false);
+import mesin1 from "@/assets/images/mesin/mesin1.jpg";
+import mesin2 from "@/assets/images/mesin/mesin2.jpg";
+import { computed, ref } from "vue";
+
+// Snackbar
+const isSnackbarTopEndVisible = ref(false);
+const snackbarMessage = ref("Add New FAW Report Success!");
+
+// State
+const fawReports = ref([
+  {
+    id: 1,
+    description: "Maintenance check completed successfully",
+    result: "Done",
+    date: "2025-08-01",
+    image: mesin1,
+  },
+  {
+    id: 2,
+    description: "Machine inspection revealed minor issues",
+    result: "Pending",
+    date: "2025-08-05",
+    image: mesin2,
+  },
+
+  {
+    id: 3,
+    description: "Machine inspection revealed leakage issues",
+    result: "Pending",
+    date: "2025-08-05",
+    image: "",
+  },
+
+  {
+    id: 4,
+    description: "Machine replacement part revealed leakage issues",
+    result: "Pending",
+    date: "2025-08-05",
+    image: "",
+  },
+]);
+const totalFawReports = ref(fawReports.value.length);
+const searchQuery = ref("");
+const page = ref(1);
+const itemsPerPage = ref(10);
+const isLoading = ref(false);
+
+const isAddNewFawReportDrawerVisible = ref(false);
+const isEditFawReportDrawerVisible = ref(false);
+const editedFawReport = ref(null);
+
+// Table headers
+const headers = [
+  { title: "Description", key: "description" },
+  { title: "Result", key: "result" },
+  { title: "Date", key: "date" },
+  { title: "Report Image", key: "image" },
+  { title: "Actions", key: "actions", sortable: false },
+];
+
+// Add report
+const addNewFawReport = (newReport) => {
+  newReport.id = Date.now();
+  fawReports.value.unshift(newReport);
+  totalFawReports.value++;
+  snackbarMessage.value = "Add New FAW Report Success!";
+  isSnackbarTopEndVisible.value = true;
+};
+
+// Edit report
+const openEditDrawer = (report) => {
+  editedFawReport.value = { ...report };
+  isEditFawReportDrawerVisible.value = true;
+};
+
+const updateFawReport = (updatedReport) => {
+  const index = fawReports.value.findIndex((u) => u.id === updatedReport.id);
+  if (index !== -1) fawReports.value[index] = updatedReport;
+  snackbarMessage.value = "Update FAW Report Completed!";
+  isSnackbarTopEndVisible.value = true;
+};
+
+// Delete report
+const deleteFawReport = (id) => {
+  fawReports.value = fawReports.value.filter((r) => r.id !== id);
+  totalFawReports.value = fawReports.value.length;
+  snackbarMessage.value = "Delete FAW Report Completed!";
+  isSnackbarTopEndVisible.value = true;
+};
+
+// Filter data
+const filteredFawReports = computed(() => {
+  return fawReports.value.filter((item) => {
+    if (!searchQuery.value) return true;
+    return (
+      item.description
+        ?.toLowerCase()
+        .includes(searchQuery.value.toLowerCase()) ||
+      item.result?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      item.date?.toLowerCase().includes(searchQuery.value.toLowerCase())
+    );
+  });
+});
 </script>
 
 <template>
-  <VCol md="8" class="mx-auto">
-    <!-- 👉 FAW Report -->
-    <VCard class="mb-6" title="Faw Report">
-      <VCardText>
-        <VRow>
-          <VCol cols="12">
-            <VCol>
-              <VLabel class="mb-1"> Description (Optional) </VLabel>
-              <TiptapEditor v-model="content" class="border rounded-lg" />
-            </VCol>
-          </VCol>
-          <VCol cols="12" md="6">
-            <VTextField label="Result" placeholder="Done" />
-          </VCol>
-          <VCol cols="12" md="6">
-            <AppDateTimePicker
-              v-model="birthDate"
-              label="Date"
-              placeholder="Select Date"
-            />
-          </VCol>
-        </VRow>
-      </VCardText>
-    </VCard>
+  <section>
+    <VSnackbar
+      v-model="isSnackbarTopEndVisible"
+      location="top end"
+      :color="snackbarMessage.includes('Delete') ? 'error' : 'success'"
+      timeout="3000"
+    >
+      {{ snackbarMessage }}
+    </VSnackbar>
 
-    <!-- 👉 report Image -->
     <VCard class="mb-6">
-      <VCardItem>
-        <template #title> Report Image </template>
-        <template #append>
-          <h6 class="text-h6 text-primary cursor-pointer">
-            Add Media from Computer
-          </h6>
-        </template>
+      <VCardItem class="pb-4">
+        <VCardTitle>FAW Reports</VCardTitle>
       </VCardItem>
 
-      <VCardText>
-        <DropZone />
+      <VCardText class="d-flex flex-wrap gap-4 align-center">
+        <VTextField
+          v-model="searchQuery"
+          placeholder="Search Report"
+          density="compact"
+        />
+        <VSpacer />
+        <VBtn @click="isAddNewFawReportDrawerVisible = true">
+          Add New FAW Report
+        </VBtn>
       </VCardText>
+
+      <VDataTable
+        v-model:page="page"
+        :headers="headers"
+        :items="filteredFawReports"
+        :loading="isLoading"
+        class="text-no-wrap rounded-0"
+        :items-per-page="itemsPerPage"
+      >
+        <!-- Description -->
+        <template #item.description="{ item }">
+          <span v-html="item.description"></span>
+        </template>
+
+        <!-- Result -->
+        <template #item.result="{ item }">
+          <span>{{ item.result }}</span>
+        </template>
+
+        <!-- Date -->
+        <template #item.date="{ item }">
+          <span>{{ item.date }}</span>
+        </template>
+
+        <!-- Image -->
+        <template #item.image="{ item }">
+          <VImg
+            v-if="item.image"
+            :src="item.image"
+            max-width="80"
+            max-height="80"
+            class="rounded my-2"
+          />
+          <span v-else>No Image</span>
+        </template>
+
+        <!-- Actions -->
+        <template #item.actions="{ item }">
+          <VBtn size="small" color="primary" @click="openEditDrawer(item)">
+            Edit
+          </VBtn>
+          <VBtn
+            class="ml-2"
+            size="small"
+            color="error"
+            @click="deleteFawReport(item.id)"
+          >
+            Delete
+          </VBtn>
+        </template>
+      </VDataTable>
     </VCard>
-    <div class="d-flex flex-wrap justify-end gap-4 mb-6">
-      <div class="d-flex gap-4 align-center-end flex-wrap">
-        <VBtn variant="outlined" color="secondary"> Discard </VBtn>
-        <VBtn variant="outlined" color="primary"> Save Draft </VBtn>
-        <VBtn>Publish Report</VBtn>
-      </div>
-    </div>
-  </VCol>
+  </section>
 </template>

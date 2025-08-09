@@ -1,127 +1,216 @@
 <script setup>
-const firstName = ref("");
-const email = ref("");
-const mobile = ref();
-const password = ref();
-const checkbox = ref(false);
-const files = ref([]);
+import { computed, ref } from "vue";
 
-// Fungsi ketika user pilih file
-const handleFileChange = (event) => {
-  const selectedFiles = Array.from(event.target.files);
-  files.value.push(...selectedFiles);
+// Snackbar
+const isSnackbarTopEndVisible = ref(false);
+const snackbarMessage = ref("Add New Leakage Report Success!");
+
+// State (dummy data)
+const leakageReports = ref([
+  {
+    id: 1,
+    location: "Lantai 1",
+    date: "2025-08-01",
+    files: [
+      {
+        name: "manual-mesin-a.pdf",
+        size: 204800,
+        url: new URL("@/assets/file/manual-mesin-a.pdf", import.meta.url).href,
+      },
+    ],
+    status: "Pending",
+  },
+  {
+    id: 2,
+    location: "Lantai 3",
+    date: "2025-08-03",
+    files: [
+      {
+        name: "laporan-perawatan.xlsx",
+        size: 198400,
+        url: new URL("@/assets/file/laporan-perawatan.xlsx", import.meta.url)
+          .href,
+      },
+    ],
+    status: "Done",
+  },
+  {
+    id: 3,
+    location: "Cust.blend",
+    date: "2025-08-05",
+    files: [],
+    status: "Pending",
+  },
+]);
+
+const totalLeakageReports = ref(leakageReports.value.length);
+const searchQuery = ref("");
+const page = ref(1);
+const itemsPerPage = ref(10);
+const isLoading = ref(false);
+
+const isAddNewLeakageReportDrawerVisible = ref(false);
+const isEditLeakageReportDrawerVisible = ref(false);
+const editedLeakageReport = ref(null);
+
+// Table headers
+const headers = [
+  { title: "Location", key: "location" },
+  { title: "Date", key: "date" },
+  { title: "Files", key: "files" },
+  { title: "Status", key: "status" },
+  { title: "Actions", key: "actions", sortable: false },
+];
+
+// Add report
+const addNewLeakageReport = (newReport) => {
+  newReport.id = Date.now();
+  leakageReports.value.unshift(newReport);
+  totalLeakageReports.value++;
+  snackbarMessage.value = "Add New Leakage Report Success!";
+  isSnackbarTopEndVisible.value = true;
 };
 
-// Fungsi hapus file dari daftar
-const removeFile = (index) => {
-  files.value.splice(index, 1);
+// Edit report
+const openEditDrawer = (report) => {
+  editedLeakageReport.value = { ...report };
+  isEditLeakageReportDrawerVisible.value = true;
 };
 
-// Fungsi tambah input file baru (klik tombol)
-const addFileInput = () => {
-  document.getElementById("fileInput").click();
+const updateLeakageReport = (updatedReport) => {
+  const index = leakageReports.value.findIndex(
+    (u) => u.id === updatedReport.id
+  );
+  if (index !== -1) leakageReports.value[index] = updatedReport;
+  snackbarMessage.value = "Update Leakage Report Completed!";
+  isSnackbarTopEndVisible.value = true;
 };
 
-function handleFileUpload(e) {
-  const uploaded = Array.from(e.target.files);
-  files.value.push(...uploaded);
-  e.target.value = ""; // reset supaya bisa pilih file yang sama lagi
-}
+// Delete report
+const deleteLeakageReport = (id) => {
+  leakageReports.value = leakageReports.value.filter((r) => r.id !== id);
+  totalLeakageReports.value = leakageReports.value.length;
+  snackbarMessage.value = "Delete Leakage Report Completed!";
+  isSnackbarTopEndVisible.value = true;
+};
+
+// Filter data
+const filteredLeakageReports = computed(() => {
+  return leakageReports.value.filter((item) => {
+    if (!searchQuery.value) return true;
+    return (
+      item.location?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      item.status?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      item.date?.toLowerCase().includes(searchQuery.value.toLowerCase())
+    );
+  });
+});
+
+// Function untuk dapatkan ikon berdasarkan ekstensi
+const getFileIcon = (fileName) => {
+  const ext = fileName.split(".").pop().toLowerCase();
+  if (ext === "pdf") return { icon: "mdi-file-pdf-box", color: "red" };
+  if (["xls", "xlsx"].includes(ext))
+    return { icon: "mdi-file-excel-box", color: "green" };
+  if (["doc", "docx"].includes(ext))
+    return { icon: "mdi-file-word-box", color: "blue" };
+  return { icon: "mdi-file", color: "grey" };
+};
 </script>
 
 <template>
-  <VCol md="8" class="mx-auto">
-    <!-- 👉 Laekage Report -->
-    <VCard class="mb-6" title="Laekage Report">
-      <VCardText>
-        <VRow>
-          <VCol cols="12">
-            <!-- 👉 report Image -->
-            <VCard class="mb-6">
-              <VCardItem>
-                <template #title> Upload Files </template>
-                <template #append>
-                  <VBtn
-                    variant="outlined"
-                    color="primary"
-                    @click="$refs.fileInput.click()"
-                  >
-                    Add Files
-                  </VBtn>
-                  <input
-                    type="file"
-                    ref="fileInput"
-                    multiple
-                    hidden
-                    @change="handleFileUpload"
-                  />
-                </template>
-              </VCardItem>
+  <section>
+    <VSnackbar
+      v-model="isSnackbarTopEndVisible"
+      location="top end"
+      :color="snackbarMessage.includes('Delete') ? 'error' : 'success'"
+      timeout="3000"
+    >
+      {{ snackbarMessage }}
+    </VSnackbar>
 
-              <VCardText>
-                <div v-if="files.length" class="d-flex flex-column gap-4">
-                  <VCard
-                    v-for="(file, index) in files"
-                    :key="index"
-                    class="pa-3"
-                    outlined
-                  >
-                    <div class="d-flex justify-space-between align-center">
-                      <div>
-                        <strong>{{ file.name }}</strong>
-                        <div class="text-caption text-medium-emphasis">
-                          {{ (file.size / 1024).toFixed(2) }} KB
-                        </div>
-                      </div>
-                      <VBtn
-                        color="error"
-                        variant="text"
-                        @click="removeFile(index)"
-                      >
-                        Delate
-                      </VBtn>
-                    </div>
-                  </VCard>
-                </div>
+    <VCard class="mb-6">
+      <VCardItem class="pb-4">
+        <VCardTitle>Leakage Reports</VCardTitle>
+      </VCardItem>
 
-                <div v-else class="text-medium-emphasis">
-                  Belum ada file yang diunggah.
-                </div>
-              </VCardText>
-            </VCard>
-          </VCol>
-          <VCol cols="12" md="6">
-            <VSelect
-              placeholder="Select Location"
-              label="Location"
-              :items="[
-                'Lantai 1',
-                'Lantai 2',
-                'Lantai 3',
-                'Lantai 4',
-                'Lantai 5',
-                'Lantai 6',
-                'Cust.blend',
-              ]"
-            />
-          </VCol>
-          <VCol cols="12" md="6">
-            <AppDateTimePicker
-              v-model="birthDate"
-              label="Date"
-              placeholder="Select Date"
-            />
-          </VCol>
-        </VRow>
+      <VCardText class="d-flex flex-wrap gap-4 align-center">
+        <VTextField
+          v-model="searchQuery"
+          placeholder="Search Report"
+          density="compact"
+        />
+        <VSpacer />
+        <VBtn @click="isAddNewLeakageReportDrawerVisible = true">
+          Add New Leakage Report
+        </VBtn>
       </VCardText>
-    </VCard>
 
-    <div class="d-flex flex-wrap justify-end gap-4 mb-6">
-      <div class="d-flex gap-4 align-center-end flex-wrap">
-        <VBtn variant="outlined" color="secondary"> Discard </VBtn>
-        <VBtn variant="outlined" color="primary"> Save Draft </VBtn>
-        <VBtn>Publish Report</VBtn>
-      </div>
-    </div>
-  </VCol>
+      <VDataTable
+        v-model:page="page"
+        :headers="headers"
+        :items="filteredLeakageReports"
+        :loading="isLoading"
+        class="text-no-wrap rounded-0"
+        :items-per-page="itemsPerPage"
+      >
+        <!-- Location -->
+        <template #item.location="{ item }">
+          <span>{{ item.location }}</span>
+        </template>
+
+        <!-- Date -->
+        <template #item.date="{ item }">
+          <span>{{ item.date }}</span>
+        </template>
+
+        <!-- Files -->
+        <template #item.files="{ item }">
+          <div v-if="item.files.length">
+            <div
+              v-for="(file, idx) in item.files"
+              :key="idx"
+              class="d-flex align-center my-1"
+            >
+              <VIcon
+                :icon="getFileIcon(file.name).icon"
+                :color="getFileIcon(file.name).color"
+                start
+              />
+              <a
+                :href="file.url"
+                target="_blank"
+                class="text-primary text-decoration-none"
+              >
+                {{ file.name }}
+              </a>
+            </div>
+          </div>
+          <span v-else>No Files</span>
+        </template>
+
+        <!-- Status -->
+        <template #item.status="{ item }">
+          <VChip :color="item.status === 'Done' ? 'success' : 'warning'" small>
+            {{ item.status }}
+          </VChip>
+        </template>
+
+        <!-- Actions -->
+        <template #item.actions="{ item }">
+          <VBtn size="small" color="primary" @click="openEditDrawer(item)">
+            Edit
+          </VBtn>
+          <VBtn
+            class="ml-2"
+            size="small"
+            color="error"
+            @click="deleteLeakageReport(item.id)"
+          >
+            Delete
+          </VBtn>
+        </template>
+      </VDataTable>
+    </VCard>
+  </section>
 </template>

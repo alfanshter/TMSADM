@@ -26,6 +26,7 @@ class UserController extends Controller
             'password' => 'required|min:6',
             'role' => 'required|in:admin,supervisor,team_leader',
             'phone' => 'nullable|string',
+            'avatar' => 'nullable|url',
         ]);
 
         $user = User::create([
@@ -34,7 +35,8 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'phone' => $request->phone,
-            'status' => 1,
+            'status' => true,
+            'avatar' => $request->avatar,
             'created_by' => $request->user()->id,
         ]);
 
@@ -61,9 +63,10 @@ class UserController extends Controller
             'role' => 'sometimes|in:admin,supervisor,team_leader',
             'phone' => 'nullable|string',
             'status' => 'boolean',
+            'avatar' => 'nullable|url',
         ]);
 
-        $data = $request->only(['name', 'email', 'role', 'phone', 'status']);
+        $data = $request->only(['name', 'email', 'role', 'phone', 'status', 'avatar']);
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }

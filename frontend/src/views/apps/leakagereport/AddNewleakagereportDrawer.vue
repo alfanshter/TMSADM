@@ -1,106 +1,219 @@
 <script setup>
 import { ENDPOINTS } from "@/config/api";
 import axios from "axios";
-import { ref } from "vue";
+import { inject, nextTick, ref } from "vue";
 
-const content = ref(""); // Description
-const result = ref(""); // Result
-const birthDate = ref(null); // Date
-const images = ref([]); // Dari DropZone
+const props = defineProps({ isDrawerOpen: Boolean });
+const emit = defineEmits(["update:isDrawerOpen", "report-data"]);
 
-// Inject global loading
 const globalLoading = inject("globalLoading");
 
-const isLoading = ref(false);
-const isSnackbarTopEndVisible = ref(false);
-const snackbarMessage = ref("");
+const refForm = ref();
+const isFormValid = ref(false);
+const isSubmitting = ref(false);
 
-// Simpan FAW Report
-const submitFawReport = async () => {
-  try {
+const form = ref({
+  location: "",
+  date: null,
+  files: [],
+});
+
+// Fungsi Upload File
+const handleFileUpload = (e) => {
+  const uploaded = Array.from(e.target.files);
+  form.value.files.push(...uploaded);
+  e.target.value = "";
+};
+
+// Hapus File
+const removeFile = (index) => {
+  form.value.files.splice(index, 1);
+};
+
+// Reset Form
+const resetForm = () => {
+  nextTick(() => {
+    refForm.value?.reset();
+    refForm.value?.resetValidation();
+    form.value.files = [];
+  });
+};
+
+// Tutup Drawer
+const closeNavigationDrawer = () => {
+  emit("update:isDrawerOpen", false);
+  resetForm();
+};
+
+// Submit FAW Report
+const onSubmit = async () => {
+  refForm.value?.validate().then(async ({ valid }) => {
+    if (!valid) return;
+    isSubmitting.value = true;
     globalLoading?.show();
-    const formData = new FormData();
-    formData.append("description", content.value);
-    formData.append("result", result.value);
-    formData.append("date", birthDate.value);
 
-    // Kalau ada upload gambar
-    images.value.forEach((file, index) => {
-      formData.append("photos[]", file);
-    });
+    try {
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("location", form.value.location);
+      formData.append("date", form.value.date);
+      form.value.files.forEach((file) => {
+        formData.append("files[]", file);
+      });
 
-    await axios.post(ENDPOINTS.fawreport, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+      const res = await axios.post(ENDPOINTS.fawReport, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-    snackbarMessage.value = "FAW Report berhasil dipublish!";
-    isSnackbarTopEndVisible.value = true;
-  } catch (error) {
-    console.error("Error submit FAW Report:", error);
-    alert("Gagal mengirim FAW Report");
-  } finally {
-    globalLoading?.hide();
-  }
+      emit("report-data", res.data.data);
+      emit("update:isDrawerOpen", false);
+      resetForm();
+    } catch (err) {
+      console.error(
+        "Gagal tambah FAW Report:",
+        err.response?.data || err.message
+      );
+    } finally {
+      globalLoading?.hide();
+      isSubmitting.value = false;
+    }
+  });
 };
 </script>
 
 <template>
-  <VCol md="8" class="mx-auto">
-    <VSnackbar
-      v-model="isSnackbarTopEndVisible"
-      location="top end"
-      timeout="3000"
-      color="success"
-    >
-      {{ snackbarMessage }}
-    </VSnackbar>
-    <!-- 👉 FAW Report -->
-    <VCard class="mb-6" title="Faw Report">
-      <VCardText>
-        <VRow>
-          <VCol cols="12">
-            <VCol>
-              <VLabel class="mb-1"> Description (Optional) </VLabel>
-              <TiptapEditor v-model="content" class="border rounded-lg" />
-            </VCol>
-          </VCol>
-          <VCol cols="12" md="6">
-            <VTextField v-model="result" label="Result" placeholder="Done" />
-          </VCol>
-          <VCol cols="12" md="6">
-            <AppDateTimePicker
-              v-model="birthDate"
-              label="Date"
-              placeholder="Select Date"
-            />
-          </VCol>
-        </VRow>
-      </VCardText>
-    </VCard>
+  <VNavigationDrawer
+    temporary
+    :width="600"
+    location="end"
+    class="scrollable-content"
+    :model-value="props.isDrawerOpen"
+    @update:model-value="(val) => emit('update:isDrawerOpen', val)"
+  >
+    <AppDrawerHeaderSection
+      title="Tambah FAW Report"
+      @cancel="closeNavigationDrawer"
+    />
+    <VDivider />
 
-    <!-- 👉 report Image -->
-    <VCard class="mb-6">
-      <VCardItem>
-        <template #title> Report Image </template>
-        <template #append>
-          <h6 class="text-h6 text-primary cursor-pointer">
-            Add Media from Computer
-          </h6>
-        </template>
-      </VCardItem>
+    <PerfectScrollbar :options="{ wheelPropagation: false }">
+      <VCard flat>
+        <VCardText>
+          <VForm ref="refForm" v-model="isFormValid" @submit.prevent="onSubmit">
+            <VRow>
+              <!-- Upload Files -->
+              <VCol cols="12">
+                <VCard outlined>
+                  <VCardItem>
+                    <template #title> Upload Files </template>
+                    <template #append>
+                      <VBtn
+                        variant="outlined"
+                        color="primary"
+                        @click="$refs.fileInput.click()"
+                      >
+                        Add Files
+                      </VBtn>
+                      <input
+                        type="file"
+                        ref="fileInput"
+                        multiple
+                        hidden
+                        @change="handleFileUpload"
+                      />
+                    </template>
+                  </VCardItem>
 
-      <VCardText>
-        <DropZone v-model="images" />
-      </VCardText>
-    </VCard>
+                  <VCardText>
+                    <div
+                      v-if="form.files.length"
+                      class="d-flex flex-column gap-4"
+                    >
+                      <VCard
+                        v-for="(file, index) in form.files"
+                        :key="index"
+                        class="pa-3"
+                        outlined
+                      >
+                        <div class="d-flex justify-space-between align-center">
+                          <div>
+                            <strong>{{ file.name }}</strong>
+                            <div class="text-caption text-medium-emphasis">
+                              {{ (file.size / 1024).toFixed(2) }} KB
+                            </div>
+                          </div>
+                          <VBtn
+                            color="error"
+                            variant="text"
+                            @click="removeFile(index)"
+                          >
+                            Delete
+                          </VBtn>
+                        </div>
+                      </VCard>
+                    </div>
+                    <div v-else class="text-medium-emphasis">
+                      Belum ada file yang diunggah.
+                    </div>
+                  </VCardText>
+                </VCard>
+              </VCol>
 
-    <!-- Tombol Aksi -->
-    <div class="d-flex flex-wrap justify-end gap-4 mb-6">
-      <div class="d-flex gap-4 align-center-end flex-wrap">
-        <VBtn variant="outlined" color="secondary"> Discard </VBtn>
-        <VBtn variant="outlined" color="primary"> Save Draft </VBtn>
-        <VBtn color="primary" @click="submitFawReport">Publish Report</VBtn>
-      </div>
-    </div>
-  </VCol>
+              <!-- Location -->
+              <VCol cols="12">
+                <VSelect
+                  v-model="form.location"
+                  label="Location"
+                  placeholder="Select Location"
+                  :items="[
+                    'Lantai 1',
+                    'Lantai 2',
+                    'Lantai 3',
+                    'Lantai 4',
+                    'Lantai 5',
+                    'Lantai 6',
+                    'Cust.blend',
+                  ]"
+                  :rules="[(v) => !!v || 'Location is required']"
+                />
+              </VCol>
+
+              <!-- Date -->
+              <VCol cols="12">
+                <AppDateTimePicker
+                  v-model="form.date"
+                  label="Date"
+                  placeholder="Select Date"
+                  :rules="[(v) => !!v || 'Date is required']"
+                />
+              </VCol>
+
+              <!-- Buttons -->
+              <VCol cols="12" class="d-flex gap-2">
+                <VBtn
+                  type="submit"
+                  :loading="isSubmitting"
+                  :disabled="isSubmitting"
+                >
+                  Submit
+                </VBtn>
+                <VBtn
+                  variant="outlined"
+                  color="error"
+                  @click="closeNavigationDrawer"
+                  :disabled="isSubmitting"
+                >
+                  Cancel
+                </VBtn>
+              </VCol>
+            </VRow>
+          </VForm>
+        </VCardText>
+      </VCard>
+    </PerfectScrollbar>
+  </VNavigationDrawer>
 </template>

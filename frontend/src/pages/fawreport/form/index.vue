@@ -15,6 +15,13 @@ const isLoading = ref(false);
 const isSnackbarTopEndVisible = ref(false);
 const snackbarMessage = ref("");
 
+const resetForm = () => {
+  content.value = "";
+  result.value = "";
+  birthDate.value = "";
+  images.value = [];
+};
+
 // Simpan FAW Report
 const submitFawReport = async () => {
   try {
@@ -32,6 +39,8 @@ const submitFawReport = async () => {
     await axios.post(ENDPOINTS.fawreport, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
+
+    resetForm();
 
     snackbarMessage.value = "FAW Report berhasil dipublish!";
     isSnackbarTopEndVisible.value = true;

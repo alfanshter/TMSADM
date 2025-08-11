@@ -1,9 +1,12 @@
 <script setup>
+import AddNewleakagereportDrawer from "@/views/apps/leakagereport/AddNewleakagereportDrawer.vue";
 import { computed, ref } from "vue";
 
 // Snackbar
 const isSnackbarTopEndVisible = ref(false);
 const snackbarMessage = ref("Add New Leakage Report Success!");
+
+const isAddNewleakagereportDrawerVisible = ref(false);
 
 // State (dummy data)
 const leakageReports = ref([
@@ -49,9 +52,17 @@ const page = ref(1);
 const itemsPerPage = ref(10);
 const isLoading = ref(false);
 
-const isAddNewLeakageReportDrawerVisible = ref(false);
 const isEditLeakageReportDrawerVisible = ref(false);
 const editedLeakageReport = ref(null);
+
+const addNewleakagereport = (itemleakagereport) => {
+  leakageReports.value.unshift(itemleakagereport);
+  totalLeakageReports.value++;
+
+  // Tampilkan snackbar
+  snackbarMessage.value = "Add New Leakage Report Success!";
+  isSnackbarTopEndVisible.value = true;
+};
 
 // Table headers
 const headers = [
@@ -141,7 +152,7 @@ const getFileIcon = (fileName) => {
           density="compact"
         />
         <VSpacer />
-        <VBtn @click="isAddNewLeakageReportDrawerVisible = true">
+        <VBtn @click="isAddNewleakagereportDrawerVisible = true">
           Add New Leakage Report
         </VBtn>
       </VCardText>
@@ -212,5 +223,10 @@ const getFileIcon = (fileName) => {
         </template>
       </VDataTable>
     </VCard>
+    <AddNewleakagereportDrawer
+      v-if="isAddNewleakagereportDrawerVisible"
+      v-model:isDrawerOpen="isAddNewleakagereportDrawerVisible"
+      @item-data="addNewleakagereport"
+    />
   </section>
 </template>

@@ -6,6 +6,7 @@ const password = ref();
 const checkbox = ref(false);
 const files = ref([]);
 
+const emit = defineEmits(["submit"]);
 // Fungsi ketika user pilih file
 const handleFileChange = (event) => {
   const selectedFiles = Array.from(event.target.files);

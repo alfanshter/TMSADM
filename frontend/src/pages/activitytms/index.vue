@@ -17,6 +17,9 @@ const isDialogVisible = ref(false);
 const selectedType = ref("");
 const selectedData = ref([]);
 
+//message snackbar
+const snackbarMessage = ref("Add New Item Machine Success!");
+
 const typeLabels = {
   cleaning_criticals: "Cleaning Critical",
   just_cleaning: "Just Cleaning",
@@ -42,6 +45,7 @@ const jsaFile = computed(() => {
 
 // Fungsi buka dialog
 function openDialog(type, data) {
+  console.log("DATA DARI BACKEND:", data);
   selectedType.value = type;
   selectedData.value = data;
   isDialogVisible.value = true;
@@ -95,6 +99,10 @@ const deleteActivityTms = async (id) => {
     globalLoading?.show();
     await axios.delete(`${ENDPOINTS.addactivityTms}/${id}`);
     await fetchActivityTms();
+
+    // Tampilkan snackbar
+    snackbarMessage.value = "Delete Activity TMS Completed!";
+    isSnackbarTopEndVisible.value = true;
   } catch (error) {
     console.error("Error deleting activity TMS:", error);
   } finally {
@@ -132,6 +140,14 @@ watch(selectedScopeOfWork, () => {
 
 <template>
   <section>
+    <VSnackbar
+      v-model="isSnackbarTopEndVisible"
+      location="top end"
+      :color="snackbarMessage.includes('Delete') ? 'error' : 'success'"
+      timeout="3000"
+    >
+      {{ snackbarMessage }}
+    </VSnackbar>
     <VCard>
       <VCardTitle>Filters</VCardTitle>
       <VCardText>

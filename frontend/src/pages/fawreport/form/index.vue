@@ -1,8 +1,17 @@
 <script setup>
 import { ENDPOINTS } from "@/config/api";
 import axios from "axios";
-import { ref } from "vue";
+import { inject, onMounted, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
+const route = useRoute();
+const router = useRouter();
+
+// Ambil id dari query ?id=... atau dari route param /:id
+const id = route.query.id || route.params.id;
+const isEditMode = ref(false);
+
+// Field form
 const content = ref(""); // Description
 const result = ref(""); // Result
 const birthDate = ref(null); // Date
@@ -11,10 +20,10 @@ const images = ref([]); // Dari DropZone
 // Inject global loading
 const globalLoading = inject("globalLoading");
 
-const isLoading = ref(false);
 const isSnackbarTopEndVisible = ref(false);
 const snackbarMessage = ref("");
 
+// Reset form
 const resetForm = () => {
   content.value = "";
   result.value = "";
@@ -22,7 +31,30 @@ const resetForm = () => {
   images.value = [];
 };
 
-// Simpan FAW Report
+// Fetch data kalau edit
+const fetchFawReportDetail = async () => {
+  try {
+    globalLoading?.show();
+    const res = await axios.get(`${ENDPOINTS.fawreport}/${id}`);
+    const data = res.data.data;
+
+    // Tetap ambil dari API, tidak fallback
+    content.value = data.description || "";
+    result.value = data.result ? stripHtml(data.result) : "";
+    birthDate.value = data.date || null;
+
+    // Preview foto lama
+    if (data.photos && data.photos.length > 0) {
+      images.value = data.photos.map((photo) => `/storage/${photo.photo_path}`);
+    }
+  } catch (error) {
+    console.error("Gagal ambil detail FAW Report:", error);
+  } finally {
+    globalLoading?.hide();
+  }
+};
+
+// Submit
 const submitFawReport = async () => {
   try {
     globalLoading?.show();
@@ -31,19 +63,28 @@ const submitFawReport = async () => {
     formData.append("result", result.value);
     formData.append("date", birthDate.value);
 
-    // Kalau ada upload gambar
-    images.value.forEach((file, index) => {
-      formData.append("photos[]", file);
+    // Append image baru kalau ada
+    images.value.forEach((file) => {
+      if (file instanceof File) {
+        formData.append("photos[]", file);
+      }
     });
 
-    await axios.post(ENDPOINTS.fawreport, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    if (isEditMode.value) {
+      formData.append("_method", "PUT");
+      await axios.post(`${ENDPOINTS.fawreport}/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      snackbarMessage.value = "FAW Report berhasil diupdate!";
+    } else {
+      await axios.post(ENDPOINTS.fawreport, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      snackbarMessage.value = "FAW Report berhasil dipublish!";
+    }
 
-    resetForm();
-
-    snackbarMessage.value = "FAW Report berhasil dipublish!";
     isSnackbarTopEndVisible.value = true;
+    router.push("/fawreport");
   } catch (error) {
     console.error("Error submit FAW Report:", error);
     alert("Gagal mengirim FAW Report");
@@ -51,6 +92,21 @@ const submitFawReport = async () => {
     globalLoading?.hide();
   }
 };
+
+// Fungsi untuk hilangkan tag HTML
+const stripHtml = (html) => {
+  if (!html) return "";
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = html;
+  return tempDiv.textContent || tempDiv.innerText || "";
+};
+
+onMounted(() => {
+  if (id) {
+    isEditMode.value = true;
+    fetchFawReportDetail();
+  }
+});
 </script>
 
 <template>

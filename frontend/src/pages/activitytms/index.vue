@@ -1,7 +1,12 @@
 <script setup>
 import { ENDPOINTS } from "@/config/api";
+import { useActivityStore } from "@/stores/useActivityStore";
 import axios from "axios";
 import { computed, inject, onMounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
+
+//Pinia send another activity
+const activityStore = useActivityStore();
 
 // Inject global loading
 const globalLoading = inject("globalLoading");
@@ -88,6 +93,15 @@ const fetchActivityTms = async () => {
     isLoading.value = false;
   }
 };
+
+const router = useRouter();
+
+function handleEdit(item) {
+  activityStore.setCurrentItem(item); // simpan data di store
+  console.log("Item yang dipilih:", item);
+  console.log("ID yang dipilih:", item.id);
+  router.push(`/activitytms/form?id=${item.id}`);
+}
 
 onMounted(() => {
   fetchActivityTms();
@@ -254,7 +268,7 @@ watch(selectedScopeOfWork, () => {
         <!-- Actions -->
         <template #item.actions="{ item }">
           <!-- Tombol Edit -->
-          <IconBtn size="small" @click="editActivityTms(item)">
+          <IconBtn size="small" @click="handleEdit(item)">
             <VIcon icon="ri-edit-box-line" />
           </IconBtn>
 

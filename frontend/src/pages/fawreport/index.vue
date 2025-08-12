@@ -1,11 +1,16 @@
 <script setup>
 import { ENDPOINTS } from "@/config/api";
+import { useFawReportStore } from "@/stores/useFawReportStore";
 import axios from "axios";
 import { computed, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 
 // Snackbar
 const isSnackbarTopEndVisible = ref(false);
 const snackbarMessage = ref("");
+
+//Pinia send another activity
+const FawReportStore = useFawReportStore();
 
 // State
 const fawReports = ref([]);
@@ -15,7 +20,6 @@ const page = ref(1);
 const itemsPerPage = ref(10);
 const isLoading = ref(false);
 
-const isAddNewFawReportDrawerVisible = ref(false);
 const isEditFawReportDrawerVisible = ref(false);
 const editedFawReport = ref(null);
 
@@ -54,6 +58,22 @@ const fetchFawReports = async () => {
     console.error("Gagal fetch FAW reports:", err);
   } finally {
     isLoading.value = false;
+  }
+};
+
+// Tambahan: fungsi untuk update data di tabel setelah edit
+const updateFawReportInList = (updatedReport) => {
+  const index = fawReports.value.findIndex((r) => r.id === updatedReport.id);
+  if (index !== -1) {
+    fawReports.value[index] = {
+      id: updatedReport.id,
+      description: stripHtml(updatedReport.description),
+      result: stripHtml(updatedReport.result),
+      date: updatedReport.date,
+      image: updatedReport.photos?.[0]
+        ? `/storage/${updatedReport.photos[0].photo_path}`
+        : "",
+    };
   }
 };
 
@@ -115,6 +135,22 @@ const filteredFawReports = computed(() => {
       item.date?.toLowerCase().includes(searchQuery.value.toLowerCase())
     );
   });
+});
+
+const router = useRouter();
+
+function handleEdit(item) {
+  FawReportStore.setCurrentItem(item); // simpan data di store
+  console.log("Item yang dipilih:", item);
+  console.log("ID yang dipilih:", item.id);
+  router.push(`/fawreport/form?id=${item.id}`);
+}
+
+// Tambahan: dengarkan event dari store setelah update
+FawReportStore.$subscribe((mutation, state) => {
+  if (state.updatedItem) {
+    updateFawReportInList(state.updatedItem);
+  }
 });
 
 onMounted(() => {
@@ -187,7 +223,7 @@ onMounted(() => {
 
         <!-- Actions -->
         <template #item.actions="{ item }">
-          <VBtn size="small" color="primary" @click="openEditDrawer(item)">
+          <VBtn size="small" color="primary" @click="handleEdit(item)">
             Edit
           </VBtn>
           <VBtn

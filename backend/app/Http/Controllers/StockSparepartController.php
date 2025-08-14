@@ -8,10 +8,27 @@ use Illuminate\Support\Facades\Validator;
 
 class StockSparepartController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $data = StockSparepart::latest()->get();
-
+        $query = StockSparepart::query();
+    
+        // Filter kategori
+        if ($request->has('category') && !empty($request->category)) {
+            $query->where('category', $request->category);
+        }
+    
+        // Filter lokasi
+        if ($request->has('loc') && !empty($request->loc)) {
+            $query->where('loc', 'LIKE', "%{$request->loc}%");
+        }
+    
+        // Filter stok rendah (<= 5)
+        if ($request->has('low_stock') && $request->low_stock == 1) {
+            $query->where('stok', '<=', 5);
+        }
+    
+        $data = $query->orderBy('nama_sparepart', 'ASC')->get();
+    
         return response()->json([
             'status' => true,
             'data' => $data,

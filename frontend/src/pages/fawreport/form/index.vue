@@ -15,7 +15,9 @@ const isEditMode = ref(false);
 const content = ref(""); // Description
 const result = ref(""); // Result
 const birthDate = ref(null); // Date
-const images = ref([]); // Dari DropZone
+const image = ref([]); // Dari DropZone
+
+const baseUrl = import.meta.env.VITE_API_URL;
 
 // Inject global loading
 const globalLoading = inject("globalLoading");
@@ -45,7 +47,9 @@ const fetchFawReportDetail = async () => {
 
     // Preview foto lama
     if (data.photos && data.photos.length > 0) {
-      images.value = data.photos.map((photo) => `/storage/${photo.photo_path}`);
+      image.value = data.photos.map(
+        (photo) => `${baseUrl}/storage/${photo.photo_path}`
+      );
     }
   } catch (error) {
     console.error("Gagal ambil detail FAW Report:", error);
@@ -64,7 +68,7 @@ const submitFawReport = async () => {
     formData.append("date", birthDate.value);
 
     // Append image baru kalau ada
-    images.value.forEach((file) => {
+    image.value.forEach((file) => {
       if (file instanceof File) {
         formData.append("photos[]", file);
       }
@@ -155,7 +159,7 @@ onMounted(() => {
       </VCardItem>
 
       <VCardText>
-        <DropZone v-model="images" />
+        <DropZone v-model="image" />
       </VCardText>
     </VCard>
 

@@ -12,6 +12,9 @@ const snackbarMessage = ref("");
 //Pinia send another activity
 const FawReportStore = useFawReportStore();
 
+// Inject global loading
+const globalLoading = inject("globalLoading");
+
 // State
 const fawReports = ref([]);
 const totalFawReports = ref(0);
@@ -22,6 +25,8 @@ const isLoading = ref(false);
 
 const isEditFawReportDrawerVisible = ref(false);
 const editedFawReport = ref(null);
+
+const baseUrl = import.meta.env.VITE_API_URL;
 
 // Table headers
 const headers = [
@@ -46,13 +51,17 @@ const fetchFawReports = async () => {
   try {
     const res = await axios.get(ENDPOINTS.fawreport);
     console.log("Data dari backend:", res.data);
-    fawReports.value = res.data.data.map((r) => ({
-      id: r.id,
-      description: stripHtml(r.description),
-      result: stripHtml(r.result),
-      date: r.date,
-      image: r.photos?.[0] ? `/storage/${r.photos[0].photo_path}` : "",
-    }));
+    fawReports.value = res.data.data.map((r) => {
+      return {
+        id: r.id,
+        description: stripHtml(r.description),
+        result: stripHtml(r.result),
+        date: r.date,
+        image: r.photos?.length
+          ? r.photos.map((p) => `${baseUrl}/storage/${p.photo_path}`)
+          : [],
+      };
+    });
     totalFawReports.value = fawReports.value.length;
   } catch (err) {
     console.error("Gagal fetch FAW reports:", err);
@@ -62,6 +71,7 @@ const fetchFawReports = async () => {
 };
 
 // Tambahan: fungsi untuk update data di tabel setelah edit
+// Update report
 const updateFawReportInList = (updatedReport) => {
   const index = fawReports.value.findIndex((r) => r.id === updatedReport.id);
   if (index !== -1) {
@@ -71,28 +81,27 @@ const updateFawReportInList = (updatedReport) => {
       result: stripHtml(updatedReport.result),
       date: updatedReport.date,
       image: updatedReport.photos?.[0]
-        ? `/storage/${updatedReport.photos[0].photo_path}`
+        ? `${baseUrl}/storage/${updatedReport.photos[0].photo_path}`
         : "",
     };
   }
 };
 
-// Add report ke backend
+// Tambah report baru
 const addNewFawReport = async (formData) => {
   try {
     const res = await axios.post(ENDPOINTS.fawreport, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    console.log("FAW Report berhasil ditambahkan:", res.data);
-
     const newReport = res.data.data;
+
     fawReports.value.unshift({
       id: newReport.id,
       description: stripHtml(newReport.description),
       result: stripHtml(newReport.result),
       date: newReport.date,
       image: newReport.photos?.[0]
-        ? `/storage/${newReport.photos[0].photo_path}`
+        ? `${baseUrl}/storage/${newReport.photos[0].photo_path}`
         : "",
     });
 
@@ -100,7 +109,7 @@ const addNewFawReport = async (formData) => {
     snackbarMessage.value = "FAW Report berhasil dipublish!";
     isSnackbarTopEndVisible.value = true;
   } catch (err) {
-    console.error("Gagal tambah FAW report:", err);
+    console.error("Error submit FAW Report:", err.response?.data || err);
   }
 };
 
@@ -113,6 +122,7 @@ const openEditDrawer = (report) => {
 // Delete report
 const deleteFawReport = async (id) => {
   try {
+    globalLoading?.show();
     await axios.delete(`${ENDPOINTS.fawreport}/${id}`);
     fawReports.value = fawReports.value.filter((r) => r.id !== id);
     totalFawReports.value = fawReports.value.length;
@@ -120,6 +130,8 @@ const deleteFawReport = async (id) => {
     isSnackbarTopEndVisible.value = true;
   } catch (err) {
     console.error("Gagal hapus FAW report:", err);
+  } finally {
+    globalLoading?.hide();
   }
 };
 
@@ -213,13 +225,36 @@ onMounted(() => {
 
         <!-- Image -->
         <template #item.image="{ item }">
-          <VImg
-            v-if="item.image"
-            :src="item.image"
-            max-width="80"
-            max-height="80"
-            class="rounded my-2"
-          />
+          <div v-if="item.image && item.image.length">
+            <VDialog max-width="500">
+              <template #activator="{ props }">
+                <VBtn v-bind="props" variant="text" size="small">
+                  Lihat Gambar ({{ item.image.length }})
+                </VBtn>
+              </template>
+
+              <template #default="{ isActive }">
+                <VCard>
+                  <VCardTitle>Gambar Laporan</VCardTitle>
+                  <VCardText>
+                    <div class="d-flex flex-wrap gap-2">
+                      <VImg
+                        v-for="(img, idx) in item.image"
+                        :key="idx"
+                        :src="img"
+                        max-width="200"
+                        class="rounded"
+                      />
+                    </div>
+                  </VCardText>
+                  <VCardActions>
+                    <VSpacer />
+                    <VBtn text="Tutup" @click="isActive.value = false" />
+                  </VCardActions>
+                </VCard>
+              </template>
+            </VDialog>
+          </div>
           <span v-else>No Image</span>
         </template>
 

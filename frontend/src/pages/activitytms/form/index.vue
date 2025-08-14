@@ -198,11 +198,10 @@ const submitForm = async () => {
       snackbarMessage.value = "Add New Activity TMS Success!";
     }
 
-    isSnackbarTopEndVisible.value = true;
-    console.log("Sukses:", res.data);
-
     // Redirect setelah sukses (opsional)
-    // router.push("/activity-tms");
+
+    isSnackbarTopEndVisible.value = true;
+    router.push("/activitytms");
   } catch (error) {
     console.error("Gagal kirim data:", error);
   } finally {

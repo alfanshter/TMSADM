@@ -8,6 +8,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ItemMachineController;
 use App\Http\Controllers\LeakageReportController;
 use App\Http\Controllers\MaintenanceController;
+use App\Http\Controllers\ScheduleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -57,3 +58,6 @@ Route::prefix('leakage-reports')->group(function () {
     Route::post('/{id}', [LeakageReportController::class, 'update']); // Bisa juga pakai PUT
     Route::delete('/{id}', [LeakageReportController::class, 'destroy']);
 });
+
+//Schedule
+Route::get('/activity-summary', [ScheduleController::class, 'index']);

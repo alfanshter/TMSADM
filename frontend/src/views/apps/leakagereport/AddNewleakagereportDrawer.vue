@@ -1,9 +1,12 @@
 <script setup>
 import { ENDPOINTS } from "@/config/api";
 import axios from "axios";
-import { inject, nextTick, ref } from "vue";
+import { inject, nextTick, ref, watch } from "vue";
 
-const props = defineProps({ isDrawerOpen: Boolean });
+const props = defineProps({
+  isDrawerOpen: Boolean,
+  editedReport: Object, // null kalau add baru
+});
 const emit = defineEmits(["update:isDrawerOpen", "report-data"]);
 
 const globalLoading = inject("globalLoading");
@@ -13,10 +16,40 @@ const isFormValid = ref(false);
 const isSubmitting = ref(false);
 
 const form = ref({
-  location: "",
+  lokasi: "",
   date: null,
   files: [],
 });
+
+// Reset Form
+const resetForm = () => {
+  nextTick(() => {
+    refForm.value?.reset();
+    refForm.value?.resetValidation();
+    form.value.files = [];
+  });
+};
+
+// Watch editedReport, isi form jika ada data
+watch(
+  () => props.editedReport,
+  (val) => {
+    if (val) {
+      form.value.lokasi = val.location || val.lokasi;
+      form.value.date = val.date || null;
+      form.value.files =
+        val.files?.map((f) => ({
+          name: f.name,
+          url: f.url,
+          size: f.size,
+          isOld: true,
+        })) || [];
+    } else {
+      resetForm();
+    }
+  },
+  { immediate: true }
+);
 
 // Fungsi Upload File
 const handleFileUpload = (e) => {
@@ -30,22 +63,13 @@ const removeFile = (index) => {
   form.value.files.splice(index, 1);
 };
 
-// Reset Form
-const resetForm = () => {
-  nextTick(() => {
-    refForm.value?.reset();
-    refForm.value?.resetValidation();
-    form.value.files = [];
-  });
-};
-
 // Tutup Drawer
 const closeNavigationDrawer = () => {
   emit("update:isDrawerOpen", false);
   resetForm();
 };
 
-// Submit FAW Report
+// Submit Leakage Report
 const onSubmit = async () => {
   refForm.value?.validate().then(async ({ valid }) => {
     if (!valid) return;
@@ -53,28 +77,37 @@ const onSubmit = async () => {
     globalLoading?.show();
 
     try {
-      const token = localStorage.getItem("token");
       const formData = new FormData();
-      formData.append("location", form.value.location);
+      formData.append("lokasi", form.value.lokasi);
       formData.append("date", form.value.date);
+
+      // file baru
       form.value.files.forEach((file) => {
-        formData.append("files[]", file);
+        if (!file.isOld)
+          // formData.append("file_scan", file);
+          formData.append("file_scan", file, file.name); // pakai nama asli file
       });
 
-      const res = await axios.post(ENDPOINTS.fawReport, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      let res;
+      if (props.editedReport) {
+        // Update
+        const id = props.editedReport.id;
+        res = await axios.post(`${ENDPOINTS.leakageReports}/${id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        // Add new
+        res = await axios.post(ENDPOINTS.leakageReports, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
 
-      emit("report-data", res.data.data);
+      emit("report-data"); // parent akan fetch ulang data
       emit("update:isDrawerOpen", false);
       resetForm();
     } catch (err) {
       console.error(
-        "Gagal tambah FAW Report:",
+        "Gagal tambah/update Leakage Report:",
         err.response?.data || err.message
       );
     } finally {
@@ -95,7 +128,9 @@ const onSubmit = async () => {
     @update:model-value="(val) => emit('update:isDrawerOpen', val)"
   >
     <AppDrawerHeaderSection
-      title="Tambah FAW Report"
+      :title="
+        props.editedReport ? 'Edit Leakage Report' : 'Tambah Leakage Report'
+      "
       @cancel="closeNavigationDrawer"
     />
     <VDivider />
@@ -143,7 +178,10 @@ const onSubmit = async () => {
                           <div>
                             <strong>{{ file.name }}</strong>
                             <div class="text-caption text-medium-emphasis">
-                              {{ (file.size / 1024).toFixed(2) }} KB
+                              {{
+                                file.size ? (file.size / 1024).toFixed(2) : "-"
+                              }}
+                              KB
                             </div>
                           </div>
                           <VBtn
@@ -165,19 +203,10 @@ const onSubmit = async () => {
 
               <!-- Location -->
               <VCol cols="12">
-                <VSelect
-                  v-model="form.location"
+                <VTextField
+                  v-model="form.lokasi"
                   label="Location"
-                  placeholder="Select Location"
-                  :items="[
-                    'Lantai 1',
-                    'Lantai 2',
-                    'Lantai 3',
-                    'Lantai 4',
-                    'Lantai 5',
-                    'Lantai 6',
-                    'Cust.blend',
-                  ]"
+                  placeholder="Enter location"
                   :rules="[(v) => !!v || 'Location is required']"
                 />
               </VCol>
@@ -199,7 +228,7 @@ const onSubmit = async () => {
                   :loading="isSubmitting"
                   :disabled="isSubmitting"
                 >
-                  Submit
+                  {{ props.editedReport ? "Update" : "Submit" }}
                 </VBtn>
                 <VBtn
                   variant="outlined"

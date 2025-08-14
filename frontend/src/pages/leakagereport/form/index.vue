@@ -1,43 +1,89 @@
 <script setup>
-const firstName = ref("");
-const email = ref("");
-const mobile = ref();
-const password = ref();
-const checkbox = ref(false);
-const files = ref([]);
+import { ENDPOINTS } from "@/config/api";
+import axios from "axios";
+import { onMounted, ref } from "vue";
 
-const emit = defineEmits(["submit"]);
-// Fungsi ketika user pilih file
-const handleFileChange = (event) => {
-  const selectedFiles = Array.from(event.target.files);
-  files.value.push(...selectedFiles);
+const props = defineProps({
+  report: { type: Object, default: null }, // Kalau edit, pass report
+});
+const emit = defineEmits(["saved", "close"]);
+
+const lokasi = ref("");
+const date = ref("");
+const files = ref([]);
+const isEditMode = ref(false);
+const reportId = ref(null);
+
+onMounted(() => {
+  if (props.report) {
+    isEditMode.value = true;
+    reportId.value = props.report.id;
+    lokasi.value = props.report.lokasi;
+    date.value = props.report.date;
+    // Kalau mau tampilkan file lama, bisa tambahkan di files
+  }
+});
+
+const handleFileUpload = (e) => {
+  const uploaded = Array.from(e.target.files);
+  files.value.push(...uploaded);
+  e.target.value = "";
 };
 
-// Fungsi hapus file dari daftar
 const removeFile = (index) => {
   files.value.splice(index, 1);
 };
 
-// Fungsi tambah input file baru (klik tombol)
-const addFileInput = () => {
-  document.getElementById("fileInput").click();
+const submitReport = async () => {
+  try {
+    const formData = new FormData();
+    formData.append("lokasi", lokasi.value);
+    formData.append("date", date.value);
+
+    // backend kamu hanya menerima satu file 'file_scan', jadi kirim satu-satu
+    files.value.forEach((file) => {
+      formData.append("file_scan", file);
+    });
+
+    console.log("Lokasi:", lokasi.value);
+    console.log("Date:", date.value);
+    console.log("Files:", files.value);
+
+    let res;
+    if (isEditMode.value && reportId.value) {
+      res = await axios.post(
+        ENDPOINTS.updateLeakageReport(reportId.value) + "?_method=PUT",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+    } else {
+      res = await axios.post(ENDPOINTS.leakageReports, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    }
+
+    emit("saved");
+
+    console.log("Response:", res.data);
+
+    // reset form
+    lokasi.value = "";
+    date.value = "";
+    files.value = [];
+    isEditMode.value = false;
+    reportId.value = null;
+  } catch (err) {
+    console.error(err.response.data);
+    alert("Terjadi kesalahan: " + JSON.stringify(err.response.data.message));
+  }
 };
-
-function handleFileUpload(e) {
-  const uploaded = Array.from(e.target.files);
-  files.value.push(...uploaded);
-  e.target.value = ""; // reset supaya bisa pilih file yang sama lagi
-}
 </script>
-
 <template>
   <VCol md="8" class="mx-auto">
-    <!-- 👉 Laekage Report -->
-    <VCard class="mb-6" title="Laekage Report">
+    <VCard class="mb-6" title="Leakage Report">
       <VCardText>
         <VRow>
           <VCol cols="12">
-            <!-- 👉 report Image -->
             <VCard class="mb-6">
               <VCardItem>
                 <template #title> Upload Files </template>
@@ -79,7 +125,7 @@ function handleFileUpload(e) {
                         variant="text"
                         @click="removeFile(index)"
                       >
-                        Delate
+                        Delete
                       </VBtn>
                     </div>
                   </VCard>
@@ -91,24 +137,18 @@ function handleFileUpload(e) {
               </VCardText>
             </VCard>
           </VCol>
+
           <VCol cols="12" md="6">
-            <VSelect
-              placeholder="Select Location"
+            <VTextField
+              v-model="lokasi"
               label="Location"
-              :items="[
-                'Lantai 1',
-                'Lantai 2',
-                'Lantai 3',
-                'Lantai 4',
-                'Lantai 5',
-                'Lantai 6',
-                'Cust.blend',
-              ]"
+              placeholder="Enter location"
             />
           </VCol>
+
           <VCol cols="12" md="6">
             <AppDateTimePicker
-              v-model="birthDate"
+              v-model="date"
               label="Date"
               placeholder="Select Date"
             />
@@ -119,9 +159,22 @@ function handleFileUpload(e) {
 
     <div class="d-flex flex-wrap justify-end gap-4 mb-6">
       <div class="d-flex gap-4 align-center-end flex-wrap">
-        <VBtn variant="outlined" color="secondary"> Discard </VBtn>
-        <VBtn variant="outlined" color="primary"> Save Draft </VBtn>
-        <VBtn>Publish Report</VBtn>
+        <VBtn
+          variant="outlined"
+          color="secondary"
+          @click="
+            () => {
+              lokasi = '';
+              date = '';
+              files = [];
+            }
+          "
+          >Discard</VBtn
+        >
+        <VBtn variant="outlined" color="primary">Save Draft</VBtn>
+        <VBtn color="primary" @click="submitReport">{{
+          isEditMode ? "Update Report" : "Publish Report"
+        }}</VBtn>
       </div>
     </div>
   </VCol>

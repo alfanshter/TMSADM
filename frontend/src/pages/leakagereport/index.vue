@@ -1,108 +1,83 @@
 <script setup>
+import { ENDPOINTS } from "@/config/api";
 import AddNewleakagereportDrawer from "@/views/apps/leakagereport/AddNewleakagereportDrawer.vue";
-import { computed, ref } from "vue";
+import axios from "axios";
+import { computed, onMounted, ref } from "vue";
 
 // Snackbar
 const isSnackbarTopEndVisible = ref(false);
-const snackbarMessage = ref("Add New Leakage Report Success!");
+const snackbarMessage = ref("");
 
-const isAddNewleakagereportDrawerVisible = ref(false);
+// Drawer
+const isDrawerVisible = ref(false);
+const editedLeakageReport = ref(null); // untuk edit
 
-// State (dummy data)
-const leakageReports = ref([
-  {
-    id: 1,
-    location: "Lantai 1",
-    date: "2025-08-01",
-    files: [
-      {
-        name: "manual-mesin-a.pdf",
-        size: 204800,
-        url: new URL("@/assets/file/manual-mesin-a.pdf", import.meta.url).href,
-      },
-    ],
-    status: "Pending",
-  },
-  {
-    id: 2,
-    location: "Lantai 3",
-    date: "2025-08-03",
-    files: [
-      {
-        name: "laporan-perawatan.xlsx",
-        size: 198400,
-        url: new URL("@/assets/file/laporan-perawatan.xlsx", import.meta.url)
-          .href,
-      },
-    ],
-    status: "Done",
-  },
-  {
-    id: 3,
-    location: "Cust.blend",
-    date: "2025-08-05",
-    files: [],
-    status: "Pending",
-  },
-]);
+const openDrawer = () => {
+  editedLeakageReport.value = null;
+  isDrawerVisible.value = true;
+};
 
-const totalLeakageReports = ref(leakageReports.value.length);
+// State
+const leakageReports = ref([]);
 const searchQuery = ref("");
 const page = ref(1);
 const itemsPerPage = ref(10);
 const isLoading = ref(false);
 
-const isEditLeakageReportDrawerVisible = ref(false);
-const editedLeakageReport = ref(null);
-
-const addNewleakagereport = (itemleakagereport) => {
-  leakageReports.value.unshift(itemleakagereport);
-  totalLeakageReports.value++;
-
-  // Tampilkan snackbar
-  snackbarMessage.value = "Add New Leakage Report Success!";
-  isSnackbarTopEndVisible.value = true;
-};
-
 // Table headers
 const headers = [
-  { title: "Location", key: "location" },
+  { title: "Location", key: "lokasi" },
   { title: "Date", key: "date" },
-  { title: "Files", key: "files" },
-  { title: "Status", key: "status" },
+  { title: "Files", key: "file_scan" },
   { title: "Actions", key: "actions", sortable: false },
 ];
 
-// Add report
-const addNewLeakageReport = (newReport) => {
-  newReport.id = Date.now();
-  leakageReports.value.unshift(newReport);
-  totalLeakageReports.value++;
-  snackbarMessage.value = "Add New Leakage Report Success!";
-  isSnackbarTopEndVisible.value = true;
+// Fetch data
+const fetchLeakageReports = async () => {
+  try {
+    isLoading.value = true;
+    const res = await axios.get(ENDPOINTS.leakageReports);
+    leakageReports.value = res.data.data.map((r) => ({
+      ...r,
+      files: r.file_scan
+        ? [
+            {
+              name: r.file_scan.split("/").pop(),
+              url: `http://127.0.0.1:8000/storage/${r.file_scan}`,
+            },
+          ]
+        : [],
+    }));
+  } catch (err) {
+    console.error(err);
+    snackbarMessage.value = "Failed to fetch data";
+    isSnackbarTopEndVisible.value = true;
+  } finally {
+    isLoading.value = false;
+  }
 };
 
-// Edit report
-const openEditDrawer = (report) => {
-  editedLeakageReport.value = { ...report };
-  isEditLeakageReportDrawerVisible.value = true;
-};
-
-const updateLeakageReport = (updatedReport) => {
-  const index = leakageReports.value.findIndex(
-    (u) => u.id === updatedReport.id
-  );
-  if (index !== -1) leakageReports.value[index] = updatedReport;
-  snackbarMessage.value = "Update Leakage Report Completed!";
-  isSnackbarTopEndVisible.value = true;
-};
+onMounted(fetchLeakageReports);
 
 // Delete report
-const deleteLeakageReport = (id) => {
-  leakageReports.value = leakageReports.value.filter((r) => r.id !== id);
-  totalLeakageReports.value = leakageReports.value.length;
-  snackbarMessage.value = "Delete Leakage Report Completed!";
-  isSnackbarTopEndVisible.value = true;
+const deleteLeakageReport = async (id) => {
+  if (!confirm("Yakin ingin menghapus report ini?")) return;
+  try {
+    await axios.delete(ENDPOINTS.deleteLeakageReport(id));
+    snackbarMessage.value = "Delete Leakage Report Completed!";
+    isSnackbarTopEndVisible.value = true;
+    fetchLeakageReports();
+  } catch (err) {
+    console.error(err);
+    snackbarMessage.value = "Failed to delete report";
+    isSnackbarTopEndVisible.value = true;
+  }
+};
+
+// Open drawer untuk edit
+const openEditDrawer = (report) => {
+  editedLeakageReport.value = { ...report };
+  isDrawerVisible.value = true;
 };
 
 // Filter data
@@ -110,14 +85,13 @@ const filteredLeakageReports = computed(() => {
   return leakageReports.value.filter((item) => {
     if (!searchQuery.value) return true;
     return (
-      item.location?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      item.status?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      item.lokasi?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       item.date?.toLowerCase().includes(searchQuery.value.toLowerCase())
     );
   });
 });
 
-// Function untuk dapatkan ikon berdasarkan ekstensi
+// Fungsi ikon file
 const getFileIcon = (fileName) => {
   const ext = fileName.split(".").pop().toLowerCase();
   if (ext === "pdf") return { icon: "mdi-file-pdf-box", color: "red" };
@@ -152,9 +126,7 @@ const getFileIcon = (fileName) => {
           density="compact"
         />
         <VSpacer />
-        <VBtn @click="isAddNewleakagereportDrawerVisible = true">
-          Add New Leakage Report
-        </VBtn>
+        <VBtn @click="openDrawer"> Add New Leakage Report </VBtn>
       </VCardText>
 
       <VDataTable
@@ -166,8 +138,8 @@ const getFileIcon = (fileName) => {
         :items-per-page="itemsPerPage"
       >
         <!-- Location -->
-        <template #item.location="{ item }">
-          <span>{{ item.location }}</span>
+        <template #item.lokasi="{ item }">
+          <span>{{ item.lokasi }}</span>
         </template>
 
         <!-- Date -->
@@ -176,11 +148,11 @@ const getFileIcon = (fileName) => {
         </template>
 
         <!-- Files -->
-        <template #item.files="{ item }">
+        <template #item.file_scan="{ item }">
           <div v-if="item.files.length">
             <div
-              v-for="(file, idx) in item.files"
-              :key="idx"
+              v-for="file in item.files"
+              :key="file.name"
               class="d-flex align-center my-1"
             >
               <VIcon
@@ -188,23 +160,10 @@ const getFileIcon = (fileName) => {
                 :color="getFileIcon(file.name).color"
                 start
               />
-              <a
-                :href="file.url"
-                target="_blank"
-                class="text-primary text-decoration-none"
-              >
-                {{ file.name }}
-              </a>
+              <a :href="file.url" target="_blank">{{ file.name }}</a>
             </div>
           </div>
           <span v-else>No Files</span>
-        </template>
-
-        <!-- Status -->
-        <template #item.status="{ item }">
-          <VChip :color="item.status === 'Done' ? 'success' : 'warning'" small>
-            {{ item.status }}
-          </VChip>
         </template>
 
         <!-- Actions -->
@@ -223,10 +182,13 @@ const getFileIcon = (fileName) => {
         </template>
       </VDataTable>
     </VCard>
+
+    <!-- Drawer -->
     <AddNewleakagereportDrawer
-      v-if="isAddNewleakagereportDrawerVisible"
-      v-model:isDrawerOpen="isAddNewleakagereportDrawerVisible"
-      @item-data="addNewleakagereport"
+      v-show="isDrawerVisible"
+      v-model:isDrawerOpen="isDrawerVisible"
+      :edited-report="editedLeakageReport"
+      @report-data="fetchLeakageReports"
     />
   </section>
 </template>

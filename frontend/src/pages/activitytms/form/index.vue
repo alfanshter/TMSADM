@@ -19,8 +19,10 @@ const scopeOfWork = ref("");
 const route = useRoute();
 const router = useRouter();
 
-const activityId = route.params.id ?? null; // kalau ada ID berarti mode edit
+const activityId = route.query.id ?? activityStore.currentItem?.id ?? null;
 const isEditMode = ref(!!activityId);
+console.log("Edit Mode:", isEditMode.value);
+console.log("Activity ID:", activityId);
 
 const selectedMaintenanceTypesCleaningCritical = ref([]);
 const selectedMaintenanceTypesJustCleaning = ref([]);
@@ -80,7 +82,7 @@ const fetchItemMachines = async () => {
 const fetchActivityDetail = async () => {
   if (!activityId) return;
   try {
-    const res = await axios.get(`${ENDPOINTS.activityTms}/${activityId}`);
+    const res = await axios.get(`${ENDPOINTS.activityTmsDetail}/${activityId}`);
     const data = res.data.data ?? res.data;
 
     // pastikan sudah ada itemMachines sebelum set value

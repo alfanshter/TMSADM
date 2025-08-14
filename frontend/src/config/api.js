@@ -7,5 +7,13 @@ export const ENDPOINTS = {
   itemMachines: `${API_BASE_URL}/item-machines`,
   activityTms: `${API_BASE_URL}/activity-tms-all`,
   addactivityTms: `${API_BASE_URL}/activity-tms`,
+  activityTmsDetail: `${API_BASE_URL}/activity-tms`,
+  updateActivityTms: `${API_BASE_URL}/activity-tms-update`,
   fawreport: `${API_BASE_URL}/faw-reports`,
+
+  // LeakageReport endpoints
+  leakageReports: `${API_BASE_URL}/leakage-reports`, // GET list & POST create
+  getLeakageReport: (id) => `${API_BASE_URL}/leakage-reports/${id}`, // GET detail
+  updateLeakageReport: (id) => `${API_BASE_URL}/leakage-reports/${id}`, // POST update
+  deleteLeakageReport: (id) => `${API_BASE_URL}/leakage-reports/${id}`, // DELETE
 };

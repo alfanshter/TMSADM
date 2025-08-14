@@ -6,6 +6,7 @@ use App\Http\Controllers\FawReportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ItemMachineController;
+use App\Http\Controllers\LeakageReportController;
 use App\Http\Controllers\MaintenanceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -47,4 +48,12 @@ Route::middleware(['auth:sanctum', 'role:team_leader,admin'])->group(function ()
 //FAW REPORT
 Route::middleware(['auth:sanctum', 'role:team_leader,admin'])->group(function () {
     Route::apiResource('faw-reports', FawReportController::class);
+});
+
+Route::prefix('leakage-reports')->group(function () {
+    Route::get('/', [LeakageReportController::class, 'index']);
+    Route::post('/', [LeakageReportController::class, 'store']);
+    Route::get('/{id}', [LeakageReportController::class, 'show']);
+    Route::post('/{id}', [LeakageReportController::class, 'update']); // Bisa juga pakai PUT
+    Route::delete('/{id}', [LeakageReportController::class, 'destroy']);
 });

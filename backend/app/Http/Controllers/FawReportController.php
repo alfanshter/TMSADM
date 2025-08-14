@@ -19,33 +19,36 @@ class FawReportController extends Controller
         ]);
     }
 
- public function store(Request $request)
-{
-    $validated = $request->validate([
-        'description' => 'required|string',
-        'result' => 'required|string', // tambahkan validasi
-        'date' => 'required|date',
-        'photos.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-    ]);
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'description' => 'required|string',
+            'date' => 'required|date',
+            'photos.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
 
-    $report = FawReport::create($validated);
+        // result sama dengan description
+        $validated['result'] = $validated['description'];
 
-    if ($request->hasFile('photos')) {
-        foreach ($request->file('photos') as $photo) {
-            $path = $photo->store('faw_reports', 'public');
-            FawReportPhoto::create([
-                'faw_report_id' => $report->id,
-                'photo_path' => $path
-            ]);
+        $report = FawReport::create($validated);
+
+        // Upload multiple photos
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photo) {
+                $path = $photo->store('faw_reports', 'public');
+                FawReportPhoto::create([
+                    'faw_report_id' => $report->id,
+                    'photo_path' => $path
+                ]);
+            }
         }
-    }
 
-    return response()->json([
-        'status' => 1,
-        'message' => 'FAW Report created successfully',
-        'data' => $report->load('photos')
-    ], 201);
-}
+        return response()->json([
+            'status' => 1,
+            'message' => 'FAW Report created successfully',
+            'data' => $report->load('photos')
+        ], 201);
+    }
 
     public function show($id)
     {
@@ -67,42 +70,45 @@ class FawReportController extends Controller
     }
 
     public function update(Request $request, $id)
-{
-    $report = FawReport::find($id);
+    {
+        $report = FawReport::find($id);
 
-    if (!$report) {
-        return response()->json([
-            'status' => 0,
-            'message' => 'Data not found',
-            'data' => null
-        ], 404);
-    }
-
-    $validated = $request->validate([
-        'description' => 'sometimes|required|string',
-        'result' => 'sometimes|required|string', // tambahkan validasi
-        'date' => 'sometimes|required|date',
-        'photos.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-    ]);
-
-    $report->update($validated);
-
-    if ($request->hasFile('photos')) {
-        foreach ($request->file('photos') as $photo) {
-            $path = $photo->store('faw_reports', 'public');
-            FawReportPhoto::create([
-                'faw_report_id' => $report->id,
-                'photo_path' => $path
-            ]);
+        if (!$report) {
+            return response()->json([
+                'status' => 0,
+                'message' => 'Data not found',
+                'data' => null
+            ], 404);
         }
-    }
 
-    return response()->json([
-        'status' => 1,
-        'message' => 'FAW Report updated successfully',
-        'data' => $report->load('photos')
-    ]);
-}
+        $validated = $request->validate([
+            'description' => 'sometimes|required|string',
+            'date' => 'sometimes|required|date',
+            'photos.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        if (isset($validated['description'])) {
+            $validated['result'] = $validated['description'];
+        }
+
+        $report->update($validated);
+
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photo) {
+                $path = $photo->store('faw_reports', 'public');
+                FawReportPhoto::create([
+                    'faw_report_id' => $report->id,
+                    'photo_path' => $path
+                ]);
+            }
+        }
+
+        return response()->json([
+            'status' => 1,
+            'message' => 'FAW Report updated successfully',
+            'data' => $report->load('photos')
+        ]);
+    }
 
     public function destroy($id)
     {

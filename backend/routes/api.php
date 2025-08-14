@@ -9,6 +9,7 @@ use App\Http\Controllers\ItemMachineController;
 use App\Http\Controllers\LeakageReportController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\StockSparepartController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -61,3 +62,12 @@ Route::prefix('leakage-reports')->group(function () {
 
 //Schedule
 Route::get('/activity-summary', [ScheduleController::class, 'index']);
+
+//sparepart
+Route::prefix('spareparts')->group(function () {
+    Route::get('/', [StockSparepartController::class, 'index']);
+    Route::post('/', [StockSparepartController::class, 'store']);
+    Route::get('/{id}', [StockSparepartController::class, 'show']);
+    Route::post('/{id}', [StockSparepartController::class, 'update']);
+    Route::delete('/{id}', [StockSparepartController::class, 'destroy']);
+});

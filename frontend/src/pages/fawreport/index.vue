@@ -196,7 +196,9 @@ onMounted(() => {
       >
         <!-- Description -->
         <template #item.description="{ item }">
-          <span>{{ item.description }}</span>
+          <span class="d-inline-block-text-truncate" style="max-width: 200px">{{
+            item.description
+          }}</span>
         </template>
 
         <!-- Result -->

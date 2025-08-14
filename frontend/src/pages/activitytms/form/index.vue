@@ -9,6 +9,9 @@ import { useRoute, useRouter } from "vue-router";
 const activityStore = useActivityStore();
 const currentItem = computed(() => activityStore.currentItem);
 
+// Inject global loading
+const globalLoading = inject("globalLoading");
+
 const code = ref("");
 const location = ref("");
 const scopeOfWork = ref("");
@@ -126,6 +129,7 @@ watch(selectedItemMachine, (newVal) => {
 
 // submit add/update
 const submitForm = async () => {
+  globalLoading?.show();
   const formData = new FormData();
 
   formData.append("item_machine_id", selectedItemMachine.value);
@@ -201,6 +205,8 @@ const submitForm = async () => {
     // router.push("/activity-tms");
   } catch (error) {
     console.error("Gagal kirim data:", error);
+  } finally {
+    globalLoading?.hide();
   }
 };
 

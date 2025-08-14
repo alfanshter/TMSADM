@@ -7,6 +7,8 @@ import { useRouter } from "vue-router";
 
 //Pinia send another activity
 const activityStore = useActivityStore();
+// message snackbar
+const isSnackbarTopEndVisible = ref(false);
 
 // Inject global loading
 const globalLoading = inject("globalLoading");
@@ -165,8 +167,8 @@ watch(selectedScopeOfWork, () => {
     <VCard>
       <VCardTitle>Filters</VCardTitle>
       <VCardText>
-        <VRow dense>
-          <VCol cols="12" sm="6">
+        <VRow dense justify="space-between" align="center">
+          <VCol cols="12" sm="4" md="3">
             <VSelect
               v-model="selectedScopeOfWork"
               label="Select Scope of Work"
@@ -175,7 +177,7 @@ watch(selectedScopeOfWork, () => {
               density="compact"
             />
           </VCol>
-          <VCol cols="12" sm="6">
+          <VCol cols="12" sm="4" md="3">
             <VTextField
               v-model="searchQuery"
               placeholder="Search Item Machine"

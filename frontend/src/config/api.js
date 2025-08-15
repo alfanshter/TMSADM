@@ -16,4 +16,7 @@ export const ENDPOINTS = {
   getLeakageReport: (id) => `${API_BASE_URL}/leakage-reports/${id}`, // GET detail
   updateLeakageReport: (id) => `${API_BASE_URL}/leakage-reports/${id}`, // POST update
   deleteLeakageReport: (id) => `${API_BASE_URL}/leakage-reports/${id}`, // DELETE
+
+  // schedule
+  ACTIVITY_SUMMARY: `${API_BASE_URL}/activity-summary`,
 };

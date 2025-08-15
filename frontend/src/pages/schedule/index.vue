@@ -1,5 +1,9 @@
 <script setup>
-import { computed, ref } from "vue";
+import { ENDPOINTS } from "@/config/api";
+import axios from "axios";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { computed, onMounted, ref } from "vue";
 
 const page = ref(1);
 const itemsPerPage = ref(10);
@@ -10,138 +14,75 @@ const isAddNewItemMachinesDrawerVisible = ref(false);
 const selectedScopeOfWork = ref(null);
 const scope_of_work = ["Mechanical", "Electrical", "HVAC"];
 
-const headers = [
+// --- Data
+const itemMachines = ref([]);
+const totalItemMachines = computed(() => itemMachines.value.length);
+const headers = ref([
   { title: "No", key: "no" },
   { title: "Nama Mesin", key: "name" },
   { title: "Nomor Mesin", key: "code" },
   { title: "Lokasi", key: "location" },
   { title: "ACT / Month", key: "act" },
-  { title: "Actions", key: "actions", sortable: false },
-];
-
-const itemMachines = ref([
-  {
-    id: 1,
-    no: 1,
-    name: "Bucket Elevator",
-    code: "BE 1107",
-    location: "Tower Lv 0 + 40m",
-    act: "2x",
-  },
-  {
-    id: 2,
-    no: 2,
-    name: "Rotary Distributor",
-    code: "RD 1110",
-    location: "Tower Lv + 33m",
-    act: "2x",
-  },
-  {
-    id: 3,
-    no: 3,
-    name: "Dust Collector",
-    code: "S01-S04",
-    location: "Tower Lv + 33m",
-    act: "4x",
-  },
-  {
-    id: 4,
-    no: 4,
-    name: "Dust Collector",
-    code: "OPRP 2-3",
-    location: "Intake Silo & Macrobin",
-    act: "4x",
-  },
-  {
-    id: 5,
-    no: 5,
-    name: "Silo 8 Ton - Ca Carbonate",
-    code: "S01-S04",
-    location: "Tower Lv + 33",
-    act: "per 6 bln",
-  },
-  {
-    id: 6,
-    no: 6,
-    name: "Silo 4 Ton",
-    code: "F01-F04",
-    location: "Tower Lv + 33",
-    act: "per 6 bln",
-  },
-  {
-    id: 7,
-    no: 7,
-    name: "Macrobin",
-    code: "K01-K14",
-    location: "Tower Lv + 33",
-    act: "per 6 bln",
-  },
-  {
-    id: 8,
-    no: 8,
-    name: "Microbin",
-    code: "M01-M22",
-    location: "Tower Lv + 33",
-    act: "per 6 bln",
-  },
-  {
-    id: 9,
-    no: 9,
-    name: "Intake Unit OPRP 4",
-    code: "SF 2014_1",
-    location: "Microbin",
-    act: "4x",
-  },
-  {
-    id: 10,
-    no: 10,
-    name: "Intake Unit OPRP 5",
-    code: "SF 2014_2",
-    location: "Microbin",
-    act: "4x",
-  },
-  {
-    id: 11,
-    no: 11,
-    name: "Intake Unit OPRP 8",
-    code: "SF 3101",
-    location: "Handtip + pipe lile to Hoper",
-    act: "4x",
-  },
-  {
-    id: 12,
-    no: 12,
-    name: "Hoist 3",
-    code: "2SH15A9053011",
-    location: "Intake",
-    act: "2x",
-  },
-  {
-    id: 13,
-    no: 13,
-    name: "Exhaust Fan Unit",
-    code: "-",
-    location: "Tower",
-    act: "1x",
-  },
-  {
-    id: 14,
-    no: 14,
-    name: "Electrical Panel Exhaust Fan",
-    code: "JB LIFT & EF",
-    location: "6th floor area",
-    act: "1x",
-  },
 ]);
 
-const totalItemMachines = computed(() => itemMachines.value.length);
-
+// --- Filter pencarian
 const filteredItemMachines = computed(() => {
   if (!searchQuery.value) return itemMachines.value;
   return itemMachines.value.filter((item) =>
     item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
+
+// --- Ambil data dari backend ---
+const fetchScheduleData = async (month) => {
+  try {
+    isLoading.value = true;
+    const res = await axios.get(`${ENDPOINTS.ACTIVITY_SUMMARY}?month=${month}`);
+
+    if (res.data.status && res.data.data.length) {
+      // Cari semua tanggal unik dari semua item
+      const allDates = new Set();
+      res.data.data.forEach((item) => {
+        (item.dates || []).forEach((d) => allDates.add(d));
+      });
+      const sortedDates = Array.from(allDates).sort();
+
+      // Update headers dynamic
+      headers.value = [
+        { title: "No", key: "no" },
+        { title: "Nama Mesin", key: "name" },
+        { title: "Nomor Mesin", key: "code" },
+        { title: "Lokasi", key: "location" },
+        { title: "ACT / Month", key: "act" },
+        ...sortedDates.map((d, i) => ({ title: d, key: `date_${i}` })),
+        { title: "Actions", key: "actions", sortable: false },
+      ];
+
+      // Data untuk tabel
+      itemMachines.value = res.data.data.map((item, index) => {
+        const row = {
+          id: index + 1,
+          no: index + 1,
+          name: item.name,
+          code: item.code,
+          location: item.location,
+          act: item.act_per_month + "x",
+        };
+        sortedDates.forEach((d, i) => {
+          row[`date_${i}`] = item.dates.includes(d) ? "✓" : "";
+        });
+        return row;
+      });
+    } else {
+      itemMachines.value = [];
+    }
+  } catch (err) {
+    console.error("Error fetching schedule:", err);
+    itemMachines.value = [];
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 const deleteItemMachine = (id) => {
   itemMachines.value = itemMachines.value.filter((item) => item.id !== id);
@@ -150,6 +91,35 @@ const deleteItemMachine = (id) => {
 const openEditDrawer = (item) => {
   console.log("Edit:", item);
 };
+
+// --- Export PDF ---
+const exportPDF = () => {
+  const doc = new jsPDF("l", "mm", "a4");
+  doc.setFontSize(14);
+  doc.text("Schedule Maintenance", 14, 15);
+
+  // Ambil headers (judul kolom)
+  const head = [headers.value.map((h) => h.title)];
+  // Ambil body data
+  const body = itemMachines.value.map((item) =>
+    headers.value.map((h) => item[h.key] || "")
+  );
+
+  autoTable(doc, {
+    head,
+    body,
+    startY: 25,
+    styles: { fontSize: 8, halign: "center", valign: "middle" },
+    headStyles: { fillColor: [41, 128, 185] },
+  });
+
+  doc.save("schedule.pdf");
+};
+
+const currentMonth = new Date().toISOString().slice(0, 7);
+onMounted(() => {
+  fetchScheduleData(currentMonth); // default ambil bulan sekarang
+});
 </script>
 
 <template>
@@ -179,6 +149,7 @@ const openEditDrawer = (item) => {
         variant="outlined"
         color="secondary"
         prepend-icon="ri-upload-2-line"
+        @click="exportPDF"
       >
         Export
       </VBtn>
@@ -207,24 +178,11 @@ const openEditDrawer = (item) => {
       class="text-no-wrap rounded-0"
       :items-per-page="itemsPerPage"
     >
-      <template #item.no="{ item }">
-        <span>{{ item.no }}</span>
-      </template>
-
-      <template #item.name="{ item }">
-        <span>{{ item.name }}</span>
-      </template>
-
-      <template #item.code="{ item }">
-        <span>{{ item.code }}</span>
-      </template>
-
-      <template #item.location="{ item }">
-        <span>{{ item.location }}</span>
-      </template>
-
-      <template #item.act="{ item }">
-        <span>{{ item.act }}</span>
+      <template
+        v-for="header in headers"
+        v-slot:[`item.${header.key}`]="{ item }"
+      >
+        <span>{{ item[header.key] }}</span>
       </template>
 
       <template #item.actions="{ item }">

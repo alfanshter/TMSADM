@@ -20,7 +20,6 @@ export const ENDPOINTS = {
   // schedule
   ACTIVITY_SUMMARY: `${API_BASE_URL}/activity-summary`,
 
-  //sparepart
   // Sparepart endpoints
   spareparts: `${API_BASE_URL}/spareparts`, // GET list & POST create
   getSparepart: (id) => `${API_BASE_URL}/spareparts/${id}`, // GET detail

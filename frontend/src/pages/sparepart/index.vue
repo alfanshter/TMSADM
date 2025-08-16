@@ -1,28 +1,29 @@
 <script setup>
 import { ENDPOINTS } from "@/config/api";
 import AddNewSparepartDrawer from "@/views/apps/sparepart/AddNewSparepartDrawer.vue";
+import AddNewStokDrawer from "@/views/apps/sparepart/AddStokDrawer.vue";
+import EditSparepartDrawer from "@/views/apps/sparepart/EditSparepartDrawer.vue";
+
 import axios from "axios";
-import { inject, onMounted, ref } from "vue";
+import { computed, inject, onMounted, ref, watch } from "vue";
 
 // Inject global loading
 const globalLoading = inject("globalLoading");
 
 // State
-const itemMachines = ref([]);
-const totalItemMachines = ref(0);
+const spareparts = ref([]);
+const totalSpareparts = ref(0);
 const searchQuery = ref("");
-const selected = ref();
+const selectedCategory = ref(null);
 const itemsPerPage = ref(10);
 const page = ref(1);
 const isLoading = ref(false);
 
-// Filter scope of work
-const selectedScopeOfWork = ref(null);
-
 // Snackbar state
 const isSnackbarTopEndVisible = ref(false);
-const snackbarMessage = ref("Add New Item Machine Success!");
+const snackbarMessage = ref("");
 
+// Table headers
 const headers = [
   { title: "Nama Sparepart", key: "nama_sparepart" },
   { title: "Spesifikasi", key: "spec" },
@@ -33,6 +34,7 @@ const headers = [
   { title: "Actions", key: "actions", sortable: false },
 ];
 
+// Filter kategori
 const categories = [
   { title: "Belting & House", value: "Belting & House" },
   { title: "Safety", value: "Safety" },
@@ -40,33 +42,50 @@ const categories = [
   { title: "Spare part & Cons", value: "Spare part & Cons" },
 ];
 
-// Ambil data item machines
-const fetchItemMachines = async () => {
+// Ambil data spareparts dari backend
+const fetchSpareparts = async () => {
+  isLoading.value = true;
   try {
-    const res = await axios.get(ENDPOINTS.itemMachines);
+    const res = await axios.get(ENDPOINTS.spareparts);
     const result = res.data.data ?? res.data;
-    itemMachines.value = result;
-    totalItemMachines.value = Array.isArray(result) ? result.length : 0;
+    spareparts.value = Array.isArray(result) ? result : [];
+    totalSpareparts.value = spareparts.value.length;
   } catch (error) {
-    console.error("Error fetching item machines:", error);
+    console.error("Error fetching spareparts:", error);
+  } finally {
+    isLoading.value = false;
   }
 };
 
 // Run saat component mounted
 onMounted(() => {
-  fetchItemMachines();
+  fetchSpareparts();
 });
 
-const addNewItemMachine = (itemMachineBaru) => {
-  itemMachines.value.unshift(itemMachineBaru);
-  totalItemMachines.value++;
+const isAddNewSparepartDrawerVisible = ref(false);
 
-  // Tampilkan snackbar
-  snackbarMessage.value = "Add New Item Machine Success!";
+// Tambah sparepart baru
+const addNewSparepart = (sparepartBaru) => {
+  spareparts.value.unshift(sparepartBaru);
+  totalSpareparts.value++;
+  snackbarMessage.value = "Add New Sparepart Success!";
   isSnackbarTopEndVisible.value = true;
 };
 
-// Edit item machine
+// Tambah stok baru
+const addNewStok = (stokBaru) => {
+  stok.value.unshift(stokBaru);
+  totalStok.value++;
+  snackbarMessage.value = "Add New Stok Success!";
+  isSnackbarTopEndVisible.value = true;
+};
+
+const stok = ref([]);
+const totalStok = ref(0);
+
+const isAddNewStokDrawerVisible = ref(false);
+
+// Edit sparepart
 const isEditSparepartDrawerVisible = ref(false);
 const editedSparepart = ref(null);
 
@@ -75,65 +94,48 @@ const openEditDrawer = (sparepart) => {
   isEditSparepartDrawerVisible.value = true;
 };
 
-const updateItemMachine = (updatedItemMachine) => {
-  const index = itemMachines.value.findIndex(
-    (u) => u.id === updatedItemMachine.id
-  );
-  if (index !== -1) itemMachines.value[index] = updatedItemMachine;
-  // Tampilkan snackbar
-  snackbarMessage.value = "Update Item Machine Completed!";
+const updateSparepart = (updatedSparepart) => {
+  const index = spareparts.value.findIndex((u) => u.id === updatedSparepart.id);
+  if (index !== -1) spareparts.value[index] = updatedSparepart;
+  snackbarMessage.value = "Update Sparepart Completed!";
   isSnackbarTopEndVisible.value = true;
 };
 
-// Delete item machine
-const deleteItemMachine = async (id) => {
+// Delete sparepart
+const deleteSparepart = async (id) => {
   try {
     globalLoading?.show();
-    await axios.delete(`${ENDPOINTS.itemMachines}/${id}`);
-    await fetchItemMachines(); // Refresh list
-
-    // Tampilkan snackbar
-    snackbarMessage.value = "Delete Item Machine Completed!";
+    await axios.delete(`${ENDPOINTS.deleteSparepart(id)}`);
+    await fetchSpareparts();
+    snackbarMessage.value = "Delete Sparepart Completed!";
     isSnackbarTopEndVisible.value = true;
   } catch (error) {
-    console.error("Error deleting item machine:", error);
+    console.error("Error deleting sparepart:", error);
   } finally {
     globalLoading?.hide();
   }
 };
 
-// Dummy resolveRole
-const resolveUserRoleVariant = (role) => {
-  return {
-    icon: "ri-settings-2-line",
-    color: "primary",
-  };
-};
-
-// Dummy resolve status
-const resolveUserStatusVariant = (status) => {
-  return status ? "success" : "error";
-};
-
-const isAddNewItemMachinesDrawerVisible = ref(false);
-
-const filteredItemMachines = computed(() => {
-  return itemMachines.value.filter((item) => {
-    const matchesScope = selectedScopeOfWork.value
-      ? item.scope_of_work === selectedScopeOfWork.value
+// Filter + search
+const filteredSpareparts = computed(() => {
+  return spareparts.value.filter((item) => {
+    const matchesCategory = selectedCategory.value
+      ? item.category === selectedCategory.value
       : true;
 
     const matchesSearch = searchQuery.value
-      ? item.name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        item.code?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        item.location?.toLowerCase().includes(searchQuery.value.toLowerCase())
+      ? item.nama_sparepart
+          ?.toLowerCase()
+          .includes(searchQuery.value.toLowerCase()) ||
+        item.spec?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        item.loc?.toLowerCase().includes(searchQuery.value.toLowerCase())
       : true;
 
-    return matchesScope && matchesSearch;
+    return matchesCategory && matchesSearch;
   });
 });
 
-watch(selectedScopeOfWork, () => {
+watch(selectedCategory, () => {
   page.value = 1;
 });
 </script>
@@ -196,7 +198,7 @@ watch(selectedScopeOfWork, () => {
           </div>
 
           <!-- 👉 Add sparepart button -->
-          <VBtn @click="isEditSparepartDrawerVisible = true">
+          <VBtn @click="isAddNewSparepartDrawerVisible = true">
             Add New Sparepart
           </VBtn>
         </div>
@@ -269,6 +271,9 @@ watch(selectedScopeOfWork, () => {
 
         <!-- Actions -->
         <template #item.actions="{ item }">
+          <IconBtn size="small" @click="isAddNewStokDrawerVisible = true">
+            <VIcon icon="ri-add-line" />
+          </IconBtn>
           <IconBtn size="small" @click="deleteSparepart(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>
@@ -327,10 +332,16 @@ watch(selectedScopeOfWork, () => {
       </VDataTable>
     </VCard>
 
-    <!-- 👉 Add New Drawer -->
+    <!-- 👉 Add Sparepart Drawer -->
     <AddNewSparepartDrawer
-      v-model:isDrawerOpen="isEditSparepartDrawerVisible"
+      v-model:isDrawerOpen="isAddNewSparepartDrawerVisible"
       @item-data="addNewSparepart"
+    />
+
+    <!-- 👉 Add Stok Drawer -->
+    <AddNewStokDrawer
+      v-model:isDrawerOpen="isAddNewStokDrawerVisible"
+      @item-data="addNewStok"
     />
 
     <!-- 👉 Edit Drawer -->

@@ -1,17 +1,13 @@
 <script setup>
-import { ENDPOINTS } from "@/config/api";
-import axios from "axios";
-import { inject, nextTick, ref } from "vue";
 import { PerfectScrollbar } from "vue3-perfect-scrollbar";
 import { VForm } from "vuetify/components/VForm";
 
 const props = defineProps({
-  isDrawerOpen: { type: Boolean, required: true },
+  isDrawerOpen: {
+    type: Boolean,
+    required: true,
+  },
 });
-
-const emit = defineEmits(["update:isDrawerOpen", "sparepart-added"]);
-
-const globalLoading = inject("globalLoading");
 
 const categories = [
   { title: "Belting & House", value: "Belting & House" },
@@ -20,17 +16,23 @@ const categories = [
   { title: "Spare part & Cons", value: "Spare part & Cons" },
 ];
 
+const emit = defineEmits(["update:isDrawerOpen"]);
+
 const handleDrawerModelValueUpdate = (val) => {
   emit("update:isDrawerOpen", val);
 };
 
 const refVForm = ref();
-const nama_sparepart = ref("");
-const spec = ref("");
-const loc = ref("");
-const category = ref("");
-const stok = ref("");
-const remark = ref("");
+const name = ref();
+const email = ref();
+const mobile = ref();
+const addressLine1 = ref();
+const addressLine2 = ref();
+const town = ref();
+const state = ref();
+const postCode = ref();
+const country = ref();
+const isBillingAddress = ref(false);
 
 const resetForm = () => {
   refVForm.value?.reset();
@@ -43,35 +45,6 @@ const closeNavigationDrawer = () => {
     refVForm.value?.reset();
     refVForm.value?.resetValidation();
   });
-};
-
-// ---- Submit sparepart ke backend ----
-const submitSparepart = async () => {
-  const isValid = await refVForm.value?.validate();
-  if (!isValid) return;
-
-  try {
-    globalLoading?.show();
-    const payload = {
-      nama_sparepart: nama_sparepart.value,
-      spec: spec.value,
-      loc: loc.value,
-      category: category.value,
-      stok: parseInt(stok.value),
-      remark: remark.value,
-    };
-    const res = await axios.post(ENDPOINTS.spareparts, payload);
-
-    // Emit ke parent supaya table update
-    emit("sparepart-added", res.data.data);
-
-    // Tutup drawer & reset form
-    resetForm();
-  } catch (error) {
-    console.error("Error adding sparepart:", error.response?.data || error);
-  } finally {
-    globalLoading?.hide();
-  }
 };
 </script>
 
@@ -94,14 +67,14 @@ const submitSparepart = async () => {
     <VCard flat>
       <PerfectScrollbar :options="{ wheelPropagation: false }" class="h-100">
         <VCardText style="block-size: calc(100vh - 5rem)">
-          <VForm ref="refVForm" @submit.prevent="submitSparepart">
+          <VForm ref="refVForm" @submit.prevent="">
             <VRow>
               <VCol cols="12">
                 <VTextField
-                  v-model="nama_sparepart"
+                  v-model="name"
                   label="Nama Sparepart"
                   :rules="[requiredValidator]"
-                  placeholder="Masukkan Nama Sparepart"
+                  placeholder="John Doe"
                 />
               </VCol>
 
@@ -109,7 +82,8 @@ const submitSparepart = async () => {
                 <VTextField
                   v-model="spec"
                   label="Spesifikasi"
-                  placeholder="Masukkan Spesifikasi"
+                  :rules="[requiredValidator, emailValidator]"
+                  placeholder="johndoe@email.com"
                 />
               </VCol>
 
@@ -140,7 +114,6 @@ const submitSparepart = async () => {
                   placeholder="Masukkan Stok"
                   :rules="[requiredValidator]"
                   label="Stok"
-                  type="number"
                 />
               </VCol>
 

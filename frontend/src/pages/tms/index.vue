@@ -1,204 +1,325 @@
 <script setup>
-import { ENDPOINTS } from "@/config/api";
-import AddNewItemMachinesDrawer from "@/views/apps/tms/list/AddNewItemMachinesDrawer.vue";
-import EditItemMachinesDrawer from "@/views/apps/tms/list/EditItemMachinesDrawer.vue";
-import axios from "axios";
-import { inject, onMounted, ref } from "vue";
-
-// Inject global loading
-const globalLoading = inject("globalLoading");
-
-// State
-const itemMachines = ref([]);
-const totalItemMachines = ref(0);
-const searchQuery = ref("");
-const selected = ref();
-const itemsPerPage = ref(10);
-const page = ref(1);
-const isLoading = ref(false);
-
-// Filter scope of work
-const selectedScopeOfWork = ref(null);
-
-// Snackbar state
-const isSnackbarTopEndVisible = ref(false);
-const snackbarMessage = ref("Add New Item Machine Success!");
+const widgetData = ref([
+  {
+    title: 'In-Store Sales',
+    value: '$5,345',
+    icon: 'ri-home-6-line',
+    desc: '5k orders',
+    change: 5.7,
+  },
+  {
+    title: 'Website Sales',
+    value: '$74,347',
+    icon: 'ri-computer-line',
+    desc: '21k orders',
+    change: 12.4,
+  },
+  {
+    title: 'Discount',
+    value: '$14,235',
+    icon: 'ri-gift-line',
+    desc: '6k orders',
+  },
+  {
+    title: 'Affiliate',
+    value: '$8,345',
+    icon: 'ri-money-dollar-circle-line',
+    desc: '150 orders',
+    change: -3.5,
+  },
+])
 
 const headers = [
-  { title: "Nama Mesin", key: "name" },
-  { title: "Code", key: "code" },
-  { title: "Lokasi", key: "location" },
-  { title: "Scope of Work", key: "scope_of_work" },
-  { title: "Actions", key: "actions", sortable: false },
-];
+  {
+    title: 'Product',
+    key: 'product',
+  },
+  {
+    title: 'Category',
+    key: 'category',
+  },
+  {
+    title: 'Stock',
+    key: 'stock',
+    sortable: false,
+  },
+  {
+    title: 'SKU',
+    key: 'sku',
+  },
+  {
+    title: 'Price',
+    key: 'price',
+  },
+  {
+    title: 'QTY',
+    key: 'qty',
+  },
+  {
+    title: 'Status',
+    key: 'status',
+  },
+  {
+    title: 'Actions',
+    key: 'actions',
+    sortable: false,
+  },
+]
 
-const scope_of_work = [
-  { title: "Safety", value: "safety" },
-  { title: "Production", value: "production" },
-];
+const selectedStatus = ref()
+const selectedCategory = ref()
+const selectedStock = ref()
+const searchQuery = ref('')
+const selectedRows = ref([])
 
-// Ambil data item machines
-const fetchItemMachines = async () => {
-  try {
-    const res = await axios.get(ENDPOINTS.itemMachines);
-    const result = res.data.data ?? res.data;
-    itemMachines.value = result;
-    totalItemMachines.value = Array.isArray(result) ? result.length : 0;
-  } catch (error) {
-    console.error("Error fetching item machines:", error);
-  }
-};
+const status = ref([
+  {
+    title: 'Scheduled',
+    value: 'Scheduled',
+  },
+  {
+    title: 'Publish',
+    value: 'Published',
+  },
+  {
+    title: 'Inactive',
+    value: 'Inactive',
+  },
+])
 
-// Run saat component mounted
-onMounted(() => {
-  fetchItemMachines();
-});
+const categories = ref([
+  {
+    title: 'Accessories',
+    value: 'Accessories',
+  },
+  {
+    title: 'Home Decor',
+    value: 'Home Decor',
+  },
+  {
+    title: 'Electronics',
+    value: 'Electronics',
+  },
+  {
+    title: 'Shoes',
+    value: 'Shoes',
+  },
+  {
+    title: 'Office',
+    value: 'Office',
+  },
+  {
+    title: 'Games',
+    value: 'Games',
+  },
+])
 
-const addNewItemMachine = (itemMachineBaru) => {
-  itemMachines.value.unshift(itemMachineBaru);
-  totalItemMachines.value++;
+const stockStatus = ref([
+  {
+    title: 'In Stock',
+    value: true,
+  },
+  {
+    title: 'Out of Stock',
+    value: false,
+  },
+])
 
-  // Tampilkan snackbar
-  snackbarMessage.value = "Add New Item Machine Success!";
-  isSnackbarTopEndVisible.value = true;
-};
+// Data table options
+const itemsPerPage = ref(10)
+const page = ref(1)
+const sortBy = ref()
+const orderBy = ref()
 
-// Edit item machine
-const isEditItemMachineDrawerVisible = ref(false);
-const editedItemMachine = ref(null);
+const updateOptions = options => {
+  page.value = options.page
+  sortBy.value = options.sortBy[0]?.key
+  orderBy.value = options.sortBy[0]?.order
+}
 
-const openEditDrawer = (itemMachine) => {
-  editedItemMachine.value = { ...itemMachine };
-  isEditItemMachineDrawerVisible.value = true;
-};
+const resolveCategory = category => {
+  if (category === 'Accessories')
+    return {
+      color: 'error',
+      icon: 'ri-headphone-line',
+    }
+  if (category === 'Home Decor')
+    return {
+      color: 'info',
+      icon: 'ri-home-6-line',
+    }
+  if (category === 'Electronics')
+    return {
+      color: 'primary',
+      icon: 'ri-computer-line',
+    }
+  if (category === 'Shoes')
+    return {
+      color: 'success',
+      icon: 'ri-footprint-line',
+    }
+  if (category === 'Office')
+    return {
+      color: 'warning',
+      icon: 'ri-briefcase-line',
+    }
+  if (category === 'Games')
+    return {
+      color: 'primary',
+      icon: 'ri-gamepad-line',
+    }
+}
 
-const updateItemMachine = (updatedItemMachine) => {
-  const index = itemMachines.value.findIndex(
-    (u) => u.id === updatedItemMachine.id
-  );
-  if (index !== -1) itemMachines.value[index] = updatedItemMachine;
-  // Tampilkan snackbar
-  snackbarMessage.value = "Update Item Machine Completed!";
-  isSnackbarTopEndVisible.value = true;
-};
+const resolveStatus = statusMsg => {
+  if (statusMsg === 'Scheduled')
+    return {
+      text: 'Scheduled',
+      color: 'warning',
+    }
+  if (statusMsg === 'Published')
+    return {
+      text: 'Publish',
+      color: 'success',
+    }
+  if (statusMsg === 'Inactive')
+    return {
+      text: 'Inactive',
+      color: 'error',
+    }
+}
 
-// Delete item machine
-const deleteItemMachine = async (id) => {
-  try {
-    globalLoading?.show();
-    await axios.delete(`${ENDPOINTS.itemMachines}/${id}`);
-    await fetchItemMachines(); // Refresh list
+const deleteProduct = async id => {
+  await $api(`apps/ecommerce/products/${ id }`, { method: 'DELETE' })
 
-    // Tampilkan snackbar
-    snackbarMessage.value = "Delete Item Machine Completed!";
-    isSnackbarTopEndVisible.value = true;
-  } catch (error) {
-    console.error("Error deleting item machine:", error);
-  } finally {
-    globalLoading?.hide();
-  }
-};
+  // Delete from selectedRows
+  const index = selectedRows.value.findIndex(row => row === id)
+  if (index !== -1)
+    selectedRows.value.splice(index, 1)
 
-// Dummy resolveRole
-const resolveUserRoleVariant = (role) => {
-  return {
-    icon: "ri-settings-2-line",
-    color: "primary",
-  };
-};
-
-// Dummy resolve status
-const resolveUserStatusVariant = (status) => {
-  return status ? "success" : "error";
-};
-
-const isAddNewItemMachinesDrawerVisible = ref(false);
-
-const filteredItemMachines = computed(() => {
-  return itemMachines.value.filter((item) => {
-    const matchesScope = selectedScopeOfWork.value
-      ? item.scope_of_work === selectedScopeOfWork.value
-      : true;
-
-    const matchesSearch = searchQuery.value
-      ? item.name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        item.code?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        item.location?.toLowerCase().includes(searchQuery.value.toLowerCase())
-      : true;
-
-    return matchesScope && matchesSearch;
-  });
-});
-
-watch(selectedScopeOfWork, () => {
-  page.value = 1;
-});
+  // Refetch products
+  fetchProducts()
+}
 </script>
 
 <template>
-  <section>
-    <VSnackbar
-      v-model="isSnackbarTopEndVisible"
-      location="top end"
-      :color="snackbarMessage.includes('Delete') ? 'error' : 'success'"
-      timeout="3000"
-    >
-      {{ snackbarMessage }}
-    </VSnackbar>
-    <!-- 👉 Widgets -->
-    <div class="d-flex mb-6">
-      <VRow>
-        <template v-for="(data, id) in widgetData" :key="id">
-          <VCol cols="12" md="3" sm="6">
-            <VCard>
-              <VCardText>
-                <div class="d-flex justify-space-between">
-                  <div class="d-flex flex-column gap-y-1">
-                    <span class="text-base text-high-emphasis">{{
-                      data.title
-                    }}</span>
-                    <h4 class="text-h4 d-flex align-center gap-2">
-                      {{ data.value }}
-                      <span
-                        class="text-base font-weight-regular"
-                        :class="data.change > 0 ? 'text-success' : 'text-error'"
-                        >({{ prefixWithPlus(data.change) }}%)</span
-                      >
-                    </h4>
-
-                    <p class="text-sm mb-0">
-                      {{ data.desc }}
-                    </p>
-                  </div>
-                  <VAvatar
-                    :color="data.iconColor"
-                    variant="tonal"
-                    rounded
-                    size="42"
-                  >
-                    <VIcon :icon="data.icon" size="26" />
-                  </VAvatar>
-                </div>
-              </VCardText>
-            </VCard>
-          </VCol>
-        </template>
-      </VRow>
-    </div>
-
+  <div>
+    <!-- 👉 widgets -->
     <VCard class="mb-6">
+      <VCardText class="px-2">
+        <VRow>
+          <template
+            v-for="(data, index) in widgetData"
+            :key="index"
+          >
+            <VCol
+              cols="12"
+              sm="6"
+              md="3"
+              class="px-6"
+            >
+              <div
+                class="d-flex justify-space-between"
+                :class="$vuetify.display.xs
+                  ? index !== widgetData.length - 1 ? 'border-b pb-4' : ''
+                  : $vuetify.display.sm
+                    ? index < (widgetData.length / 2) ? 'border-b pb-4' : ''
+                    : ''"
+              >
+                <div class="d-flex flex-column gap-y-1">
+                  <p class="text-capitalize mb-0">
+                    {{ data.title }}
+                  </p>
+
+                  <h4 class="text-h4">
+                    {{ data.value }}
+                  </h4>
+
+                  <div class="d-flex align-center">
+                    <div class="text-no-wrap me-2">
+                      {{ data.desc }}
+                    </div>
+
+                    <VChip
+                      v-if="data.change"
+                      size="small"
+                      :color="data.change > 0 ? 'success' : 'error'"
+                    >
+                      {{ prefixWithPlus(data.change) }}%
+                    </VChip>
+                  </div>
+                </div>
+
+                <VAvatar
+                  variant="tonal"
+                  rounded="lg"
+                  size="44"
+                >
+                  <VIcon
+                    :icon="data.icon"
+                    size="28"
+                    color="high-emphasis"
+                  />
+                </VAvatar>
+              </div>
+            </VCol>
+            <VDivider
+              v-if="$vuetify.display.mdAndUp ? index !== widgetData.length - 1 : $vuetify.display.smAndUp ? index % 2 === 0 : false"
+              vertical
+              inset
+              length="92"
+            />
+          </template>
+        </VRow>
+      </VCardText>
+    </VCard>
+
+    <!-- 👉 products -->
+    <VCard>
       <VCardItem class="pb-4">
         <VCardTitle>Filters</VCardTitle>
       </VCardItem>
       <VCardText>
         <VRow>
-          <!-- 👉 Select Role -->
-          <VCol cols="12" sm="4">
+          <!-- 👉 Select Status -->
+          <VCol
+            cols="12"
+            sm="4"
+          >
             <VSelect
-              v-model="selectedScopeOfWork"
-              label="Select Scope of Work"
-              placeholder="Select Scope of Work"
-              :items="scope_of_work"
+              v-model="selectedStatus"
+              label="Select Status"
+              placeholder="Select Status"
+              :items="status"
+              clearable
+              clear-icon="ri-close-line"
+            />
+          </VCol>
+
+          <!-- 👉 Select Category -->
+          <VCol
+            cols="12"
+            sm="4"
+          >
+            <VSelect
+              v-model="selectedCategory"
+              label="Category"
+              placeholder="Select Category"
+              :items="categories"
+              clearable
+              clear-icon="ri-close-line"
+            />
+          </VCol>
+
+          <!-- 👉 Select Stock Status -->
+          <VCol
+            cols="12"
+            sm="4"
+          >
+            <VSelect
+              v-model="selectedStock"
+              label="Stock"
+              placeholder="Stock"
+              :items="stockStatus"
               clearable
               clear-icon="ri-close-line"
             />
@@ -208,111 +329,129 @@ watch(selectedScopeOfWork, () => {
 
       <VDivider />
 
-      <VCardText class="d-flex flex-wrap gap-4 align-center">
-        <!-- 👉 Export button -->
-        <VBtn
-          variant="outlined"
-          color="secondary"
-          prepend-icon="ri-upload-2-line"
-        >
-          Export
-        </VBtn>
-        <VSpacer />
-        <div class="d-flex align-center gap-4 flex-wrap">
+      <VCardText class="d-flex flex-wrap gap-4">
+        <div class="d-flex align-center">
           <!-- 👉 Search  -->
-          <div class="app-user-search-filter">
-            <VTextField
-              v-model="searchQuery"
-              placeholder="Search User"
-              density="compact"
-            />
-          </div>
-          <!-- 👉 Add user button -->
-          <VBtn @click="isAddNewItemMachinesDrawerVisible = true">
-            Add New Item Machines
+          <VTextField
+            v-model="searchQuery"
+            placeholder="Search Product"
+            style="inline-size: 200px;"
+            density="compact"
+            class="me-3"
+          />
+        </div>
+
+        <VSpacer />
+
+        <div class="d-flex gap-x-4 align-center">
+          <!-- 👉 Export button -->
+          <VBtn
+            variant="outlined"
+            color="secondary"
+            prepend-icon="ri-upload-2-line"
+          >
+            Export
+          </VBtn>
+
+          <VBtn
+            color="primary"
+            prepend-icon="ri-add-line"
+            @click="$router.push('/apps/ecommerce/product/add')"
+          >
+            Add Product
           </VBtn>
         </div>
       </VCardText>
 
-      <!-- SECTION datatable -->
-      <VDataTable
+      <!-- 👉 Datatable  -->
+      <VDataTableServer
+        v-model:model-value="selectedRows"
+        v-model:items-per-page="itemsPerPage"
         v-model:page="page"
         :headers="headers"
-        :items="filteredItemMachines"
-        :loading="isLoading"
+        show-select
+        :items="products"
+        :items-length="totalProduct"
         class="text-no-wrap rounded-0"
-        :items-per-page="itemsPerPage"
+        @update:options="updateOptions"
       >
-        <!-- User -->
-        <template #item.name="{ item }">
-          <div class="d-flex align-center">
+        <!-- product  -->
+        <template #item.product="{ item }">
+          <div class="d-flex align-center gap-x-3">
+            <VAvatar
+              v-if="item.image"
+              size="38"
+              variant="tonal"
+              rounded
+              :image="item.image"
+            />
             <div class="d-flex flex-column">
-              <span class="text-sm text-medium-emphasis">{{ item.name }}</span>
+              <span class="text-base text-high-emphasis font-weight-medium">{{ item.productName }}</span>
+              <span class="text-sm">{{ item.productBrand }}</span>
             </div>
           </div>
         </template>
 
-        <!-- Code -->
-        <template #item.code="{ item }">
-          <div class="d-flex gap-2">
+        <!-- category -->
+        <template #item.category="{ item }">
+          <VAvatar
+            size="30"
+            variant="tonal"
+            :color="resolveCategory(item.category)?.color"
+            class="me-3"
+          >
             <VIcon
-              :icon="resolveUserRoleVariant(item.code).icon"
-              :color="resolveUserRoleVariant(item.code).color"
-              size="22"
+              :icon="resolveCategory(item.category)?.icon"
+              size="18"
             />
-            <span class="text-capitalize text-high-emphasis">{{
-              item.code
-            }}</span>
-          </div>
+          </VAvatar>
+          <span class="text-base text-high-emphasis">{{ item.category }}</span>
         </template>
 
-        <!-- Lokasi -->
-        <template #item.location="{ item }">
-          <span>{{ item.location }}</span>
+        <!-- stock -->
+        <template #item.stock="{ item }">
+          <VSwitch :model-value="item.stock" />
         </template>
 
-        <!-- Status -->
+        <!-- status -->
         <template #item.status="{ item }">
           <VChip
-            :color="resolveUserStatusVariant(item.status === 1)"
+            v-bind="resolveStatus(item.status)"
             size="small"
-            class="text-capitalize"
-          >
-            {{ item.status === 1 ? "Aktif" : "Tidak Aktif" }}
-          </VChip>
+          />
         </template>
 
         <!-- Actions -->
         <template #item.actions="{ item }">
-          <!-- Delete button -->
-          <IconBtn size="small" @click="deleteItemMachine(item.id)">
-            <VIcon icon="ri-delete-bin-7-line" />
-          </IconBtn>
-
-          <!-- View button (opsional, bisa kamu hubungkan ke modal nanti) -->
           <IconBtn size="small">
-            <VIcon icon="ri-eye-line" />
+            <VIcon icon="ri-edit-box-line" />
           </IconBtn>
 
-          <!-- More menu -->
-          <IconBtn size="small" color="medium-emphasis">
-            <VIcon icon="ri-more-2-line" />
+          <IconBtn size="small">
+            <VIcon icon="ri-more-2-fill" />
 
             <VMenu activator="parent">
               <VList>
-                <VListItem link>
-                  <template #prepend>
-                    <VIcon icon="ri-download-line" />
-                  </template>
-                  <VListItemTitle>Download</VListItemTitle>
+                <VListItem
+                  value="download"
+                  prepend-icon="ri-download-line"
+                >
+                  Download
                 </VListItem>
 
-                <!-- Edit item -->
-                <VListItem link @click="openEditDrawer(item)">
-                  <template #prepend>
-                    <VIcon icon="ri-edit-box-line" />
-                  </template>
-                  <VListItemTitle>Edit</VListItemTitle>
+                <VListItem
+                  value="delete"
+                  prepend-icon="ri-delete-bin-line"
+                  @click="deleteProduct(item.id)"
+                >
+                  Delete
+                </VListItem>
+
+                <VListItem
+                  value="duplicate"
+                  prepend-icon="ri-stack-line"
+                >
+                  Duplicate
                 </VListItem>
               </VList>
             </VMenu>
@@ -324,9 +463,7 @@ watch(selectedScopeOfWork, () => {
           <VDivider />
 
           <div class="d-flex justify-end flex-wrap gap-x-6 px-2 py-1">
-            <div
-              class="d-flex align-center gap-x-2 text-medium-emphasis text-base"
-            >
+            <div class="d-flex align-center gap-x-2 text-medium-emphasis text-base">
               Rows Per Page:
               <VSelect
                 v-model="itemsPerPage"
@@ -336,10 +473,8 @@ watch(selectedScopeOfWork, () => {
               />
             </div>
 
-            <p
-              class="d-flex align-center text-base text-high-emphasis me-2 mb-0"
-            >
-              {{ paginationMeta({ page, itemsPerPage }, totalUsers) }}
+            <p class="d-flex align-center text-base text-high-emphasis me-2 mb-0">
+              {{ paginationMeta({ page, itemsPerPage }, totalProduct) }}
             </p>
 
             <div class="d-flex gap-x-2 align-center me-2">
@@ -350,7 +485,7 @@ watch(selectedScopeOfWork, () => {
                 density="comfortable"
                 color="high-emphasis"
                 :disabled="page <= 1"
-                @click="page <= 1 ? (page = 1) : page--"
+                @click="page <= 1 ? page = 1 : page--"
               />
 
               <VBtn
@@ -359,35 +494,13 @@ watch(selectedScopeOfWork, () => {
                 density="comfortable"
                 variant="text"
                 color="high-emphasis"
-                :disabled="page >= Math.ceil(totalItemMachines / itemsPerPage)"
-                @click="
-                  page >= Math.ceil(totalItemMachines / itemsPerPage)
-                    ? (page = Math.ceil(totalItemMachines / itemsPerPage))
-                    : page++
-                "
+                :disabled="page >= Math.ceil(totalProduct / itemsPerPage)"
+                @click="page >= Math.ceil(totalProduct / itemsPerPage) ? page = Math.ceil(totalProduct / itemsPerPage) : page++ "
               />
             </div>
           </div>
         </template>
-      </VDataTable>
-      <!-- SECTION -->
+      </VDataTableServer>
     </VCard>
-    <!-- 👉 Add New Item Machine -->
-    <AddNewItemMachinesDrawer
-      v-model:isDrawerOpen="isAddNewItemMachinesDrawerVisible"
-      @item-data="addNewItemMachine"
-    />
-
-    <EditItemMachinesDrawer
-      v-model:isDrawerOpen="isEditItemMachineDrawerVisible"
-      :itemMachines="editedItemMachine"
-      @update-itemMachines="updateItemMachine"
-    />
-  </section>
+  </div>
 </template>
-
-<style lang="scss" scoped>
-.app-user-search-filter {
-  inline-size: 15.625rem;
-}
-</style>

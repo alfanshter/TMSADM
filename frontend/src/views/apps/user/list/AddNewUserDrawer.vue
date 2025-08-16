@@ -6,13 +6,12 @@ import { nextTick, ref } from "vue";
 // Props dan emit
 const props = defineProps({ isDrawerOpen: Boolean });
 const emit = defineEmits(["update:isDrawerOpen", "userData"]);
-// Inject global loading
-const globalLoading = inject("globalLoading");
 
 // Refs
 const refForm = ref();
 const isFormValid = ref(false);
-const isSubmitting = ref(false); // ⬅️ Loading state baru
+const previewImage = ref(null);
+const selectedFile = ref([]);
 
 // Form state
 const form = ref({
@@ -21,25 +20,56 @@ const form = ref({
   password: "",
   role: "",
   phone: "",
+  avatar: "", // URL hasil upload
 });
+
+// 👉 Upload avatar → kirim ke Laravel backend
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  previewImage.value = URL.createObjectURL(file);
+  selectedFile.value = file;
+};
 
 // 👉 Submit user data
 const onSubmit = async () => {
   refForm.value?.validate().then(async ({ valid }) => {
     if (!valid) return;
-    globalLoading?.show();
 
     try {
+      let avatarUrl = "";
       const token = localStorage.getItem("token");
 
+      // Upload avatar jika ada
+      if (selectedFile.value) {
+        const uploadData = new FormData();
+        uploadData.append("avatar", selectedFile.value);
+
+        const uploadRes = await axios.post(
+          `${ENDPOINTS.users}/upload-avatar`,
+          uploadData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        avatarUrl = uploadRes.data.url;
+      }
+
+      // Kirim data user
       const res = await axios.post(
         ENDPOINTS.users,
         {
           name: form.value.name,
           email: form.value.email,
           password: form.value.password,
-          role: form.value.role,
+          role: form.value.role.toLowerCase(),
           phone: form.value.phone,
+          avatar: avatarUrl,
         },
         {
           headers: {
@@ -54,8 +84,6 @@ const onSubmit = async () => {
       resetForm();
     } catch (err) {
       console.error("Gagal tambah user:", err.response?.data || err.message);
-    } finally {
-      globalLoading?.hide();
     }
   });
 };
@@ -65,6 +93,9 @@ const resetForm = () => {
   nextTick(() => {
     refForm.value?.reset();
     refForm.value?.resetValidation();
+    previewImage.value = null;
+    selectedFile.value = null;
+    form.value.avatar = "";
   });
 };
 
@@ -147,21 +178,26 @@ const handleDrawerModelValueUpdate = (val) => {
                 />
               </VCol>
 
+              <VCol cols="12">
+                <VFileInput
+                  v-model="selectedFile"
+                  label="Upload Foto Profil"
+                  accept="image/*"
+                  prepend-icon="mdi-camera"
+                  show-size
+                  chips
+                  :rules="[requiredValidator]"
+                  @change="handleFileUpload"
+                />
+              </VCol>
+
               <VCol cols="12" class="d-flex gap-2">
-                <VBtn
-                  type="submit"
-                  class="me-2"
-                  :loading="isSubmitting"
-                  :disabled="isSubmitting"
-                >
-                  Submit
-                </VBtn>
+                <VBtn type="submit" class="me-2">Submit</VBtn>
                 <VBtn
                   type="reset"
                   variant="outlined"
                   color="error"
                   @click="closeNavigationDrawer"
-                  :disabled="isSubmitting"
                 >
                   Cancel
                 </VBtn>

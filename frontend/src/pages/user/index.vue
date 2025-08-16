@@ -1,26 +1,20 @@
 <script setup>
 import { ENDPOINTS } from "@/config/api";
 import AddNewUserDrawer from "@/views/apps/user/list/AddNewUserDrawer.vue";
-import EditUserDrawer from "@/views/apps/user/list/EditUserDrawer.vue";
 import axios from "axios";
-import { inject, onMounted, ref } from "vue";
-
-// Inject global loading
-const globalLoading = inject("globalLoading");
+import { onMounted, ref } from "vue";
 
 // State
 const users = ref([]);
 const totalUsers = ref(0);
+
 const searchQuery = ref("");
 const selectedRole = ref();
+
 const itemsPerPage = ref(10);
 const page = ref(1);
 const isLoading = ref(false);
-
-// Snackbar state
-const isSnackbarTopEndVisible = ref(false);
-const snackbarMessage = ref("Add New User Success!");
-
+// Headers sesuai data backend
 const headers = [
   { title: "Nama Lengkap", key: "name" },
   { title: "Role", key: "role" },
@@ -28,20 +22,33 @@ const headers = [
   { title: "Status", key: "status" },
   { title: "Actions", key: "actions", sortable: false },
 ];
-
 const roles = [
-  { title: "Admin", value: "admin" },
-  { title: "TeamLeader", value: "team_leader" },
-  { title: "Supervisor", value: "supervisor" },
+  {
+    title: "Admin",
+    value: "admin",
+  },
+  {
+    title: "TeamLeader",
+    value: "teamleader",
+  },
+  {
+    title: "Supervisor",
+    value: "supervisor",
+  },
 ];
 
 // Ambil data user
 const fetchUsers = async () => {
   try {
     const res = await axios.get(ENDPOINTS.users);
-    const result = res.data.data ?? res.data;
-    users.value = result;
-    totalUsers.value = Array.isArray(result) ? result.length : 0;
+
+    // Asumsikan data langsung array
+    users.value = res.data;
+    console.log("Daftar Data users:", users.value);
+
+    // Validasi agar tidak error
+    users.value = users.value;
+    totalUsers.value = Array.isArray(users.value) ? users.value.length : 0;
   } catch (error) {
     console.error("Error fetching users:", error);
   }
@@ -52,50 +59,28 @@ onMounted(() => {
   fetchUsers();
 });
 
-const addNewUser = (userBaru) => {
-  users.value.unshift(userBaru);
-  totalUsers.value++;
-
-  // Tampilkan snackbar
-  snackbarMessage.value = "Add New User Success!";
-  isSnackbarTopEndVisible.value = true;
-};
-
-// Edit user
-const isEditUserDrawerVisible = ref(false);
-const editedUser = ref(null);
-
-const openEditDrawer = (user) => {
-  editedUser.value = { ...user };
-  isEditUserDrawerVisible.value = true;
-};
-
-const updateUser = (updatedUser) => {
-  const index = users.value.findIndex((u) => u.id === updatedUser.id);
-  if (index !== -1) users.value[index] = updatedUser;
+// Tambah user
+const addNewUser = async (userData) => {
+  try {
+    const res = await axios.post(ENDPOINTS.users, userData);
+    console.log("User berhasil ditambahkan:", res.data);
+    fetchUsers(); // refresh data setelah tambah user
+  } catch (error) {
+    console.error("Error adding user:", error);
+  }
 };
 
 // Delete user
 const deleteUser = async (id) => {
   try {
-    globalLoading?.show();
     await axios.delete(`${ENDPOINTS.users}/${id}`);
-    await fetchUsers(); // Refresh list
-
-    // Tampilkan snackbar
-    snackbarMessage.value = "Delete User Completed!";
-    isSnackbarTopEndVisible.value = true;
+    fetchUsers();
   } catch (error) {
     console.error("Error deleting user:", error);
-    // Tampilkan snackbar error
-    snackbarMessage.value = "Delete User Failed!";
-    isSnackbarTopEndVisible.value = true;
-  } finally {
-    globalLoading?.hide();
   }
 };
 
-// Dummy resolveRole
+// Dummy resolveRole (supaya role tampil icon-nya)
 const resolveUserRoleVariant = (role) => {
   return {
     icon: "ri-user-line",
@@ -103,7 +88,7 @@ const resolveUserRoleVariant = (role) => {
   };
 };
 
-// Dummy resolve status
+// Dummy resolve status (jika status boolean)
 const resolveUserStatusVariant = (status) => {
   return status ? "success" : "error";
 };
@@ -113,15 +98,6 @@ const isAddNewUserDrawerVisible = ref(false);
 
 <template>
   <section>
-    <!-- ✅ Snackbar for success -->
-    <VSnackbar
-      v-model="isSnackbarTopEndVisible"
-      location="top end"
-      :color="snackbarMessage.includes('Delete') ? 'error' : 'success'"
-      timeout="3000"
-    >
-      {{ snackbarMessage }}
-    </VSnackbar>
     <!-- 👉 Widgets -->
     <div class="d-flex mb-6">
       <VRow>
@@ -221,7 +197,28 @@ const isAddNewUserDrawerVisible = ref(false);
         <!-- User -->
         <template #item.name="{ item }">
           <div class="d-flex align-center">
+            <VAvatar
+              size="34"
+              :variant="!item.avatar ? 'tonal' : undefined"
+              :color="
+                !item.avatar
+                  ? resolveUserRoleVariant(item.role).color
+                  : undefined
+              "
+              class="me-3"
+            >
+              <VImg v-if="item.avatar" :src="item.avatar" />
+              <span v-else>{{ item.name.charAt(0).toUpperCase() }}</span>
+            </VAvatar>
+
             <div class="d-flex flex-column">
+              <RouterLink
+                :to="{ name: 'apps-user-view-id', params: { id: item.id } }"
+                class="text-link text-base font-weight-medium"
+              >
+                {{ item.name }}
+              </RouterLink>
+
               <span class="text-sm text-medium-emphasis">{{ item.email }}</span>
             </div>
           </div>
@@ -259,17 +256,17 @@ const isAddNewUserDrawerVisible = ref(false);
 
         <!-- Actions -->
         <template #item.actions="{ item }">
-          <!-- Delete button -->
           <IconBtn size="small" @click="deleteUser(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>
 
-          <!-- View button (opsional, bisa kamu hubungkan ke modal nanti) -->
-          <IconBtn size="small">
+          <IconBtn
+            size="small"
+            :to="{ name: 'apps-user-view-id', params: { id: item.id } }"
+          >
             <VIcon icon="ri-eye-line" />
           </IconBtn>
 
-          <!-- More menu -->
           <IconBtn size="small" color="medium-emphasis">
             <VIcon icon="ri-more-2-line" />
 
@@ -281,9 +278,7 @@ const isAddNewUserDrawerVisible = ref(false);
                   </template>
                   <VListItemTitle>Download</VListItemTitle>
                 </VListItem>
-
-                <!-- Edit item -->
-                <VListItem link @click="openEditDrawer(item)">
+                <VListItem link>
                   <template #prepend>
                     <VIcon icon="ri-edit-box-line" />
                   </template>
@@ -351,12 +346,6 @@ const isAddNewUserDrawerVisible = ref(false);
     <AddNewUserDrawer
       v-model:isDrawerOpen="isAddNewUserDrawerVisible"
       @user-data="addNewUser"
-    />
-
-    <EditUserDrawer
-      v-model:isDrawerOpen="isEditUserDrawerVisible"
-      :user="editedUser"
-      @update-user="updateUser"
     />
   </section>
 </template>

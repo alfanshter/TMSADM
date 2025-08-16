@@ -1,4 +1,5 @@
 <script setup>
+import { nextTick, ref, watch } from "vue";
 import { PerfectScrollbar } from "vue3-perfect-scrollbar";
 import { VForm } from "vuetify/components/VForm";
 
@@ -7,6 +8,7 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  sparepart: { type: Object, default: () => ({}) },
 });
 
 const categories = [
@@ -16,23 +18,33 @@ const categories = [
   { title: "Spare part & Cons", value: "Spare part & Cons" },
 ];
 
-const emit = defineEmits(["update:isDrawerOpen"]);
+const emit = defineEmits(["update:isDrawerOpen", "update-sparepart"]);
 
 const handleDrawerModelValueUpdate = (val) => {
   emit("update:isDrawerOpen", val);
 };
 
 const refVForm = ref();
-const name = ref();
-const email = ref();
-const mobile = ref();
-const addressLine1 = ref();
-const addressLine2 = ref();
-const town = ref();
-const state = ref();
-const postCode = ref();
-const country = ref();
-const isBillingAddress = ref(false);
+const name = ref("");
+const spec = ref("");
+const loc = ref("");
+const category = ref("");
+const remark = ref("");
+
+// Bind data dari props.sparepart
+watch(
+  () => props.sparepart,
+  (val) => {
+    if (val) {
+      name.value = val.nama_sparepart || "";
+      spec.value = val.spec || "";
+      loc.value = val.loc || "";
+      category.value = val.category || "";
+      remark.value = val.remark || "";
+    }
+  },
+  { immediate: true }
+);
 
 const resetForm = () => {
   refVForm.value?.reset();
@@ -46,6 +58,22 @@ const closeNavigationDrawer = () => {
     refVForm.value?.resetValidation();
   });
 };
+
+// ===== Submit form =====
+const submitForm = () => {
+  if (refVForm.value?.validate()) {
+    const updatedData = {
+      id: props.sparepart.id,
+      nama_sparepart: name.value,
+      spec: spec.value,
+      loc: loc.value,
+      category: category.value,
+      remark: remark.value,
+    };
+    emit("update-sparepart", updatedData); // kirim ke parent
+    emit("update:isDrawerOpen", false); // tutup drawer
+  }
+};
 </script>
 
 <template>
@@ -57,9 +85,9 @@ const closeNavigationDrawer = () => {
     border="none"
     @update:model-value="handleDrawerModelValueUpdate"
   >
-    <!-- 👉 Header -->
+    <!-- Header -->
     <AppDrawerHeaderSection
-      title="Add a Sparepart"
+      title="Edit Sparepart"
       @cancel="closeNavigationDrawer"
     />
     <VDivider />
@@ -67,7 +95,7 @@ const closeNavigationDrawer = () => {
     <VCard flat>
       <PerfectScrollbar :options="{ wheelPropagation: false }" class="h-100">
         <VCardText style="block-size: calc(100vh - 5rem)">
-          <VForm ref="refVForm" @submit.prevent="">
+          <VForm ref="refVForm" @submit.prevent="submitForm">
             <VRow>
               <VCol cols="12">
                 <VTextField
@@ -82,8 +110,8 @@ const closeNavigationDrawer = () => {
                 <VTextField
                   v-model="spec"
                   label="Spesifikasi"
-                  :rules="[requiredValidator, emailValidator]"
-                  placeholder="johndoe@email.com"
+                  :rules="[requiredValidator]"
+                  placeholder=""
                 />
               </VCol>
 
@@ -110,15 +138,6 @@ const closeNavigationDrawer = () => {
 
               <VCol cols="12">
                 <VTextField
-                  v-model="stok"
-                  placeholder="Masukkan Stok"
-                  :rules="[requiredValidator]"
-                  label="Stok"
-                />
-              </VCol>
-
-              <VCol cols="12">
-                <VTextField
                   v-model="remark"
                   label="Remark"
                   :rules="[requiredValidator]"
@@ -128,7 +147,7 @@ const closeNavigationDrawer = () => {
 
               <VCol cols="12">
                 <div class="d-flex justify-start">
-                  <VBtn type="submit" color="primary" class="me-4"> Add </VBtn>
+                  <VBtn type="submit" color="primary" class="me-4">Update</VBtn>
                   <VBtn color="error" variant="outlined" @click="resetForm">
                     Discard
                   </VBtn>

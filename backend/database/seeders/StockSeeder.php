@@ -62,10 +62,7 @@ class StockSeeder extends Seeder
                 'type'             => $item['type'],
                 'category'         => $item['category'],
                 'stok'             => $stok_awal, // bisa diset stok awal juga
-                'stok_awal'        => $stok_awal,
                 'incoming'         => $incoming,
-                'usage'            => $usage,
-                'end_month_stock'  => $end_month_stock,
                 'remark'           => $item['remark'],
                 'created_at'       => Carbon::now(),
                 'updated_at'       => Carbon::now(),

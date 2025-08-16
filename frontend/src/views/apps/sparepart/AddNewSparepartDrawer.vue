@@ -57,7 +57,6 @@ const submitSparepart = async () => {
       spec: spec.value,
       loc: loc.value,
       category: category.value,
-      stok: parseInt(stok.value),
       remark: remark.value,
     };
     const res = await axios.post(ENDPOINTS.spareparts, payload);
@@ -131,16 +130,6 @@ const submitSparepart = async () => {
                   label="Kategori"
                   :rules="[requiredValidator]"
                   placeholder="Pilih Kategori"
-                />
-              </VCol>
-
-              <VCol cols="12">
-                <VTextField
-                  v-model="stok"
-                  placeholder="Masukkan Stok"
-                  :rules="[requiredValidator]"
-                  label="Stok"
-                  type="number"
                 />
               </VCol>
 

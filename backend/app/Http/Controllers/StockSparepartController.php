@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\StockSparepart;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class StockSparepartController extends Controller
@@ -42,38 +43,37 @@ class StockSparepartController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'nama_sparepart' => 'required|string|max:255',
-            'spec' => 'nullable|string|max:255',
-            'loc' => 'required|string|max:255',
-            'type' => 'nullable|string|max:255',
-            'category' => 'required|in:Belting & House,Safety,Tools,Spare part & Cons',
-            'stok_awal' => 'required|integer|min:0',
-            'incoming' => 'required|integer|min:0',
-            'usage' => 'required|integer|min:0',
-            'remark' => 'required|string|max:50',
-        ]);
+{
+    $validator = Validator::make($request->all(), [
+        'nama_sparepart' => 'required|string|max:255',
+        'spec' => 'nullable|string|max:255',
+        'loc' => 'required|string|max:255',
+        'type' => 'nullable|string|max:255',
+        'category' => 'required|in:Belting & House,Safety,Tools,Spare part & Cons',
+        'remark' => 'required|string|max:50',
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'data' => null,
-                'message' => $validator->errors()
-            ], 422);
-        }
-
-        $validated = $validator->validated();
-        $validated['end_month_stock'] = $validated['stok_awal'] + $validated['incoming'] - $validated['usage'];
-
-        $sparepart = StockSparepart::create($validated);
-
+    if ($validator->fails()) {
         return response()->json([
-            'status' => true,
-            'data' => $sparepart,
-            'message' => 'Spare part created successfully'
-        ], 201);
+            'status' => false,
+            'data' => null,
+            'message' => $validator->errors()
+        ], 422);
     }
+
+    $validated = $validator->validated();
+
+    // set stok awal & incoming default
+    $validated['incoming'] = 0;
+
+    $sparepart = StockSparepart::create($validated);
+
+    return response()->json([
+        'status' => true,
+        'data' => $sparepart,
+        'message' => 'Spare part created successfully'
+    ], 201);
+}
 
     public function show($id)
     {

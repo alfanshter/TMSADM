@@ -24,6 +24,7 @@ return new class extends Migration
                 'Spare part & Cons'
             ]);
             $table->integer('stok')->default(0);
+            $table->integer('incoming')->default(0);
             $table->string('remark'); // pcs, unit, dll
             $table->timestamps();
         });

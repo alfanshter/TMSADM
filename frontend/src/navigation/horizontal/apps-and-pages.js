@@ -56,4 +56,10 @@ export default [
     children: [{ title: "List", to: "schedule" }],
     icon: { icon: "ri-survey-line" },
   },
+
+  {
+    title: "Sparepart",
+    to: { name: "sparepart" },
+    icon: { icon: "ri-hammer-line" },
+  },
 ];

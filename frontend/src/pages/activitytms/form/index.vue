@@ -1,7 +1,28 @@
 <script setup>
 import { ENDPOINTS } from "@/config/api";
+import { useActivityStore } from "@/stores/useActivityStore";
 import axios from "axios";
-import { ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+
+//get pinia
+const activityStore = useActivityStore();
+const currentItem = computed(() => activityStore.currentItem);
+
+// Inject global loading
+const globalLoading = inject("globalLoading");
+
+const code = ref("");
+const location = ref("");
+const scopeOfWork = ref("");
+
+const route = useRoute();
+const router = useRouter();
+
+const activityId = route.query.id ?? activityStore.currentItem?.id ?? null;
+const isEditMode = ref(!!activityId);
+console.log("Edit Mode:", isEditMode.value);
+console.log("Activity ID:", activityId);
 
 const selectedMaintenanceTypesCleaningCritical = ref([]);
 const selectedMaintenanceTypesJustCleaning = ref([]);
@@ -9,7 +30,7 @@ const selectedMaintenanceTypesReplacementPart = ref([]);
 const selectedMaintenanceTypesPreventivePM = ref([]);
 const birthDate = ref("");
 
-//file foto
+// file foto
 const cleaningCriticalBeforeFiles = ref([]);
 const cleaningCriticalAfterFiles = ref([]);
 const justCleaningBeforeFiles = ref([]);
@@ -18,47 +39,84 @@ const replacementPartBeforeFiles = ref([]);
 const replacementPartAfterFiles = ref([]);
 const preventivePmBeforeFiles = ref([]);
 const preventivePmAfterFiles = ref([]);
-const cleaningCriticalJsa = ref([]);
-const justCleaningJsa = ref([]);
+const cleaningCriticalJsa = ref(null);
+const justCleaningJsa = ref(null);
 const replacementJsa = ref(null);
 const preventiveJsa = ref(null);
 
-const code = ref("");
-const location = ref("");
-const scopeOfWork = ref("");
-
-// Snackbar state
+// Snackbar
 const isSnackbarTopEndVisible = ref(false);
-const snackbarMessage = ref("Add New Activity TMS Success!");
+const snackbarMessage = ref("");
 
 const itemMachines = ref([]);
 const totalItemMachines = ref(0);
 const selectedItemMachine = ref(null);
-const maintenanceOptions = [
-  { label: "Cleaning Critical", value: "cleaning_critical" },
-  { label: "Just Cleaning", value: "just_cleaning" },
-  { label: "Replacement Part", value: "replacement_part" },
-  { label: "Preventive PM", value: "preventive_pm" },
-];
 
-// Fetch item machines from API
+console.log("tester ", currentItem.value);
+if (currentItem.value != null) {
+  console.log("date:", currentItem.value);
+  location.value = currentItem.value.item_machine.location;
+  code.value = currentItem.value.item_machine.code;
+  scopeOfWork.value = currentItem.value.item_machine.scope_of_work;
+  birthDate.value = currentItem.value.date;
+}
+
+// Ambil item machines
 const fetchItemMachines = async () => {
   try {
     const res = await axios.get(ENDPOINTS.itemMachines);
     const result = res.data.data ?? res.data;
     itemMachines.value = result;
+
     totalItemMachines.value = Array.isArray(result) ? result.length : 0;
-    console.log("Data itemMachines:", itemMachines.value);
+
+    // Kalau mode edit, langsung set value yang sesuai
+    if (currentItem.value) {
+      selectedItemMachine.value = currentItem.value.item_machine_id;
+    }
   } catch (error) {
     console.error("Error fetching item machines:", error);
   }
 };
 
+const fetchActivityDetail = async () => {
+  if (!activityId) return;
+  try {
+    const res = await axios.get(`${ENDPOINTS.activityTmsDetail}/${activityId}`);
+    const data = res.data.data ?? res.data;
+
+    // pastikan sudah ada itemMachines sebelum set value
+    if (!itemMachines.value.length) {
+      await fetchItemMachines();
+    }
+
+    selectedItemMachine.value = Number(data.item_machine_id);
+    code.value = data.code ?? "";
+    location.value = data.location ?? "";
+    scopeOfWork.value = data.scope_of_work ?? "";
+    birthDate.value = data.date ? data.date : "";
+
+    if (data.cleaning_critical) {
+      selectedMaintenanceTypesCleaningCritical.value = ["cleaning_critical"];
+    }
+    if (data.just_cleaning) {
+      selectedMaintenanceTypesJustCleaning.value = ["just_cleaning"];
+    }
+    if (data.replacement_part) {
+      selectedMaintenanceTypesReplacementPart.value = ["replacement_part"];
+    }
+    if (data.preventive_pm) {
+      selectedMaintenanceTypesPreventivePM.value = ["preventive_pm"];
+    }
+  } catch (error) {
+    console.error("Error fetching activity detail:", error);
+  }
+};
+
+// Sync code/location/scope kalau ganti item machine
 watch(selectedItemMachine, (newVal) => {
   if (newVal) {
-    // Jika kamu simpan ID saja di selectedItemMachine:
     const selected = itemMachines.value.find((item) => item.id === newVal);
-
     if (selected) {
       code.value = selected.code ?? "";
       location.value = selected.location ?? "";
@@ -71,9 +129,9 @@ watch(selectedItemMachine, (newVal) => {
   }
 });
 
-//fungsi untuk menambah data ke activity tms API
-
+// submit add/update
 const submitForm = async () => {
+  globalLoading?.show();
   const formData = new FormData();
 
   formData.append("item_machine_id", selectedItemMachine.value);
@@ -82,28 +140,25 @@ const submitForm = async () => {
   formData.append("scope_of_work", scopeOfWork.value);
   formData.append("date", birthDate.value);
 
-  // Format yang diminta backend: prefix_foto_status[]
+  // Foto
   cleaningCriticalBeforeFiles.value.forEach((file) => {
     formData.append("cleaning_criticals_foto_before[]", file);
   });
   cleaningCriticalAfterFiles.value.forEach((file) => {
     formData.append("cleaning_criticals_foto_after[]", file);
   });
-
   justCleaningBeforeFiles.value.forEach((file) => {
     formData.append("just_cleaning_foto_before[]", file);
   });
   justCleaningAfterFiles.value.forEach((file) => {
     formData.append("just_cleaning_foto_after[]", file);
   });
-
   replacementPartBeforeFiles.value.forEach((file) => {
     formData.append("replacement_part_foto_before[]", file);
   });
   replacementPartAfterFiles.value.forEach((file) => {
     formData.append("replacement_part_foto_after[]", file);
   });
-
   preventivePmBeforeFiles.value.forEach((file) => {
     formData.append("preventive_foto_before[]", file);
   });
@@ -111,7 +166,7 @@ const submitForm = async () => {
     formData.append("preventive_foto_after[]", file);
   });
 
-  // JSA files (tidak perlu diubah)
+  // JSA
   if (replacementJsa.value) {
     formData.append("replacement_jsa", replacementJsa.value);
   }
@@ -126,24 +181,39 @@ const submitForm = async () => {
   }
 
   try {
-    const res = await axios.post(ENDPOINTS.addactivityTms, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    let res;
+    if (isEditMode.value) {
+      // Update → sesuai route kamu POST /activity-tms-update/{id}
+      res = await axios.post(
+        `${ENDPOINTS.updateActivityTms}/${activityId}`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      snackbarMessage.value = "Activity TMS Updated Successfully!";
+    } else {
+      // Tambah
+      res = await axios.post(ENDPOINTS.addactivityTms, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      snackbarMessage.value = "Add New Activity TMS Success!";
+    }
 
-    // Tampilkan snackbar
-    snackbarMessage.value = "Add New Activity TMS Success!";
+    // Redirect setelah sukses (opsional)
+
     isSnackbarTopEndVisible.value = true;
-
-    console.log("Sukses:", res.data);
+    router.push("/activitytms");
   } catch (error) {
     console.error("Gagal kirim data:", error);
+  } finally {
+    globalLoading?.hide();
   }
 };
 
 onMounted(() => {
   fetchItemMachines();
+  fetchActivityDetail();
 });
 </script>
 

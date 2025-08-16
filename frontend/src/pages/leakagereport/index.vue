@@ -1,127 +1,194 @@
 <script setup>
-const firstName = ref("");
-const email = ref("");
-const mobile = ref();
-const password = ref();
-const checkbox = ref(false);
-const files = ref([]);
+import { ENDPOINTS } from "@/config/api";
+import AddNewleakagereportDrawer from "@/views/apps/leakagereport/AddNewleakagereportDrawer.vue";
+import axios from "axios";
+import { computed, onMounted, ref } from "vue";
 
-// Fungsi ketika user pilih file
-const handleFileChange = (event) => {
-  const selectedFiles = Array.from(event.target.files);
-  files.value.push(...selectedFiles);
+// Snackbar
+const isSnackbarTopEndVisible = ref(false);
+const snackbarMessage = ref("");
+
+// Drawer
+const isDrawerVisible = ref(false);
+const editedLeakageReport = ref(null); // untuk edit
+
+const openDrawer = () => {
+  editedLeakageReport.value = null;
+  isDrawerVisible.value = true;
 };
 
-// Fungsi hapus file dari daftar
-const removeFile = (index) => {
-  files.value.splice(index, 1);
+// State
+const leakageReports = ref([]);
+const searchQuery = ref("");
+const page = ref(1);
+const itemsPerPage = ref(10);
+const isLoading = ref(false);
+
+// Table headers
+const headers = [
+  { title: "Location", key: "lokasi" },
+  { title: "Date", key: "date" },
+  { title: "Files", key: "file_scan" },
+  { title: "Actions", key: "actions", sortable: false },
+];
+
+// Fetch data
+const fetchLeakageReports = async () => {
+  try {
+    isLoading.value = true;
+    const res = await axios.get(ENDPOINTS.leakageReports);
+    leakageReports.value = res.data.data.map((r) => ({
+      ...r,
+      files: r.file_scan
+        ? [
+            {
+              name: r.file_scan.split("/").pop(),
+              url: `http://127.0.0.1:8000/storage/${r.file_scan}`,
+            },
+          ]
+        : [],
+    }));
+  } catch (err) {
+    console.error(err);
+    snackbarMessage.value = "Failed to fetch data";
+    isSnackbarTopEndVisible.value = true;
+  } finally {
+    isLoading.value = false;
+  }
 };
 
-// Fungsi tambah input file baru (klik tombol)
-const addFileInput = () => {
-  document.getElementById("fileInput").click();
+onMounted(fetchLeakageReports);
+
+// Delete report
+const deleteLeakageReport = async (id) => {
+  if (!confirm("Yakin ingin menghapus report ini?")) return;
+  try {
+    await axios.delete(ENDPOINTS.deleteLeakageReport(id));
+    snackbarMessage.value = "Delete Leakage Report Completed!";
+    isSnackbarTopEndVisible.value = true;
+    fetchLeakageReports();
+  } catch (err) {
+    console.error(err);
+    snackbarMessage.value = "Failed to delete report";
+    isSnackbarTopEndVisible.value = true;
+  }
 };
 
-function handleFileUpload(e) {
-  const uploaded = Array.from(e.target.files);
-  files.value.push(...uploaded);
-  e.target.value = ""; // reset supaya bisa pilih file yang sama lagi
-}
+// Open drawer untuk edit
+const openEditDrawer = (report) => {
+  editedLeakageReport.value = { ...report };
+  isDrawerVisible.value = true;
+};
+
+// Filter data
+const filteredLeakageReports = computed(() => {
+  return leakageReports.value.filter((item) => {
+    if (!searchQuery.value) return true;
+    return (
+      item.lokasi?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      item.date?.toLowerCase().includes(searchQuery.value.toLowerCase())
+    );
+  });
+});
+
+// Fungsi ikon file
+const getFileIcon = (fileName) => {
+  const ext = fileName.split(".").pop().toLowerCase();
+  if (ext === "pdf") return { icon: "mdi-file-pdf-box", color: "red" };
+  if (["xls", "xlsx"].includes(ext))
+    return { icon: "mdi-file-excel-box", color: "green" };
+  if (["doc", "docx"].includes(ext))
+    return { icon: "mdi-file-word-box", color: "blue" };
+  return { icon: "mdi-file", color: "grey" };
+};
 </script>
 
 <template>
-  <VCol md="8" class="mx-auto">
-    <!-- 👉 Laekage Report -->
-    <VCard class="mb-6" title="Laekage Report">
-      <VCardText>
-        <VRow>
-          <VCol cols="12">
-            <!-- 👉 report Image -->
-            <VCard class="mb-6">
-              <VCardItem>
-                <template #title> Upload Files </template>
-                <template #append>
-                  <VBtn
-                    variant="outlined"
-                    color="primary"
-                    @click="$refs.fileInput.click()"
-                  >
-                    Add Files
-                  </VBtn>
-                  <input
-                    type="file"
-                    ref="fileInput"
-                    multiple
-                    hidden
-                    @change="handleFileUpload"
-                  />
-                </template>
-              </VCardItem>
+  <section>
+    <VSnackbar
+      v-model="isSnackbarTopEndVisible"
+      location="top end"
+      :color="snackbarMessage.includes('Delete') ? 'error' : 'success'"
+      timeout="3000"
+    >
+      {{ snackbarMessage }}
+    </VSnackbar>
 
-              <VCardText>
-                <div v-if="files.length" class="d-flex flex-column gap-4">
-                  <VCard
-                    v-for="(file, index) in files"
-                    :key="index"
-                    class="pa-3"
-                    outlined
-                  >
-                    <div class="d-flex justify-space-between align-center">
-                      <div>
-                        <strong>{{ file.name }}</strong>
-                        <div class="text-caption text-medium-emphasis">
-                          {{ (file.size / 1024).toFixed(2) }} KB
-                        </div>
-                      </div>
-                      <VBtn
-                        color="error"
-                        variant="text"
-                        @click="removeFile(index)"
-                      >
-                        Delate
-                      </VBtn>
-                    </div>
-                  </VCard>
-                </div>
+    <VCard class="mb-6">
+      <VCardItem class="pb-4">
+        <VCardTitle>Leakage Reports</VCardTitle>
+      </VCardItem>
 
-                <div v-else class="text-medium-emphasis">
-                  Belum ada file yang diunggah.
-                </div>
-              </VCardText>
-            </VCard>
-          </VCol>
-          <VCol cols="12" md="6">
-            <VSelect
-              placeholder="Select Location"
-              label="Location"
-              :items="[
-                'Lantai 1',
-                'Lantai 2',
-                'Lantai 3',
-                'Lantai 4',
-                'Lantai 5',
-                'Lantai 6',
-                'Cust.blend',
-              ]"
-            />
-          </VCol>
-          <VCol cols="12" md="6">
-            <AppDateTimePicker
-              v-model="birthDate"
-              label="Date"
-              placeholder="Select Date"
-            />
-          </VCol>
-        </VRow>
+      <VCardText class="d-flex flex-wrap gap-4 align-center">
+        <VTextField
+          v-model="searchQuery"
+          placeholder="Search Report"
+          density="compact"
+        />
+        <VSpacer />
+        <VBtn @click="openDrawer"> Add New Leakage Report </VBtn>
       </VCardText>
+
+      <VDataTable
+        v-model:page="page"
+        :headers="headers"
+        :items="filteredLeakageReports"
+        :loading="isLoading"
+        class="text-no-wrap rounded-0"
+        :items-per-page="itemsPerPage"
+      >
+        <!-- Location -->
+        <template #item.lokasi="{ item }">
+          <span>{{ item.lokasi }}</span>
+        </template>
+
+        <!-- Date -->
+        <template #item.date="{ item }">
+          <span>{{ item.date }}</span>
+        </template>
+
+        <!-- Files -->
+        <template #item.file_scan="{ item }">
+          <div v-if="item.files.length">
+            <div
+              v-for="file in item.files"
+              :key="file.name"
+              class="d-flex align-center my-1"
+            >
+              <VIcon
+                :icon="getFileIcon(file.name).icon"
+                :color="getFileIcon(file.name).color"
+                start
+              />
+              <a :href="file.url" target="_blank">{{ file.name }}</a>
+            </div>
+          </div>
+          <span v-else>No Files</span>
+        </template>
+
+        <!-- Actions -->
+        <template #item.actions="{ item }">
+          <VBtn size="small" color="primary" @click="openEditDrawer(item)">
+            Edit
+          </VBtn>
+          <VBtn
+            class="ml-2"
+            size="small"
+            color="error"
+            @click="deleteLeakageReport(item.id)"
+          >
+            Delete
+          </VBtn>
+        </template>
+      </VDataTable>
     </VCard>
 
-    <div class="d-flex flex-wrap justify-end gap-4 mb-6">
-      <div class="d-flex gap-4 align-center-end flex-wrap">
-        <VBtn variant="outlined" color="secondary"> Discard </VBtn>
-        <VBtn variant="outlined" color="primary"> Save Draft </VBtn>
-        <VBtn>Publish Report</VBtn>
-      </div>
-    </div>
-  </VCol>
+    <!-- Drawer -->
+    <AddNewleakagereportDrawer
+      v-show="isDrawerVisible"
+      v-model:isDrawerOpen="isDrawerVisible"
+      :edited-report="editedLeakageReport"
+      @report-data="fetchLeakageReports"
+    />
+  </section>
 </template>

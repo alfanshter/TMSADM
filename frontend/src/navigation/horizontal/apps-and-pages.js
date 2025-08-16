@@ -1,5 +1,5 @@
 export default [
-  { heading: "Apps & Pages" },
+  { heading: "Dashboard" },
 
   {
     title: "Home",
@@ -22,5 +22,38 @@ export default [
     title: "TMS",
     to: { name: "tms" },
     icon: { icon: "ri-settings-2-line" },
+  },
+
+  {
+    title: "Activity TMS",
+    children: [
+      { title: "List", to: "activitytms" },
+      { title: "Add", to: "activitytms-form" },
+    ],
+    icon: { icon: "ri-pulse-line" },
+  },
+
+  {
+    title: "FAW Report",
+    children: [
+      { title: "List", to: "fawreport" },
+      { title: "Add", to: "fawreport-form" },
+    ],
+    icon: { icon: "ri-settings-2-line" },
+  },
+
+  {
+    title: "Leakage Report",
+    children: [
+      { title: "List", to: "leakagereport" },
+      { title: "Add", to: "leakagereport-form" },
+    ],
+    icon: { icon: "ri-alarm-warning-fill" },
+  },
+
+  {
+    title: "Schedule",
+    children: [{ title: "List", to: "schedule" }],
+    icon: { icon: "ri-survey-line" },
   },
 ];

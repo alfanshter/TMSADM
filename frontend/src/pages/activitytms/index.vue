@@ -1,7 +1,14 @@
 <script setup>
 import { ENDPOINTS } from "@/config/api";
+import { useActivityStore } from "@/stores/useActivityStore";
 import axios from "axios";
 import { computed, inject, onMounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
+
+//Pinia send another activity
+const activityStore = useActivityStore();
+// message snackbar
+const isSnackbarTopEndVisible = ref(false);
 
 // Inject global loading
 const globalLoading = inject("globalLoading");
@@ -16,6 +23,11 @@ const baseURL = "http://localhost:8000/storage/";
 const isDialogVisible = ref(false);
 const selectedType = ref("");
 const selectedData = ref([]);
+
+const jsaFile = ref(null);
+
+//message snackbar
+const snackbarMessage = ref("Add New Item Machine Success!");
 
 const typeLabels = {
   cleaning_criticals: "Cleaning Critical",
@@ -34,16 +46,32 @@ const afterPhotos = computed(() =>
   selectedData.value.filter((item) => item.status === "after")
 );
 
-// File JSA
-const jsaFile = computed(() => {
-  const found = selectedData.value.find((d) => d.jsa_file);
-  return found ? baseURL + found.jsa_file : null;
-});
-
 // Fungsi buka dialog
-function openDialog(type, data) {
+function openDialog(type, data, activity) {
+  console.log("DATA DARI BACKEND:", data);
+  console.log("ACTIVITY DATA:", activity);
   selectedType.value = type;
   selectedData.value = data;
+
+  // Ambil JSA file sesuai tipe
+  if (type === "cleaning_criticals") {
+    jsaFile.value = activity.jsa_file_cleaning_criticals
+      ? baseURL + activity.jsa_file_cleaning_criticals
+      : null;
+  } else if (type === "just_cleaning") {
+    jsaFile.value = activity.jsa_file_just_cleaning
+      ? baseURL + activity.jsa_file_just_cleaning
+      : null;
+  } else if (type === "preventive") {
+    jsaFile.value = activity.jsa_file_preventive
+      ? baseURL + activity.jsa_file_preventive
+      : null;
+  } else if (type === "replacement_part") {
+    jsaFile.value = activity.jsa_file_replacement_part
+      ? baseURL + activity.jsa_file_replacement_part
+      : null;
+  }
+
   isDialogVisible.value = true;
 }
 
@@ -85,6 +113,15 @@ const fetchActivityTms = async () => {
   }
 };
 
+const router = useRouter();
+
+function handleEdit(item) {
+  activityStore.setCurrentItem(item); // simpan data di store
+  console.log("Item yang dipilih:", item);
+  console.log("ID yang dipilih:", item.id);
+  router.push(`/activitytms/form?id=${item.id}`);
+}
+
 onMounted(() => {
   fetchActivityTms();
 });
@@ -95,6 +132,10 @@ const deleteActivityTms = async (id) => {
     globalLoading?.show();
     await axios.delete(`${ENDPOINTS.addactivityTms}/${id}`);
     await fetchActivityTms();
+
+    // Tampilkan snackbar
+    snackbarMessage.value = "Delete Activity TMS Completed!";
+    isSnackbarTopEndVisible.value = true;
   } catch (error) {
     console.error("Error deleting activity TMS:", error);
   } finally {
@@ -132,11 +173,19 @@ watch(selectedScopeOfWork, () => {
 
 <template>
   <section>
+    <VSnackbar
+      v-model="isSnackbarTopEndVisible"
+      location="top end"
+      :color="snackbarMessage.includes('Delete') ? 'error' : 'success'"
+      timeout="3000"
+    >
+      {{ snackbarMessage }}
+    </VSnackbar>
     <VCard>
       <VCardTitle>Filters</VCardTitle>
       <VCardText>
-        <VRow dense>
-          <VCol cols="12" sm="6">
+        <VRow dense justify="space-between" align="center">
+          <VCol cols="12" sm="4" md="3">
             <VSelect
               v-model="selectedScopeOfWork"
               label="Select Scope of Work"
@@ -145,7 +194,7 @@ watch(selectedScopeOfWork, () => {
               density="compact"
             />
           </VCol>
-          <VCol cols="12" sm="6">
+          <VCol cols="12" sm="4" md="3">
             <VTextField
               v-model="searchQuery"
               placeholder="Search Item Machine"
@@ -189,7 +238,9 @@ watch(selectedScopeOfWork, () => {
             <VBtn
               v-if="item.cleaning_criticals?.length"
               variant="text"
-              @click="openDialog('cleaning_criticals', item.cleaning_criticals)"
+              @click="
+                openDialog('cleaning_criticals', item.cleaning_criticals, item)
+              "
             >
               Cleaning Critical
             </VBtn>
@@ -197,7 +248,7 @@ watch(selectedScopeOfWork, () => {
             <VBtn
               v-if="item.just_cleaning?.length"
               variant="text"
-              @click="openDialog('just_cleaning', item.just_cleaning)"
+              @click="openDialog('just_cleaning', item.just_cleaning, item)"
             >
               Just Cleaning
             </VBtn>
@@ -205,7 +256,7 @@ watch(selectedScopeOfWork, () => {
             <VBtn
               v-if="item.preventive?.length"
               variant="text"
-              @click="openDialog('preventive', item.preventive)"
+              @click="openDialog('preventive', item.preventive, item)"
             >
               Preventive
             </VBtn>
@@ -213,7 +264,9 @@ watch(selectedScopeOfWork, () => {
             <VBtn
               v-if="item.replacement_part?.length"
               variant="text"
-              @click="openDialog('replacement_part', item.replacement_part)"
+              @click="
+                openDialog('replacement_part', item.replacement_part, item)
+              "
             >
               Replacement Part
             </VBtn>
@@ -237,6 +290,12 @@ watch(selectedScopeOfWork, () => {
 
         <!-- Actions -->
         <template #item.actions="{ item }">
+          <!-- Tombol Edit -->
+          <IconBtn size="small" @click="handleEdit(item)">
+            <VIcon icon="ri-edit-box-line" />
+          </IconBtn>
+
+          <!-- Tombol Delete -->
           <IconBtn size="small" @click="deleteActivityTms(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>

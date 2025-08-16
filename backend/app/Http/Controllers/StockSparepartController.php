@@ -11,24 +11,29 @@ class StockSparepartController extends Controller
     public function index(Request $request)
     {
         $query = StockSparepart::query();
-    
+
         // Filter kategori
         if ($request->has('category') && !empty($request->category)) {
             $query->where('category', $request->category);
         }
-    
+
         // Filter lokasi
         if ($request->has('loc') && !empty($request->loc)) {
             $query->where('loc', 'LIKE', "%{$request->loc}%");
         }
-    
-        // Filter stok rendah (<= 5)
+
+        // Filter stok rendah (end_month_stock <= 5)
         if ($request->has('low_stock') && $request->low_stock == 1) {
-            $query->where('stok', '<=', 5);
+            $query->where(DB::raw('(stok_awal + incoming - usage)'), '<=', 5);
         }
-    
-        $data = $query->orderBy('nama_sparepart', 'ASC')->get();
-    
+
+        $data = $query->orderBy('nama_sparepart', 'ASC')
+                      ->get()
+                      ->map(function($item) {
+                          $item->end_month_stock = $item->stok_awal + $item->incoming - $item->usage;
+                          return $item;
+                      });
+
         return response()->json([
             'status' => true,
             'data' => $data,
@@ -44,8 +49,10 @@ class StockSparepartController extends Controller
             'loc' => 'required|string|max:255',
             'type' => 'nullable|string|max:255',
             'category' => 'required|in:Belting & House,Safety,Tools,Spare part & Cons',
-            'stok' => 'required|integer|min:0',
-            'remark' => 'required|string|max:50'
+            'stok_awal' => 'required|integer|min:0',
+            'incoming' => 'required|integer|min:0',
+            'usage' => 'required|integer|min:0',
+            'remark' => 'required|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -56,7 +63,10 @@ class StockSparepartController extends Controller
             ], 422);
         }
 
-        $sparepart = StockSparepart::create($validator->validated());
+        $validated = $validator->validated();
+        $validated['end_month_stock'] = $validated['stok_awal'] + $validated['incoming'] - $validated['usage'];
+
+        $sparepart = StockSparepart::create($validated);
 
         return response()->json([
             'status' => true,
@@ -77,12 +87,15 @@ class StockSparepartController extends Controller
             ], 404);
         }
 
+        $sparepart->end_month_stock = $sparepart->stok_awal + $sparepart->incoming - $sparepart->usage;
+
         return response()->json([
             'status' => true,
             'data' => $sparepart,
             'message' => 'Spare part retrieved successfully'
         ]);
     }
+
 
     public function update(Request $request, $id)
     {
@@ -102,8 +115,10 @@ class StockSparepartController extends Controller
             'loc' => 'required|string|max:255',
             'type' => 'nullable|string|max:255',
             'category' => 'required|in:Belting & House,Safety,Tools,Spare part & Cons',
-            'stok' => 'required|integer|min:0',
-            'remark' => 'required|string|max:50'
+            'stok_awal' => 'required|integer|min:0',
+            'incoming' => 'required|integer|min:0',
+            'usage' => 'required|integer|min:0',
+            'remark' => 'required|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -114,7 +129,10 @@ class StockSparepartController extends Controller
             ], 422);
         }
 
-        $sparepart->update($validator->validated());
+        $validated = $validator->validated();
+        $validated['end_month_stock'] = $validated['stok_awal'] + $validated['incoming'] - $validated['usage'];
+
+        $sparepart->update($validated);
 
         return response()->json([
             'status' => true,

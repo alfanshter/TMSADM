@@ -16,6 +16,11 @@ class StockSparepart extends Model
         'type',
         'category',
         'stok',
-        'remark'
+        'remark',
+        'stok_awal',
+        'incoming',
+        'usage',
+        'end_month_stock'
     ];
+    
 }

@@ -23,17 +23,13 @@ class StockSparepartController extends Controller
             $query->where('loc', 'LIKE', "%{$request->loc}%");
         }
 
-        // Filter stok rendah (end_month_stock <= 5)
-        if ($request->has('low_stock') && $request->low_stock == 1) {
-            $query->where(DB::raw('(stok_awal + incoming - usage)'), '<=', 5);
-        }
 
         $data = $query->orderBy('nama_sparepart', 'ASC')
-                      ->get()
-                      ->map(function($item) {
-                          $item->end_month_stock = $item->stok_awal + $item->incoming - $item->usage;
-                          return $item;
-                      });
+            ->get()
+            ->map(function ($item) {
+                $item->end_month_stock = $item->stok + $item->incoming - $item->usage;
+                return $item;
+            });
 
         return response()->json([
             'status' => true,
@@ -43,37 +39,40 @@ class StockSparepartController extends Controller
     }
 
     public function store(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'nama_sparepart' => 'required|string|max:255',
-        'spec' => 'nullable|string|max:255',
-        'loc' => 'required|string|max:255',
-        'type' => 'nullable|string|max:255',
-        'category' => 'required|in:Belting & House,Safety,Tools,Spare part & Cons',
-        'remark' => 'required|string|max:50',
-    ]);
+    {
+        $validator = Validator::make($request->all(), [
+            'nama_sparepart' => 'required|string|max:255',
+            'spec' => 'nullable|string|max:255',
+            'loc' => 'required|string|max:255',
+            'type' => 'nullable|string|max:255',
+            'category' => 'required|in:Belting & House,Safety,Tools,Spare part & Cons',
+            'remark' => 'required|string|max:50',
+        ]);
 
-    if ($validator->fails()) {
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'data' => null,
+                'message' => $validator->errors()
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+
+        if ($request->stok!=null) {
+            $validated['stok'] = $request->stok;
+        }
+
+        // set stok awal & incoming default
+        $validated['incoming'] = 0;
+        $sparepart = StockSparepart::create($validated);
+
         return response()->json([
-            'status' => false,
-            'data' => null,
-            'message' => $validator->errors()
-        ], 422);
+            'status' => true,
+            'data' => $sparepart,
+            'message' => 'Spare part created successfully'
+        ], 201);
     }
-
-    $validated = $validator->validated();
-
-    // set stok awal & incoming default
-    $validated['incoming'] = 0;
-
-    $sparepart = StockSparepart::create($validated);
-
-    return response()->json([
-        'status' => true,
-        'data' => $sparepart,
-        'message' => 'Spare part created successfully'
-    ], 201);
-}
 
     public function show($id)
     {

@@ -9,7 +9,6 @@ import "vue-toast-notification/dist/theme-sugar.css";
 // Styles
 import "@core/scss/template/index.scss";
 import "@styles/styles.scss";
-
 // Ambil token dari localStorage
 const token = localStorage.getItem("token");
 if (token) {

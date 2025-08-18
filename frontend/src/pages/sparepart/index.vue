@@ -27,6 +27,8 @@ const headers = [
   { title: "Spesifikasi", key: "spec" },
   { title: "Lokasi", key: "loc" },
   { title: "Kategori", key: "category" },
+  { title: "Stok", key: "stok" },
+  { title: "Incoming", key: "incoming" },
   { title: "Stok Akhir", key: "end_month_stock" },
   { title: "Remark", key: "remark" },
   { title: "Actions", key: "actions", sortable: false },
@@ -259,7 +261,7 @@ watch(selectedCategory, () => {
     <EditSparepartDrawer
       v-model:isDrawerOpen="isEditSparepartDrawerVisible"
       :sparepart="editedSparepart"
-      @update-sparepart="updateSparepart"
+      @sparepart-updated="updateSparepart"
     />
   </section>
 </template>

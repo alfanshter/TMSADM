@@ -6,6 +6,7 @@ use App\Models\StockSparepart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class StockSparepartController extends Controller
 {
@@ -109,15 +110,17 @@ class StockSparepartController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'nama_sparepart' => 'required|string|max:255',
-            'spec' => 'nullable|string|max:255',
-            'loc' => 'required|string|max:255',
-            'type' => 'nullable|string|max:255',
-            'category' => 'required|in:Belting & House,Safety,Tools,Spare part & Cons',
-            'stok_awal' => 'required|integer|min:0',
-            'incoming' => 'required|integer|min:0',
-            'usage' => 'required|integer|min:0',
-            'remark' => 'required|string|max:50',
+            'nama_sparepart' => 'sometimes|string|max:255',
+            'spec' => 'sometimes|nullable|string|max:255',
+            'loc' => 'sometimes|required|string|max:255',
+            'type' => 'sometimes|nullable|string|max:255',
+            'category' => [
+                'sometimes',
+                'required',
+                Rule::in(['Belting & House', 'Safety', 'Tools', 'Spare part & Cons']),
+            ],
+            'stok' => 'sometimes|required|integer|min:0',
+            'remark' => 'sometimes|required|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -128,8 +131,9 @@ class StockSparepartController extends Controller
             ], 422);
         }
 
+        
+
         $validated = $validator->validated();
-        $validated['end_month_stock'] = $validated['stok_awal'] + $validated['incoming'] - $validated['usage'];
 
         $sparepart->update($validated);
 

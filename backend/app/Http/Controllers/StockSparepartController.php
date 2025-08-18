@@ -136,6 +136,7 @@ class StockSparepartController extends Controller
         $validated = $validator->validated();
 
         $sparepart->update($validated);
+        $sparepart['end_month_stock'] = $sparepart['stok'] + $sparepart['incoming'];
 
         return response()->json([
             'status' => true,

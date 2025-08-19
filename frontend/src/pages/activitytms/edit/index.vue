@@ -1,4 +1,5 @@
 <script setup>
+import UpdateDropZone from "@/@core/components/UpdateDropZone.vue";
 import { ENDPOINTS } from "@/config/api";
 import { useActivityStore } from "@/stores/useActivityStore";
 import axios from "axios";
@@ -21,6 +22,8 @@ const route = useRoute();
 const router = useRouter();
 
 const activityId = route.query.id ?? activityStore.currentItem?.id ?? null;
+const isEditMode = ref(!!activityId);
+console.log("Edit Mode:", isEditMode.value);
 console.log("Activity ID:", activityId);
 
 const selectedMaintenanceTypesCleaningCritical = ref([]);
@@ -44,13 +47,13 @@ const replacementJsa = ref(null);
 const preventiveJsa = ref(null);
 const safety_scan = ref(null);
 const production_scan = ref(null);
+const production_scan_filename = ref(null); // dari backend
+const production_scan_old = ref(null); // dari backend
 
 
 // Snackbar
 const isSnackbarTopEndVisible = ref(false);
 const snackbarMessage = ref("");
-const snackbarColor = ref("success"); // default
-
 
 const itemMachines = ref([]);
 const totalItemMachines = ref(0);
@@ -98,27 +101,42 @@ const fetchActivityDetail = async () => {
     const res = await axios.get(`${ENDPOINTS.activityTmsDetail}/${activityId}`);
     const data = res.data.data ?? res.data;
 
+    console.log("dinda", data);
+
     // pastikan sudah ada itemMachines sebelum set value
     if (!itemMachines.value.length) {
       await fetchItemMachines();
     }
 
     selectedItemMachine.value = Number(data.item_machine_id);
-    code.value = data.code ?? "";
-    location.value = data.location ?? "";
-    scopeOfWork.value = data.scope_of_work ?? "";
+    code.value = data.item_machine.code ?? "";
+    location.value = data.item_machine.location ?? "";
+    scopeOfWork.value = data.item_machine.scope_of_work ?? "";
     birthDate.value = data.date ? data.date : "";
+    incomingRs.value = data.incoming_rs ?? "";
+    incomingRt.value = data.incoming_rt ?? "";
+    incomingSt.value = data.incoming_st ?? "";
+    outgoingRs.value = data.outgoing_rs ?? "";
+    outgoingRt.value = data.outgoing_rt ?? "";
+    outgoingSt.value = data.outgoing_st ?? "";
+    temp.value = data.temp ?? "";
+    deviation.value = data.deviation ?? "";
+    production_scan_filename.value = data.production_scan_filename ?? "";
+    production_scan_old.value = data.production_scan ?? "";
 
-    if (data.cleaning_critical) {
+    
+    if (data.cleaning_criticals && data.cleaning_criticals.length > 0) {
+      justCleaningAfterFiles.value = data.cleaning_criticals;
       selectedMaintenanceTypesCleaningCritical.value = ["cleaning_critical"];
     }
-    if (data.just_cleaning) {
+    if (data.just_cleaning && data.just_cleaning.length > 0) {
       selectedMaintenanceTypesJustCleaning.value = ["just_cleaning"];
     }
-    if (data.replacement_part) {
+
+    if (data.replacement_part && data.replacement_part.length > 0) {
       selectedMaintenanceTypesReplacementPart.value = ["replacement_part"];
     }
-    if (data.preventive_pm) {
+    if (data.preventive_pm && data.preventive_pm.lenght > 0) {
       selectedMaintenanceTypesPreventivePM.value = ["preventive_pm"];
     }
   } catch (error) {
@@ -181,17 +199,16 @@ const submitForm = async () => {
 
   // JSA
   if (replacementJsa.value) {
-    formData.append("jsa_file_replacement_part", replacementJsa.value);
+    formData.append("replacement_jsa", replacementJsa.value);
   }
   if (cleaningCriticalJsa.value) {
-    formData.append("jsa_file_cleaning_criticals", cleaningCriticalJsa.value);
+    formData.append("cleaning_critical_jsa", cleaningCriticalJsa.value);
   }
   if (justCleaningJsa.value) {
-    formData.append("jsa_file_just_cleaning", justCleaningJsa.value);
+    formData.append("just_cleaning_jsa", justCleaningJsa.value);
   }
   if (preventiveJsa.value) {
-    console.log("dinda oke");
-    formData.append("jsa_file_preventive", preventiveJsa.value);
+    formData.append("preventive_pm_jsa", preventiveJsa.value);
   }
 
   //Scope of work
@@ -213,36 +230,41 @@ const submitForm = async () => {
 
   try {
     let res;
-    // Tambah
-    res = await axios.post(ENDPOINTS.addactivityTms, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    snackbarMessage.value = "Add New Activity TMS Success!";
-    snackbarColor.value = "success"; // warna hijau
-
+    if (isEditMode.value) {
+      // Update → sesuai route kamu POST /activity-tms-update/{id}
+      res = await axios.post(
+        `${ENDPOINTS.updateActivityTms}/${activityId}`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+      snackbarMessage.value = "Activity TMS Updated Successfully!";
+    } else {
+      // Tambah
+      res = await axios.post(ENDPOINTS.addactivityTms, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      snackbarMessage.value = "Add New Activity TMS Success!";
+    }
 
     // Redirect setelah sukses (opsional)
 
     isSnackbarTopEndVisible.value = true;
     router.push("/activitytms");
   } catch (error) {
-    // Cek jika ada response dari server
-    if (error.response) {
-      if (error.response.status === 422) {
-        snackbarMessage.value = error.response.data.message;
-        snackbarColor.value = "error"; // warna hijau
-      } else {
-        snackbarMessage.value = `Gagal:  ${error.response.statusText}`;
-      }
-    } else {
-      // Error lain (network, timeout, dll)
-      snackbarMessage.value = "Gagal: Terjadi kesalahan jaringan atau server!";
-    }
-
-    isSnackbarTopEndVisible.value = true;
+    console.error("Gagal kirim data:", error);
   } finally {
     globalLoading?.hide();
   }
+};
+
+const getFileUrl = (path) => {
+  return `http://127.0.0.1:8000/storage/${path}`; // sesuaikan URL file
+};
+
+const getFileName = (path) => {
+  return path.split("/").pop();
 };
 
 onMounted(() => {
@@ -255,7 +277,7 @@ onMounted(() => {
   <div>
     <div class="d-flex flex-wrap justify-space-between gap-4 mb-6">
       <div class="d-flex flex-column justify-center">
-        <h4 class="text-h4 mb-1">Add a new Activity TMS</h4>
+        <h4 class="text-h4 mb-1">Edit Activity TMS</h4>
       </div>
 
       <div class="d-flex gap-4 align-center flex-wrap">
@@ -293,7 +315,7 @@ onMounted(() => {
           </VCardText>
         </VCard>
 
-        <!-- production or safety -->
+        <!-- safety -->
         <VCard class="mb-6" v-if="scopeOfWork == 'safety'">
           <VCardItem>
             <template #title> Scope of Work </template>
@@ -350,15 +372,24 @@ onMounted(() => {
           </VCardItem>
         </VCard>
 
-        <!-- production or safety -->
+        <!-- production -->
         <VCard class="mb-6" v-if="scopeOfWork == 'production'">
           <VCardItem>
             <template #title> Scope of Work </template>
             <div class="d-flex flex-column mt-2">
-              <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
-              <VFileInput v-model="production_scan" label="Pilih file dokumen"
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
+              <VLabel class="mt-2 mb-1">Upload JSA file (Production)</VLabel>
 
+              <!-- Tampilkan file lama jika ada -->
+              <div v-if="production_scan_filename" class="mb-2">
+                <a :href="getFileUrl(production_scan_old)" target="_blank">
+                  {{ getFileName(production_scan_filename) }}
+                </a>
+              </div>
+
+              <!-- File input baru -->
+              <VFileInput v-model="production_scan" label="Pilih file dokumen"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png" prepend-icon="ri-upload-2-line"
+                show-size />
             </div>
             <!-- Checkbox -->
 
@@ -367,7 +398,7 @@ onMounted(() => {
         <!-- 👉 Product Image -->
         <VCard class="mb-6">
           <VCardItem>
-            <template #title> Maintenance Types </template>
+            <template #title> Maintenance Type </template>
 
             <!-- Checkbox -->
             <div class="d-flex flex-column mt-2">
@@ -395,10 +426,11 @@ onMounted(() => {
               <template v-if="selectedMaintenanceTypesJustCleaning.length">
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <DropZone label="BEFORE" v-model="justCleaningBeforeFiles" />
+                    <UpdateDropZone label="BEFORE" v-model="justCleaningBeforeFiles" />
                   </div>
                   <div style="flex: 1">
-                    <DropZone label="AFTER" v-model="justCleaningAfterFiles" />
+                    <UpdateDropZone label="BEFORE" v-model="justCleaningAfterFiles" />
+            
                   </div>
                 </VCardText>
                 <VCardText>
@@ -453,7 +485,7 @@ onMounted(() => {
     </VRow>
 
     <!-- Snackbar -->
-    <VSnackbar v-model="isSnackbarTopEndVisible" :timeout="3000" location="top end" :color="snackbarColor">
+    <VSnackbar v-model="isSnackbarTopEndVisible" :timeout="3000" location="top end" color="success">
       {{ snackbarMessage }}
     </VSnackbar>
   </div>

@@ -119,7 +119,7 @@ function handleEdit(item) {
   activityStore.setCurrentItem(item); // simpan data di store
   console.log("Item yang dipilih:", item);
   console.log("ID yang dipilih:", item.id);
-  router.push(`/activitytms/form?id=${item.id}`);
+  router.push(`/activitytms/edit?id=${item.id}`);
 }
 
 onMounted(() => {

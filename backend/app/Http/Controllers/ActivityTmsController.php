@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityTMS;
 use App\Models\CleaningCritical;
+use App\Models\ItemMachine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -74,7 +75,13 @@ class ActivityTmsController extends Controller
             'jsa_file_just_cleaning' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'jsa_file_replacement_part' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'jsa_file_preventive' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
-
+            //scope of work safety
+            'safety_scan' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
+            'production_scan' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
+            'outgoing'   => 'nullable|numeric',       // karena float bisa dicek pakai numeric
+            'ingoing'    => 'nullable|numeric',
+            'temp'       => 'nullable|numeric',       // bisa float
+            'deviation'  => 'nullable|string|max:255',
             // Foto array
             'cleaning_criticals' => 'nullable|array',
             'cleaning_criticals.*.foto_before' => 'nullable|file|mimes:jpg,jpeg,png',
@@ -103,12 +110,36 @@ class ActivityTmsController extends Controller
         }
 
 
-
         // Simpan file JSA jika ada
         $jsa_cleaning = $request->file('jsa_file_cleaning_criticals')?->store('jsa_files', 'public');
         $jsa_just = $request->file('jsa_file_just_cleaning')?->store('jsa_files', 'public');
         $jsa_replacement = $request->file('jsa_file_replacement_part')?->store('jsa_files', 'public');
         $jsa_preventive = $request->file('jsa_file_preventive')?->store('jsa_files', 'public');
+
+        //get data itemmachine
+        $itemmachine = ItemMachine::where('id', $request->item_machine_id)->first();
+        // default value (biar gak undefined variable)
+        $incoming_rs = $incoming_rt = $incoming_st = null;
+        $outgoing_rs = $outgoing_rt = $outgoing_st = null;
+        $deviation = $temp = null;
+        $safety_scan = null;
+        $production_scan = null;
+
+        if ($itemmachine->scope_of_work == "safety") {
+            $incoming_rs = $request->incoming_rs;
+            $incoming_rt = $request->incoming_rt;
+            $incoming_st = $request->incoming_st;
+            $outgoing_rs = $request->outgoing_rs;
+            $outgoing_rt = $request->outgoing_rt;
+            $outgoing_st = $request->outgoing_st;
+            $deviation = $request->deviation;
+            $temp = $request->temp;
+
+            $safety_scan = $request->file('safety_scan')?->store('safety_scan', 'public');
+        } else if ($itemmachine->scope_of_work == "production") {
+            $production_scan = $request->file('production_scan')?->store('production_scan', 'public');
+
+        }
 
 
 
@@ -120,6 +151,16 @@ class ActivityTmsController extends Controller
             'jsa_file_just_cleaning' => $jsa_just,
             'jsa_file_replacement_part' => $jsa_replacement,
             'jsa_file_preventive' => $jsa_preventive,
+            'incoming_rs' => $incoming_rs,
+            'incoming_rt' => $incoming_rt,
+            'incoming_st' => $incoming_st,
+            'outgoing_rs' => $outgoing_rs,
+            'outgoing_rt' => $outgoing_rt,
+            'outgoing_st' => $outgoing_st,
+            'deviation' => $deviation,
+            'temp' => $temp,
+            'safety_scan' => $safety_scan,
+            'production_scan' => $production_scan,
         ]);
 
         $fotoGroups = [
@@ -220,14 +261,14 @@ class ActivityTmsController extends Controller
 
         foreach ($fotoGroups as $prefix => $relation) {
             foreach (['before', 'after'] as $status) {
-        
+
                 // Kalau field tidak ada di request → skip (tidak hapus, tidak tambah)
                 if (!$request->has("{$prefix}_foto_{$status}")) {
                     continue;
                 }
-        
+
                 $files = $request->file("{$prefix}_foto_{$status}");
-        
+
                 if ($files && count($files) > 0) {
                     // Hapus lama & simpan baru
                     $oldPhotos = $relation->where('status', $status)->get();

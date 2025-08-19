@@ -4,6 +4,7 @@ import { useActivityStore } from "@/stores/useActivityStore";
 import axios from "axios";
 import { onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { VCardItem, VRow } from "vuetify/components";
 
 //get pinia
 const activityStore = useActivityStore();
@@ -52,7 +53,16 @@ const itemMachines = ref([]);
 const totalItemMachines = ref(0);
 const selectedItemMachine = ref(null);
 
-console.log("tester ", currentItem.value);
+//scope of work
+const incomingRs = ref("");
+const incomingRt = ref("");
+const incomingSt = ref("");
+const outgoingRs = ref("");
+const outgoingRt = ref("");
+const outgoingSt = ref("");
+const temp = ref("");
+const deviation = ref("");
+
 if (currentItem.value != null) {
   console.log("date:", currentItem.value);
   location.value = currentItem.value.item_machine.location;
@@ -238,52 +248,97 @@ onMounted(() => {
           <VCardText>
             <VRow>
               <VCol cols="12" md="4">
-                <VSelect
-                  v-model="selectedItemMachine"
-                  :items="itemMachines"
-                  item-title="name"
-                  item-value="id"
-                  placeholder="Item Machine"
-                  label="Item Machine"
-                />
+                <VSelect v-model="selectedItemMachine" :items="itemMachines" item-title="name" item-value="id"
+                  placeholder="Item Machine" label="Item Machine" />
               </VCol>
               <VCol cols="12" md="6">
-                <VTextField
-                  v-model="code"
-                  label="Code"
-                  readonly
-                  placeholder="FXSK123U"
-                />
+                <VTextField v-model="code" label="Code" readonly placeholder="FXSK123U" />
               </VCol>
               <VCol cols="12" md="6">
-                <VTextField
-                  v-model="location"
-                  label="Location"
-                  readonly
-                  placeholder="Tower 1"
-                />
+                <VTextField v-model="location" label="Location" readonly placeholder="Tower 1" />
               </VCol>
 
               <VCol cols="12" md="6">
-                <VTextField
-                  v-model="scopeOfWork"
-                  label="Scope_of_work"
-                  readonly
-                  placeholder="Safety"
-                />
+                <VTextField v-model="scopeOfWork" label="Scope_of_work" readonly placeholder="Safety" />
               </VCol>
 
               <VCol>
-                <AppDateTimePicker
-                  v-model="birthDate"
-                  label="Date"
-                  placeholder="Select Date"
-                />
+                <AppDateTimePicker v-model="birthDate" label="Date" placeholder="Select Date" />
               </VCol>
             </VRow>
           </VCardText>
         </VCard>
 
+        <!-- production or safety -->
+        <VCard class="mb-6" v-if="scopeOfWork == 'safety'">
+          <VCardItem>
+            <template #title> Scope of Work </template>
+            <div class="d-flex flex-column mt-2">
+              <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
+              <VFileInput v-model="cleaningCriticalJsa" label="Pilih file dokumen"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
+
+            </div>
+            <!-- Checkbox -->
+            
+          </VCardItem>
+
+          <VCardItem>
+            <VLabel class="mb-1">Incoming</VLabel>
+            <VRow >
+              <VCol cols="12" md="4">
+                <VTextField v-model="incomingRs" label="Incoming R-S"  placeholder="Incoming R-S" />
+              </VCol>
+              <VCol cols="12" md="4">
+                <VTextField v-model="incomingRt" label="Incoming R-T"  placeholder="Incoming R-T" />
+              </VCol>
+              <VCol cols="12" md="4">
+                <VTextField v-model="incomingSt" label="Incoming S-T"  placeholder="Incoming S-T" />
+              </VCol>
+            </VRow>
+          </VCardItem>
+
+          <VCardItem>
+            <VLabel class="mb-1">Outgoing</VLabel>
+            <VRow >
+              <VCol cols="12" md="4">
+                <VTextField v-model="outgoingRs" label="Outgoing R-S"  placeholder="Outgoing R-S" type="number" />
+              </VCol>
+              <VCol cols="12" md="4">
+                <VTextField v-model="outgoingRt" label="Outgoing R-T"  placeholder="Outgoing R-T" type="number" />
+              </VCol>
+              <VCol cols="12" md="4">
+                <VTextField v-model="outgoingSt" label="Outgoing S-T"  placeholder="Outgoing S-T" type="number"/>
+              </VCol>
+            </VRow>
+          </VCardItem>
+
+          <VCardItem>
+            <VRow class="mt-1">
+              <VCol cols="12" md="6">
+                <VTextField v-model="temp" label="Temp in der C"  placeholder="Temp in der C" />
+              </VCol>
+              <VCol cols="12" md="6">
+                <VTextField v-model="deviation" label="Deviation Status"  placeholder="Deviation Status" />
+              </VCol>
+            </VRow>
+          </VCardItem>
+        </VCard>
+
+        <!-- production or safety -->
+        <VCard class="mb-6" v-if="scopeOfWork == 'production'">
+          <VCardItem>
+            <template #title> Scope of Work </template>
+            <div class="d-flex flex-column mt-2">
+              <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
+              <VFileInput v-model="cleaningCriticalJsa" label="Pilih file dokumen"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
+
+            </div>
+            <!-- Checkbox -->
+
+          </VCardItem>
+        </VCard>
         <!-- 👉 Product Image -->
         <VCard class="mb-6">
           <VCardItem>
@@ -292,51 +347,30 @@ onMounted(() => {
             <!-- Checkbox -->
             <div class="d-flex flex-column mt-2">
               <!-- Cleaning Critical -->
-              <VCheckbox
-                label="Cleaning Critical"
-                value="cleaning_critical"
-                v-model="selectedMaintenanceTypesCleaningCritical"
-              />
+              <VCheckbox label="Cleaning Critical" value="cleaning_critical"
+                v-model="selectedMaintenanceTypesCleaningCritical" />
               <template v-if="selectedMaintenanceTypesCleaningCritical.length">
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <DropZone
-                      label="BEFORE"
-                      v-model="cleaningCriticalBeforeFiles"
-                    />
+                    <DropZone label="BEFORE" v-model="cleaningCriticalBeforeFiles" />
                   </div>
                   <div style="flex: 1">
-                    <DropZone
-                      label="AFTER"
-                      v-model="cleaningCriticalAfterFiles"
-                    />
+                    <DropZone label="AFTER" v-model="cleaningCriticalAfterFiles" />
                   </div>
                 </VCardText>
                 <VCardText>
                   <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
-                  <VFileInput
-                    v-model="cleaningCriticalJsa"
-                    label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                    prepend-icon="ri-upload-2-line"
-                    show-size
-                  />
+                  <VFileInput v-model="cleaningCriticalJsa" label="Pilih file dokumen"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
                 </VCardText>
               </template>
 
               <!-- Just Cleaning -->
-              <VCheckbox
-                label="Just Cleaning"
-                value="just_cleaning"
-                v-model="selectedMaintenanceTypesJustCleaning"
-              />
+              <VCheckbox label="Just Cleaning" value="just_cleaning" v-model="selectedMaintenanceTypesJustCleaning" />
               <template v-if="selectedMaintenanceTypesJustCleaning.length">
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <DropZone
-                      label="BEFORE"
-                      v-model="justCleaningBeforeFiles"
-                    />
+                    <DropZone label="BEFORE" v-model="justCleaningBeforeFiles" />
                   </div>
                   <div style="flex: 1">
                     <DropZone label="AFTER" v-model="justCleaningAfterFiles" />
@@ -344,62 +378,36 @@ onMounted(() => {
                 </VCardText>
                 <VCardText>
                   <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
-                  <VFileInput
-                    v-model="justCleaningJsa"
-                    label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                    prepend-icon="ri-upload-2-line"
-                    show-size
-                  />
+                  <VFileInput v-model="justCleaningJsa" label="Pilih file dokumen"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
                 </VCardText>
               </template>
 
               <!-- Replacement Part -->
-              <VCheckbox
-                label="Replacement Part"
-                value="replacement_part"
-                v-model="selectedMaintenanceTypesReplacementPart"
-              />
+              <VCheckbox label="Replacement Part" value="replacement_part"
+                v-model="selectedMaintenanceTypesReplacementPart" />
               <template v-if="selectedMaintenanceTypesReplacementPart.length">
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <DropZone
-                      label="BEFORE"
-                      v-model="replacementPartBeforeFiles"
-                    />
+                    <DropZone label="BEFORE" v-model="replacementPartBeforeFiles" />
                   </div>
                   <div style="flex: 1">
-                    <DropZone
-                      label="AFTER"
-                      v-model="replacementPartAfterFiles"
-                    />
+                    <DropZone label="AFTER" v-model="replacementPartAfterFiles" />
                   </div>
                 </VCardText>
                 <VCardText>
                   <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
-                  <VFileInput
-                    v-model="replacementJsa"
-                    label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                    prepend-icon="ri-upload-2-line"
-                    show-size
-                  />
+                  <VFileInput v-model="replacementJsa" label="Pilih file dokumen"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
                 </VCardText>
               </template>
 
               <!-- Preventive PM -->
-              <VCheckbox
-                label="Preventive PM"
-                value="preventive_pm"
-                v-model="selectedMaintenanceTypesPreventivePM"
-              />
+              <VCheckbox label="Preventive PM" value="preventive_pm" v-model="selectedMaintenanceTypesPreventivePM" />
               <template v-if="selectedMaintenanceTypesPreventivePM.length">
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <DropZone
-                      label="BEFORE"
-                      v-model="preventivePmBeforeFiles"
-                    />
+                    <DropZone label="BEFORE" v-model="preventivePmBeforeFiles" />
                   </div>
                   <div style="flex: 1">
                     <DropZone label="AFTER" v-model="preventivePmAfterFiles" />
@@ -407,13 +415,8 @@ onMounted(() => {
                 </VCardText>
                 <VCardText>
                   <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
-                  <VFileInput
-                    v-model="preventiveJsa"
-                    label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                    prepend-icon="ri-upload-2-line"
-                    show-size
-                  />
+                  <VFileInput v-model="preventiveJsa" label="Pilih file dokumen"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
                 </VCardText>
               </template>
             </div>
@@ -425,12 +428,7 @@ onMounted(() => {
     </VRow>
 
     <!-- Snackbar -->
-    <VSnackbar
-      v-model="isSnackbarTopEndVisible"
-      :timeout="3000"
-      location="top end"
-      color="success"
-    >
+    <VSnackbar v-model="isSnackbarTopEndVisible" :timeout="3000" location="top end" color="success">
       {{ snackbarMessage }}
     </VSnackbar>
   </div>
@@ -445,6 +443,7 @@ onMounted(() => {
 
 <style lang="scss">
 .inventory-card {
+
   .v-radio-group,
   .v-checkbox {
     .v-selection-control {

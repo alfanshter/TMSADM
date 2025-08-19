@@ -145,11 +145,9 @@ class ActivityTmsController extends Controller
 
             $safety_scan = $request->file('safety_scan')?->store('safety_scan', 'public');
             $safety_scan_filename = $request->file('safety_scan')?->getClientOriginalName();
-
         } else if ($itemmachine->scope_of_work == "production") {
             $production_scan = $request->file('production_scan')?->store('production_scan', 'public');
             $production_scan_filename = $request->file('production_scan')?->getClientOriginalName();
-
         }
 
 
@@ -209,8 +207,14 @@ class ActivityTmsController extends Controller
 
     public function updateActivityTms(Request $request, $id)
     {
-        $activity = ActivityTMS::findOrFail($id);
 
+        $activity = ActivityTMS::with([
+            'itemMachine',
+            'cleaningCriticals',
+            'justCleaning',
+            'preventive',
+            'replacementPart'
+        ])->findOrFail($id);
 
         $validator = Validator::make($request->all(), [
             'item_machine_id' => 'required|exists:item_machines,id',
@@ -238,6 +242,13 @@ class ActivityTmsController extends Controller
             'replacement_part' => 'nullable|array',
             'replacement_part.*.foto_before' => 'nullable|file|mimes:jpg,jpeg,png',
             'replacement_part.*.foto_after' => 'nullable|file|mimes:jpg,jpeg,png',
+
+            //scope of work safety
+            'safety_scan' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
+            'production_scan' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
+            'temp'       => 'nullable|numeric',       // bisa float
+            'deviation'  => 'nullable|string|max:255',
+
         ]);
 
         if ($validator->fails()) {
@@ -254,6 +265,53 @@ class ActivityTmsController extends Controller
             'jsa_file_replacement_part',
             'jsa_file_preventive'
         ];
+
+        $production_scan = $activity->production_scan; // default lama
+        $production_scan_filename = $activity->production_scan_filename;
+
+        $safety_scan = $activity->safety_scan;
+        $safety_scan_filename = $activity->safety_scan_filename;
+
+
+        if ($activity->itemMachine->scope_of_work == "safety") {
+            $incoming_rs = $request->incoming_rs;
+            $incoming_rt = $request->incoming_rt;
+            $incoming_st = $request->incoming_st;
+            $outgoing_rs = $request->outgoing_rs;
+            $outgoing_rt = $request->outgoing_rt;
+            $outgoing_st = $request->outgoing_st;
+            $deviation = $request->deviation;
+            $temp = $request->temp;
+
+            if ($request->hasFile('safety_scan')) {
+                // hapus file lama kalau ada
+                if ($activity->safety_scan) {
+                    Storage::disk('public')->delete($activity->safety_scan);
+                }
+
+                $safety_scan = $request->file('safety_scan')->store('safety_scan', 'public');
+                $safety_scan_filename = $request->file('safety_scan')->getClientOriginalName();
+            }
+        } else if ($activity->itemMachine->scope_of_work == "production") {
+            
+            if ($request->hasFile('production_scan')) {
+
+                // hapus file lama kalau ada
+                if ($activity->production_scan) {
+                    Storage::disk('public')->delete($activity->production_scan);
+                }
+
+                $production_scan = $request->file('production_scan')->store('production_scan', 'public');
+                $production_scan_filename = $request->file('production_scan')->getClientOriginalName();
+            }
+        }
+
+        // lalu update ke model
+        $activity->production_scan = $production_scan;
+        $activity->production_scan_filename = $production_scan_filename;
+        $activity->safety_scan = $safety_scan;
+        $activity->safety_scan_filename = $safety_scan_filename;
+
 
         foreach ($jsaFiles as $field) {
             if ($request->hasFile($field)) {

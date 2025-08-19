@@ -15,10 +15,13 @@ return new class extends Migration
             $table->id();
             $table->date('date');
             $table->foreignId('item_machine_id')->constrained('item_machines')->onDelete('cascade');
-            $table->string('jsa_file_cleaning_criticals')->nullable();
+            $table->string('jsa_filename_cleaning_criticals')->nullable();
             $table->string('jsa_file_just_cleaning')->nullable();
+            $table->string('jsa_filename_just_cleaning')->nullable();
             $table->string('jsa_file_replacement_part')->nullable();
+            $table->string('jsa_filename_replacement_part')->nullable();
             $table->string('jsa_file_preventive')->nullable();
+            $table->string('jsa_filename_preventive')->nullable();
             $table->float('incoming_rs')->nullable();
             $table->float('incoming_rt')->nullable();
             $table->float('incoming_st')->nullable();
@@ -28,7 +31,9 @@ return new class extends Migration
             $table->string('temp')->nullable();
             $table->string('deviation')->nullable();
             $table->string('production_scan')->nullable();
+            $table->string('production_scan_filename')->nullable();
             $table->string('safety_scan')->nullable();
+            $table->string('safety_scan_filename')->nullable();
             $table->timestamps();
         });
     }

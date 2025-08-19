@@ -109,12 +109,18 @@ class ActivityTmsController extends Controller
             ], 422);
         }
 
-
-        // Simpan file JSA jika ada
+        // Simpan file JSA jika ada, sekaligus simpan nama file asli
         $jsa_cleaning = $request->file('jsa_file_cleaning_criticals')?->store('jsa_files', 'public');
+        $jsa_cleaning_name = $request->file('jsa_file_cleaning_criticals')?->getClientOriginalName();
+
         $jsa_just = $request->file('jsa_file_just_cleaning')?->store('jsa_files', 'public');
+        $jsa_just_name = $request->file('jsa_file_just_cleaning')?->getClientOriginalName();
+
         $jsa_replacement = $request->file('jsa_file_replacement_part')?->store('jsa_files', 'public');
+        $jsa_replacement_name = $request->file('jsa_file_replacement_part')?->getClientOriginalName();
+
         $jsa_preventive = $request->file('jsa_file_preventive')?->store('jsa_files', 'public');
+        $jsa_preventive_name = $request->file('jsa_file_preventive')?->getClientOriginalName();
 
         //get data itemmachine
         $itemmachine = ItemMachine::where('id', $request->item_machine_id)->first();
@@ -123,7 +129,9 @@ class ActivityTmsController extends Controller
         $outgoing_rs = $outgoing_rt = $outgoing_st = null;
         $deviation = $temp = null;
         $safety_scan = null;
+        $safety_scan_filename = null;
         $production_scan = null;
+        $production_scan_filename = null;
 
         if ($itemmachine->scope_of_work == "safety") {
             $incoming_rs = $request->incoming_rs;
@@ -136,8 +144,11 @@ class ActivityTmsController extends Controller
             $temp = $request->temp;
 
             $safety_scan = $request->file('safety_scan')?->store('safety_scan', 'public');
+            $safety_scan_filename = $request->file('safety_scan')?->getClientOriginalName();
+
         } else if ($itemmachine->scope_of_work == "production") {
             $production_scan = $request->file('production_scan')?->store('production_scan', 'public');
+            $production_scan_filename = $request->file('production_scan')?->getClientOriginalName();
 
         }
 
@@ -148,9 +159,13 @@ class ActivityTmsController extends Controller
             'item_machine_id' => $request->item_machine_id,
             'date' => $request->date,
             'jsa_file_cleaning_criticals' => $jsa_cleaning,
+            'jsa_filename_cleaning_criticals' => $jsa_cleaning_name,
             'jsa_file_just_cleaning' => $jsa_just,
+            'jsa_filename_just_cleaning' => $jsa_just_name,
             'jsa_file_replacement_part' => $jsa_replacement,
+            'jsa_filename_replacement_part' => $jsa_replacement_name,
             'jsa_file_preventive' => $jsa_preventive,
+            'jsa_filename_preventive' => $jsa_preventive_name,
             'incoming_rs' => $incoming_rs,
             'incoming_rt' => $incoming_rt,
             'incoming_st' => $incoming_st,
@@ -161,6 +176,8 @@ class ActivityTmsController extends Controller
             'temp' => $temp,
             'safety_scan' => $safety_scan,
             'production_scan' => $production_scan,
+            'safety_scan_filename' => $safety_scan_filename,
+            'production_scan_filename' => $production_scan_filename,
         ]);
 
         $fotoGroups = [

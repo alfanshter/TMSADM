@@ -44,6 +44,9 @@ const cleaningCriticalJsa = ref(null);
 const justCleaningJsa = ref(null);
 const replacementJsa = ref(null);
 const preventiveJsa = ref(null);
+const safety_scan = ref(null);
+const production_scan = ref(null);
+
 
 // Snackbar
 const isSnackbarTopEndVisible = ref(false);
@@ -190,6 +193,23 @@ const submitForm = async () => {
     formData.append("preventive_pm_jsa", preventiveJsa.value);
   }
 
+  //Scope of work
+  if (safety_scan.value) {
+    formData.append("safety_scan", safety_scan.value);
+  }
+  if (production_scan.value) {
+    formData.append("production_scan", production_scan.value);
+  }
+
+  formData.append("incoming_rs", incomingRs.value ?? "");
+  formData.append("incoming_rt", incomingRt.value ?? "");
+  formData.append("incoming_st", incomingSt.value ?? "");
+  formData.append("outgoing_rs", outgoingRs.value ?? "");
+  formData.append("outgoing_rt", outgoingRt.value ?? "");
+  formData.append("outgoing_st", outgoingSt.value ?? "");
+  formData.append("temp", temp.value ?? "");
+  formData.append("deviation", deviation.value ?? "");
+
   try {
     let res;
     if (isEditMode.value) {
@@ -275,8 +295,9 @@ onMounted(() => {
             <template #title> Scope of Work </template>
             <div class="d-flex flex-column mt-2">
               <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
-              <VFileInput v-model="cleaningCriticalJsa" label="Pilih file dokumen"
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
+              <VFileInput v-model="safety_scan" label="Pilih file dokumen"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp"
+              prepend-icon="ri-upload-2-line" show-size />
 
             </div>
             <!-- Checkbox -->
@@ -287,13 +308,13 @@ onMounted(() => {
             <VLabel class="mb-1">Incoming</VLabel>
             <VRow >
               <VCol cols="12" md="4">
-                <VTextField v-model="incomingRs" label="Incoming R-S"  placeholder="Incoming R-S" />
+                <VTextField v-model="incomingRs" label="Incoming R-S"  placeholder="Incoming R-S" type="number" />
               </VCol>
               <VCol cols="12" md="4">
-                <VTextField v-model="incomingRt" label="Incoming R-T"  placeholder="Incoming R-T" />
+                <VTextField v-model="incomingRt" label="Incoming R-T"  placeholder="Incoming R-T" type="number" />
               </VCol>
               <VCol cols="12" md="4">
-                <VTextField v-model="incomingSt" label="Incoming S-T"  placeholder="Incoming S-T" />
+                <VTextField v-model="incomingSt" label="Incoming S-T"  placeholder="Incoming S-T" type="number" />
               </VCol>
             </VRow>
           </VCardItem>
@@ -316,7 +337,7 @@ onMounted(() => {
           <VCardItem>
             <VRow class="mt-1">
               <VCol cols="12" md="6">
-                <VTextField v-model="temp" label="Temp in der C"  placeholder="Temp in der C" />
+                <VTextField v-model="temp" label="Temp in der C"  placeholder="Temp in der C" type="number" />
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField v-model="deviation" label="Deviation Status"  placeholder="Deviation Status" />
@@ -331,7 +352,7 @@ onMounted(() => {
             <template #title> Scope of Work </template>
             <div class="d-flex flex-column mt-2">
               <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
-              <VFileInput v-model="cleaningCriticalJsa" label="Pilih file dokumen"
+              <VFileInput v-model="production_scan" label="Pilih file dokumen"
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
 
             </div>

@@ -255,7 +255,7 @@ class ActivityTmsController extends Controller
 
 
         // -----------------------------
-        // BEFORE
+        // PREVENTIVE BEFORE
         // -----------------------------
         // Ambil array ID lama (foto yg dipertahankan)
         $preventiveBeforeOld = $request->input('preventive_foto_before_old', []);
@@ -269,7 +269,6 @@ class ActivityTmsController extends Controller
                 $photo->delete();
             });
 
-      
         // Step 2: Simpan foto baru
         if ($request->hasFile('preventive_foto_before_new')) {
             foreach ($request->file('preventive_foto_before_new') as $file) {
@@ -277,6 +276,31 @@ class ActivityTmsController extends Controller
 
                 $activity->preventive()->create([
                     'status' => 'before',
+                    'foto' => $path,
+                ]);
+            }
+        }
+        // -----------------------------
+        // PREVENTIVE AFTER
+        // -----------------------------
+        // Ambil array ID lama (foto yg dipertahankan)
+        $preventiveAfterOld = $request->input('preventive_foto_after_old', []);
+        // Step 1: Hapus foto lama yang tidak ada di "old"
+        $activity->preventive()
+            ->where('status', 'after')
+            ->whereNotIn('id', $preventiveAfterOld)
+            ->get()
+            ->each(function ($photo) {
+                Storage::disk('public')->delete($photo->foto);
+                $photo->delete();
+            });
+        // Step 2: Simpan foto baru
+        if ($request->hasFile('preventive_foto_after_new')) {
+            foreach ($request->file('preventive_foto_after_new') as $file) {
+                $path = $file->store('preventive_after', 'public');
+
+                $activity->preventive()->create([
+                    'status' => 'after',
                     'foto' => $path,
                 ]);
             }

@@ -272,7 +272,7 @@ class ActivityTmsController extends Controller
         // Step 2: Simpan foto baru
         if ($request->hasFile('preventive_foto_before_new')) {
             foreach ($request->file('preventive_foto_before_new') as $file) {
-                $path = $file->store('preventive_before', 'public');
+                $path = $file->store('preventive', 'public');
 
                 $activity->preventive()->create([
                     'status' => 'before',
@@ -297,10 +297,166 @@ class ActivityTmsController extends Controller
         // Step 2: Simpan foto baru
         if ($request->hasFile('preventive_foto_after_new')) {
             foreach ($request->file('preventive_foto_after_new') as $file) {
-                $path = $file->store('preventive_after', 'public');
+                $path = $file->store('preventive', 'public');
 
                 $activity->preventive()->create([
                     'status' => 'after',
+                    'foto' => $path,
+                ]);
+            }
+        }
+
+         // -----------------------------
+        // REPLACEMENT PART AFTER
+        // -----------------------------
+        // Ambil array ID lama (foto yg dipertahankan)
+        $replacementPartAfterOld = $request->input('replacement_part_foto_after_old', []);
+        // Step 1: Hapus foto lama yang tidak ada di "old"
+        $activity->replacementPart()
+            ->where('status', 'after')
+            ->whereNotIn('id', $replacementPartAfterOld)
+            ->get()
+            ->each(function ($photo) {
+                Storage::disk('public')->delete($photo->foto);
+                $photo->delete();
+            });
+        // Step 2: Simpan foto baru
+        if ($request->hasFile('replacement_part_foto_after_new')) {
+            foreach ($request->file('replacement_part_foto_after_new') as $file) {
+                $path = $file->store('replacement_part', 'public');
+
+                $activity->replacementPart()->create([
+                    'status' => 'after',
+                    'foto' => $path,
+                ]);
+            }
+        }
+
+         // -----------------------------
+        // REPLACEMENT PART BEFORE
+        // -----------------------------
+        // Ambil array ID lama (foto yg dipertahankan)
+        $replacementPartBeforeOld = $request->input('replacement_part_foto_before_old', []);
+        // Step 1: Hapus foto lama yang tidak ada di "old"
+        $activity->replacementPart()
+            ->where('status', 'before')
+            ->whereNotIn('id', $replacementPartBeforeOld)
+            ->get()
+            ->each(function ($photo) {
+                Storage::disk('public')->delete($photo->foto);
+                $photo->delete();
+            });
+        // Step 2: Simpan foto baru
+        if ($request->hasFile('replacement_part_foto_before_new')) {
+            foreach ($request->file('replacement_part_foto_before_new') as $file) {
+                $path = $file->store('replacement_part', 'public');
+
+                $activity->replacementPart()->create([
+                    'status' => 'before',
+                    'foto' => $path,
+                ]);
+            }
+        }
+
+         // -----------------------------
+        // Just Cleaning BEFORE
+        // -----------------------------
+        // Ambil array ID lama (foto yg dipertahankan)
+        $justCleaningBeforeOld = $request->input('just_cleaning_foto_before_old', []);
+        // Step 1: Hapus foto lama yang tidak ada di "old"
+        $activity->justCleaning()
+            ->where('status', 'before')
+            ->whereNotIn('id', $justCleaningBeforeOld)
+            ->get()
+            ->each(function ($photo) {
+                Storage::disk('public')->delete($photo->foto);
+                $photo->delete();
+            });
+        // Step 2: Simpan foto baru
+        if ($request->hasFile('just_cleaning_foto_before_new')) {
+            foreach ($request->file('just_cleaning_foto_before_new') as $file) {
+                $path = $file->store('just_cleaning', 'public');
+
+                $activity->justCleaning()->create([
+                    'status' => 'before',
+                    'foto' => $path,
+                ]);
+            }
+        }
+
+         // -----------------------------
+        // Just Cleaning AFTER
+        // -----------------------------
+        // Ambil array ID lama (foto yg dipertahankan)
+        $justCleaningAfterOld = $request->input('just_cleaning_foto_after_old', []);
+        // Step 1: Hapus foto lama yang tidak ada di "old"
+        $activity->justCleaning()
+            ->where('status', 'after')
+            ->whereNotIn('id', $justCleaningAfterOld)
+            ->get()
+            ->each(function ($photo) {
+                Storage::disk('public')->delete($photo->foto);
+                $photo->delete();
+            });
+        // Step 2: Simpan foto baru
+        if ($request->hasFile('just_cleaning_foto_after_new')) {
+            foreach ($request->file('just_cleaning_foto_after_new') as $file) {
+                $path = $file->store('just_cleaning', 'public');
+
+                $activity->justCleaning()->create([
+                    'status' => 'after',
+                    'foto' => $path,
+                ]);
+            }
+        }
+
+         // -----------------------------
+        // Cleaning Cricital AFTER
+        // -----------------------------
+        // Ambil array ID lama (foto yg dipertahankan)
+        $cleaningCricitalAfterOld = $request->input('cleaning_cricital_foto_after_old', []);
+        // Step 1: Hapus foto lama yang tidak ada di "old"
+        $activity->cleaningCriticals()
+            ->where('status', 'after')
+            ->whereNotIn('id', $cleaningCricitalAfterOld)
+            ->get()
+            ->each(function ($photo) {
+                Storage::disk('public')->delete($photo->foto);
+                $photo->delete();
+            });
+        // Step 2: Simpan foto baru
+        if ($request->hasFile('cleaning_cricital_foto_after_new')) {
+            foreach ($request->file('cleaning_cricital_foto_after_new') as $file) {
+                $path = $file->store('cleaning_cricital', 'public');
+
+                $activity->cleaningCriticals()->create([
+                    'status' => 'after',
+                    'foto' => $path,
+                ]);
+            }
+        }
+
+         // -----------------------------
+        // Cleaning Cricital BEFORE
+        // -----------------------------
+        // Ambil array ID lama (foto yg dipertahankan)
+        $cleaningCricitalBeforeOld = $request->input('cleaning_cricital_foto_before_old', []);
+        // Step 1: Hapus foto lama yang tidak ada di "old"
+        $activity->cleaningCriticals()
+            ->where('status', 'before')
+            ->whereNotIn('id', $cleaningCricitalBeforeOld)
+            ->get()
+            ->each(function ($photo) {
+                Storage::disk('public')->delete($photo->foto);
+                $photo->delete();
+            });
+        // Step 2: Simpan foto baru
+        if ($request->hasFile('cleaning_cricital_foto_before_new')) {
+            foreach ($request->file('cleaning_cricital_foto_before_new') as $file) {
+                $path = $file->store('cleaning_cricital', 'public');
+
+                $activity->cleaningCriticals()->create([
+                    'status' => 'before',
                     'foto' => $path,
                 ]);
             }

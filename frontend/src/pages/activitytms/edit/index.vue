@@ -41,11 +41,30 @@ const replacementPartBeforeFiles = ref([]);
 const replacementPartAfterFiles = ref([]);
 const preventivePmBeforeFiles = ref([]);
 const preventivePmAfterFiles = ref([]);
+//cleaning critical JSA
 const cleaningCriticalJsa = ref(null);
+const cleaningCriticalJsa_old = ref(null);
+const cleaningCriticalJsa_filename = ref(null);
+//Just Cleaning
 const justCleaningJsa = ref(null);
+const justCleaningJsa_old = ref(null);
+const justCleaningJsa_filename = ref(null);
+//replacement
 const replacementJsa = ref(null);
+const replacementJsa_old = ref(null);
+const replacementJsa_filename = ref(null);
+
+//preventive
 const preventiveJsa = ref(null);
+const preventiveJsa_old = ref(null);
+const preventiveJsa_filename = ref(null);
+
+//safety
 const safety_scan = ref(null);
+const safety_old = ref(null);
+const safety_filename = ref(null);
+
+//production scan
 const production_scan = ref(null);
 const production_scan_filename = ref(null); // dari backend
 const production_scan_old = ref(null); // dari backend
@@ -121,22 +140,65 @@ const fetchActivityDetail = async () => {
     outgoingSt.value = data.outgoing_st ?? "";
     temp.value = data.temp ?? "";
     deviation.value = data.deviation ?? "";
+
     production_scan_filename.value = data.production_scan_filename ?? "";
     production_scan_old.value = data.production_scan ?? "";
 
-    
+    //cleaning critical 
+    cleaningCriticalJsa_filename.value = data.jsa_filename_cleaning_criticals ?? "";
+    cleaningCriticalJsa_old.value = data.jsa_file_cleaning_criticals ?? "";
+    //just cleaning
+    justCleaningJsa_filename.value = data.jsa_filename_just_cleaning ?? "";
+    justCleaningJsa_old.value = data.jsa_file_just_cleaning ?? "";
+    //replacement
+    replacementJsa_filename.value = data.jsa_filename_replacement_part ?? "";
+    replacementJsa_old.value = data.jsa_file_replacement_part ?? "";
+    //preventive
+    preventiveJsa_filename.value = data.jsa_filename_preventive ?? "";
+    preventiveJsa_old.value = data.jsa_file_preventive ?? "";
+
+
     if (data.cleaning_criticals && data.cleaning_criticals.length > 0) {
-      justCleaningAfterFiles.value = data.cleaning_criticals;
+      cleaningCriticalBeforeFiles.value = data.cleaning_criticals.filter(
+        (item) => item.status === "before"
+      );
+
+      cleaningCriticalAfterFiles.value = data.cleaning_criticals.filter(
+        (item) => item.status === "after"
+      );
       selectedMaintenanceTypesCleaningCritical.value = ["cleaning_critical"];
     }
     if (data.just_cleaning && data.just_cleaning.length > 0) {
+
+      justCleaningBeforeFiles.value = data.just_cleaning.filter(
+        (item) => item.status === "before"
+      );
+
+      justCleaningAfterFiles.value = data.just_cleaning.filter(
+        (item) => item.status === "after"
+      );
       selectedMaintenanceTypesJustCleaning.value = ["just_cleaning"];
     }
 
     if (data.replacement_part && data.replacement_part.length > 0) {
+      replacementPartBeforeFiles.value = data.replacement_part.filter(
+        (item) => item.status === "before"
+      );
+
+      replacementPartAfterFiles.value = data.replacement_part.filter(
+        (item) => item.status === "after"
+      );
       selectedMaintenanceTypesReplacementPart.value = ["replacement_part"];
     }
-    if (data.preventive_pm && data.preventive_pm.lenght > 0) {
+    
+    if (data.preventive && data.preventive.length > 0) {
+      preventivePmBeforeFiles.value = data.preventive.filter(
+        (item) => item.status === "before"
+      );
+
+      preventivePmAfterFiles.value = data.preventive.filter(
+        (item) => item.status === "after"
+      );
       selectedMaintenanceTypesPreventivePM.value = ["preventive_pm"];
     }
   } catch (error) {
@@ -170,7 +232,7 @@ const submitForm = async () => {
   formData.append("location", location.value);
   formData.append("scope_of_work", scopeOfWork.value);
   formData.append("date", birthDate.value);
-
+  
   // Foto
   cleaningCriticalBeforeFiles.value.forEach((file) => {
     formData.append("cleaning_criticals_foto_before[]", file);
@@ -199,16 +261,16 @@ const submitForm = async () => {
 
   // JSA
   if (replacementJsa.value) {
-    formData.append("replacement_jsa", replacementJsa.value);
+    formData.append("jsa_file_replacement_part", replacementJsa.value);
   }
   if (cleaningCriticalJsa.value) {
-    formData.append("cleaning_critical_jsa", cleaningCriticalJsa.value);
+    formData.append("jsa_file_cleaning_criticals", cleaningCriticalJsa.value);
   }
   if (justCleaningJsa.value) {
-    formData.append("just_cleaning_jsa", justCleaningJsa.value);
+    formData.append("jsa_file_just_cleaning", justCleaningJsa.value);
   }
   if (preventiveJsa.value) {
-    formData.append("preventive_pm_jsa", preventiveJsa.value);
+    formData.append("jsa_file_preventive", preventiveJsa.value);
   }
 
   //Scope of work
@@ -408,16 +470,26 @@ onMounted(() => {
               <template v-if="selectedMaintenanceTypesCleaningCritical.length">
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <DropZone label="BEFORE" v-model="cleaningCriticalBeforeFiles" />
+                    <UpdateDropZone label="BEFORE" v-model="cleaningCriticalBeforeFiles" />
                   </div>
                   <div style="flex: 1">
-                    <DropZone label="AFTER" v-model="cleaningCriticalAfterFiles" />
+                    <UpdateDropZone label="AFTER" v-model="cleaningCriticalAfterFiles" />
                   </div>
                 </VCardText>
                 <VCardText>
-                  <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
+                  <VLabel class="mt-2 mb-1">Upload JSA file (Cleaning Critical)</VLabel>
+
+                  <!-- Tampilkan file lama jika ada -->
+                  <div v-if="cleaningCriticalJsa_filename" class="mb-2">
+                    <a :href="getFileUrl(cleaningCriticalJsa_old)" target="_blank">
+                      {{ getFileName(cleaningCriticalJsa_filename) }}
+                    </a>
+                  </div>
+
+                  <!-- File input baru -->
                   <VFileInput v-model="cleaningCriticalJsa" label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png" prepend-icon="ri-upload-2-line"
+                    show-size />
                 </VCardText>
               </template>
 
@@ -429,12 +501,20 @@ onMounted(() => {
                     <UpdateDropZone label="BEFORE" v-model="justCleaningBeforeFiles" />
                   </div>
                   <div style="flex: 1">
-                    <UpdateDropZone label="BEFORE" v-model="justCleaningAfterFiles" />
-            
+                    <UpdateDropZone label="AFTER" v-model="justCleaningAfterFiles" />
                   </div>
                 </VCardText>
                 <VCardText>
                   <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
+
+                  <!-- Tampilkan file lama jika ada -->
+                  <div v-if="justCleaningJsa_filename" class="mb-2">
+                    <a :href="getFileUrl(justCleaningJsa_old)" target="_blank">
+                      {{ getFileName(justCleaningJsa_filename) }}
+                    </a>
+                  </div>
+
+
                   <VFileInput v-model="justCleaningJsa" label="Pilih file dokumen"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
                 </VCardText>
@@ -446,14 +526,20 @@ onMounted(() => {
               <template v-if="selectedMaintenanceTypesReplacementPart.length">
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <DropZone label="BEFORE" v-model="replacementPartBeforeFiles" />
+                    <UpdateDropZone label="BEFORE" v-model="replacementPartBeforeFiles" />
                   </div>
                   <div style="flex: 1">
-                    <DropZone label="AFTER" v-model="replacementPartAfterFiles" />
+                    <UpdateDropZone label="AFTER" v-model="replacementPartAfterFiles" />
                   </div>
                 </VCardText>
                 <VCardText>
                   <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
+                  <!-- Tampilkan file lama jika ada -->
+                  <div v-if="replacementJsa_filename" class="mb-2">
+                    <a :href="getFileUrl(replacementJsa_old)" target="_blank">
+                      {{ getFileName(replacementJsa_filename) }}
+                    </a>
+                  </div>
                   <VFileInput v-model="replacementJsa" label="Pilih file dokumen"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
                 </VCardText>
@@ -464,14 +550,20 @@ onMounted(() => {
               <template v-if="selectedMaintenanceTypesPreventivePM.length">
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <DropZone label="BEFORE" v-model="preventivePmBeforeFiles" />
+                    <UpdateDropZone label="BEFORE" v-model="preventivePmBeforeFiles" />
                   </div>
                   <div style="flex: 1">
-                    <DropZone label="AFTER" v-model="preventivePmAfterFiles" />
+                    <UpdateDropZone label="AFTER" v-model="preventivePmAfterFiles" />
                   </div>
                 </VCardText>
                 <VCardText>
                   <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
+                  <div v-if="preventiveJsa_filename" class="mb-2">
+                    <a :href="getFileUrl(preventiveJsa_old)" target="_blank">
+                      {{ getFileName(preventiveJsa_filename) }}
+                    </a>
+                  </div>
+
                   <VFileInput v-model="preventiveJsa" label="Pilih file dokumen"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
                 </VCardText>

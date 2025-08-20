@@ -462,11 +462,6 @@ class ActivityTmsController extends Controller
             }
         }
 
-        return response()->json([
-            'status' => 1,
-            'message' => 1,
-        ], 422);
-
         // --- Update JSA Files ---
         $jsaFiles = [
             'jsa_file_cleaning_criticals',
@@ -514,39 +509,6 @@ class ActivityTmsController extends Controller
                 }
                 $activity->production_scan = $request->file('production_scan')->store('production_scan', 'public');
                 $activity->production_scan_filename = $request->file('production_scan')->getClientOriginalName();
-            }
-        }
-
-        // --- Update foto relasi ---
-        $fotoGroups = [
-            'cleaning_criticals' => $activity->cleaningCriticals(),
-            'just_cleaning' => $activity->justCleaning(),
-            'preventive' => $activity->preventive(),
-            'replacement_part' => $activity->replacementPart(),
-        ];
-
-        foreach ($fotoGroups as $prefix => $relation) {
-            foreach (['before', 'after'] as $status) {
-                $field = "{$prefix}_foto_{$status}";
-
-                if ($request->hasFile($field)) {
-                    // Hapus lama
-                    // $oldPhotos = $relation->where('status', $status)->get();
-                    // foreach ($oldPhotos as $photo) {
-                    //     Storage::disk('public')->delete($photo->foto);
-                    //     $photo->delete();
-                    // }
-
-                    // Simpan baru
-                    foreach ($request->file($field) as $file) {
-                        $path = $file->store('photos', 'public');
-                        $relation->create([
-                            'foto' => $path,
-                            'status' => $status,
-                        ]);
-                    }
-                }
-                // ❌ Tidak ada else → biarkan foto lama tetap ada
             }
         }
 

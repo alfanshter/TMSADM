@@ -16,6 +16,7 @@ return new class extends Migration
             $table->date('date');
             $table->foreignId('item_machine_id')->constrained('item_machines')->onDelete('cascade');
             $table->string('jsa_filename_cleaning_criticals')->nullable();
+            $table->string('jsa_file_cleaning_criticals')->nullable();
             $table->string('jsa_file_just_cleaning')->nullable();
             $table->string('jsa_filename_just_cleaning')->nullable();
             $table->string('jsa_file_replacement_part')->nullable();

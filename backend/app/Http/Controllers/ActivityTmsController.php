@@ -207,7 +207,6 @@ class ActivityTmsController extends Controller
 
     public function updateActivityTms(Request $request, $id)
     {
-
         $activity = ActivityTMS::with([
             'itemMachine',
             'cleaningCriticals',
@@ -215,104 +214,52 @@ class ActivityTmsController extends Controller
             'preventive',
             'replacementPart'
         ])->findOrFail($id);
-
+    
         $validator = Validator::make($request->all(), [
             'item_machine_id' => 'required|exists:item_machines,id',
             'date' => 'required|date',
-
+    
             // JSA file uploads
             'jsa_file_cleaning_criticals' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'jsa_file_just_cleaning' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'jsa_file_replacement_part' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'jsa_file_preventive' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
-
-            // Foto array
-            'cleaning_criticals' => 'nullable|array',
-            'cleaning_criticals.*.foto_before' => 'nullable|file|mimes:jpg,jpeg,png',
-            'cleaning_criticals.*.foto_after' => 'nullable|file|mimes:jpg,jpeg,png',
-
-            'just_cleaning' => 'nullable|array',
-            'just_cleaning.*.foto_before' => 'nullable|file|mimes:jpg,jpeg,png',
-            'just_cleaning.*.foto_after' => 'nullable|file|mimes:jpg,jpeg,png',
-
-            'preventive' => 'nullable|array',
-            'preventive.*.foto_before' => 'nullable|file|mimes:jpg,jpeg,png',
-            'preventive.*.foto_after' => 'nullable|file|mimes:jpg,jpeg,png',
-
-            'replacement_part' => 'nullable|array',
-            'replacement_part.*.foto_before' => 'nullable|file|mimes:jpg,jpeg,png',
-            'replacement_part.*.foto_after' => 'nullable|file|mimes:jpg,jpeg,png',
-
+    
+            // Foto array (lebih konsisten: pakai _foto_before / _foto_after.*)
+            'cleaning_criticals_foto_before.*' => 'nullable|file|mimes:jpg,jpeg,png',
+            'cleaning_criticals_foto_after.*'  => 'nullable|file|mimes:jpg,jpeg,png',
+    
+            'just_cleaning_foto_before.*' => 'nullable|file|mimes:jpg,jpeg,png',
+            'just_cleaning_foto_after.*'  => 'nullable|file|mimes:jpg,jpeg,png',
+    
+            'preventive_foto_before.*' => 'nullable|file|mimes:jpg,jpeg,png',
+            'preventive_foto_after.*'  => 'nullable|file|mimes:jpg,jpeg,png',
+    
+            'replacement_part_foto_before.*' => 'nullable|file|mimes:jpg,jpeg,png',
+            'replacement_part_foto_after.*'  => 'nullable|file|mimes:jpg,jpeg,png',
+    
             //scope of work safety
             'safety_scan' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'production_scan' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
-            'temp'       => 'nullable|numeric',       // bisa float
+            'temp'       => 'nullable|numeric',
             'deviation'  => 'nullable|string|max:255',
-
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json([
                 'status' => 0,
                 'message' => $validator->errors()->first(),
             ], 422);
         }
-
-        // Update JSA file, hapus lama jika ada file baru
+    
+        // --- Update JSA Files ---
         $jsaFiles = [
             'jsa_file_cleaning_criticals',
             'jsa_file_just_cleaning',
             'jsa_file_replacement_part',
             'jsa_file_preventive'
         ];
-
-        $production_scan = $activity->production_scan; // default lama
-        $production_scan_filename = $activity->production_scan_filename;
-
-        $safety_scan = $activity->safety_scan;
-        $safety_scan_filename = $activity->safety_scan_filename;
-
-
-        if ($activity->itemMachine->scope_of_work == "safety") {
-            $incoming_rs = $request->incoming_rs;
-            $incoming_rt = $request->incoming_rt;
-            $incoming_st = $request->incoming_st;
-            $outgoing_rs = $request->outgoing_rs;
-            $outgoing_rt = $request->outgoing_rt;
-            $outgoing_st = $request->outgoing_st;
-            $deviation = $request->deviation;
-            $temp = $request->temp;
-
-            if ($request->hasFile('safety_scan')) {
-                // hapus file lama kalau ada
-                if ($activity->safety_scan) {
-                    Storage::disk('public')->delete($activity->safety_scan);
-                }
-
-                $safety_scan = $request->file('safety_scan')->store('safety_scan', 'public');
-                $safety_scan_filename = $request->file('safety_scan')->getClientOriginalName();
-            }
-        } else if ($activity->itemMachine->scope_of_work == "production") {
-            
-            if ($request->hasFile('production_scan')) {
-
-                // hapus file lama kalau ada
-                if ($activity->production_scan) {
-                    Storage::disk('public')->delete($activity->production_scan);
-                }
-
-                $production_scan = $request->file('production_scan')->store('production_scan', 'public');
-                $production_scan_filename = $request->file('production_scan')->getClientOriginalName();
-            }
-        }
-
-        // lalu update ke model
-        $activity->production_scan = $production_scan;
-        $activity->production_scan_filename = $production_scan_filename;
-        $activity->safety_scan = $safety_scan;
-        $activity->safety_scan_filename = $safety_scan_filename;
-
-
+    
         foreach ($jsaFiles as $field) {
             if ($request->hasFile($field)) {
                 if ($activity->$field) {
@@ -321,59 +268,87 @@ class ActivityTmsController extends Controller
                 $activity->$field = $request->file($field)->store('jsa_files', 'public');
             }
         }
-
-        $activity->item_machine_id = $request->item_machine_id;
-        $activity->date = $request->date;
-        $activity->save();
-
-        // Update foto relasi
+    
+        // Simpan nama asli JSA
+        if ($request->hasFile('jsa_file_cleaning_criticals')) {
+            $activity->jsa_filename_cleaning_criticals = $request->file('jsa_file_cleaning_criticals')->getClientOriginalName();
+        }
+        if ($request->hasFile('jsa_file_just_cleaning')) {
+            $activity->jsa_filename_just_cleaning = $request->file('jsa_file_just_cleaning')->getClientOriginalName();
+        }
+        if ($request->hasFile('jsa_file_replacement_part')) {
+            $activity->jsa_filename_replacement_part = $request->file('jsa_file_replacement_part')->getClientOriginalName();
+        }
+        if ($request->hasFile('jsa_file_preventive')) {
+            $activity->jsa_filename_preventive = $request->file('jsa_file_preventive')->getClientOriginalName();
+        }
+    
+        // --- Update Safety / Production Scan ---
+        if ($activity->itemMachine->scope_of_work == "safety") {
+            if ($request->hasFile('safety_scan')) {
+                if ($activity->safety_scan) {
+                    Storage::disk('public')->delete($activity->safety_scan);
+                }
+                $activity->safety_scan = $request->file('safety_scan')->store('safety_scan', 'public');
+                $activity->safety_scan_filename = $request->file('safety_scan')->getClientOriginalName();
+            }
+        } elseif ($activity->itemMachine->scope_of_work == "production") {
+            if ($request->hasFile('production_scan')) {
+                if ($activity->production_scan) {
+                    Storage::disk('public')->delete($activity->production_scan);
+                }
+                $activity->production_scan = $request->file('production_scan')->store('production_scan', 'public');
+                $activity->production_scan_filename = $request->file('production_scan')->getClientOriginalName();
+            }
+        }
+    
+        // --- Update foto relasi ---
         $fotoGroups = [
             'cleaning_criticals' => $activity->cleaningCriticals(),
             'just_cleaning' => $activity->justCleaning(),
             'preventive' => $activity->preventive(),
             'replacement_part' => $activity->replacementPart(),
         ];
-
+    
         foreach ($fotoGroups as $prefix => $relation) {
             foreach (['before', 'after'] as $status) {
-
-                // Kalau field tidak ada di request → skip (tidak hapus, tidak tambah)
-                if (!$request->has("{$prefix}_foto_{$status}")) {
-                    continue;
-                }
-
-                $files = $request->file("{$prefix}_foto_{$status}");
-
-                if ($files && count($files) > 0) {
-                    // Hapus lama & simpan baru
-                    $oldPhotos = $relation->where('status', $status)->get();
-                    foreach ($oldPhotos as $photo) {
-                        Storage::disk('public')->delete($photo->foto);
-                        $photo->delete();
-                    }
-                    foreach ($files as $file) {
+                $field = "{$prefix}_foto_{$status}";
+                
+                if ($request->hasFile($field)) {
+                    // Hapus lama
+                    // $oldPhotos = $relation->where('status', $status)->get();
+                    // foreach ($oldPhotos as $photo) {
+                    //     Storage::disk('public')->delete($photo->foto);
+                    //     $photo->delete();
+                    // }
+    
+                    // Simpan baru
+                    foreach ($request->file($field) as $file) {
                         $path = $file->store('photos', 'public');
                         $relation->create([
                             'foto' => $path,
                             'status' => $status,
                         ]);
                     }
-                } else {
-                    // Field ada tapi kosong → hapus semua lama
-                    $oldPhotos = $relation->where('status', $status)->get();
-                    foreach ($oldPhotos as $photo) {
-                        Storage::disk('public')->delete($photo->foto);
-                        $photo->delete();
-                    }
                 }
+                // ❌ Tidak ada else → biarkan foto lama tetap ada
             }
         }
-
+    
+        // Update field lain
+        $activity->item_machine_id = $request->item_machine_id;
+        $activity->date = $request->date;
+        $activity->temp = $request->temp;
+        $activity->deviation = $request->deviation;
+    
+        $activity->save();
+    
         return response()->json([
             'status' => 1,
             'message' => 'Activity TMS berhasil diupdate.',
         ], 200);
     }
+    
 
 
     public function destroyActivityTms($id)

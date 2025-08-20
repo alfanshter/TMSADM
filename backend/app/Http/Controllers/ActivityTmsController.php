@@ -214,44 +214,79 @@ class ActivityTmsController extends Controller
             'preventive',
             'replacementPart'
         ])->findOrFail($id);
-    
+
         $validator = Validator::make($request->all(), [
             'item_machine_id' => 'required|exists:item_machines,id',
             'date' => 'required|date',
-    
+
             // JSA file uploads
             'jsa_file_cleaning_criticals' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'jsa_file_just_cleaning' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'jsa_file_replacement_part' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'jsa_file_preventive' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
-    
+
             // Foto array (lebih konsisten: pakai _foto_before / _foto_after.*)
             'cleaning_criticals_foto_before.*' => 'nullable|file|mimes:jpg,jpeg,png',
             'cleaning_criticals_foto_after.*'  => 'nullable|file|mimes:jpg,jpeg,png',
-    
+
             'just_cleaning_foto_before.*' => 'nullable|file|mimes:jpg,jpeg,png',
             'just_cleaning_foto_after.*'  => 'nullable|file|mimes:jpg,jpeg,png',
-    
+
             'preventive_foto_before.*' => 'nullable|file|mimes:jpg,jpeg,png',
             'preventive_foto_after.*'  => 'nullable|file|mimes:jpg,jpeg,png',
-    
+            'preventive_foto_old.*'  => 'nullable|string',
+
             'replacement_part_foto_before.*' => 'nullable|file|mimes:jpg,jpeg,png',
             'replacement_part_foto_after.*'  => 'nullable|file|mimes:jpg,jpeg,png',
-    
+
             //scope of work safety
             'safety_scan' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'production_scan' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'temp'       => 'nullable|numeric',
             'deviation'  => 'nullable|string|max:255',
         ]);
-    
+
         if ($validator->fails()) {
             return response()->json([
                 'status' => 0,
                 'message' => $validator->errors()->first(),
             ], 422);
         }
-    
+
+
+        // -----------------------------
+        // BEFORE
+        // -----------------------------
+        // Ambil array ID lama (foto yg dipertahankan)
+        $preventiveBeforeOld = $request->input('preventive_foto_before_old', []);
+        // Step 1: Hapus foto lama yang tidak ada di "old"
+        $activity->preventive()
+            ->where('status', 'before')
+            ->whereNotIn('id', $preventiveBeforeOld)
+            ->get()
+            ->each(function ($photo) {
+                Storage::disk('public')->delete($photo->foto);
+                $photo->delete();
+            });
+
+      
+        // Step 2: Simpan foto baru
+        if ($request->hasFile('preventive_foto_before_new')) {
+            foreach ($request->file('preventive_foto_before_new') as $file) {
+                $path = $file->store('preventive_before', 'public');
+
+                $activity->preventive()->create([
+                    'status' => 'before',
+                    'foto' => $path,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'status' => 1,
+            'message' => 1,
+        ], 422);
+
         // --- Update JSA Files ---
         $jsaFiles = [
             'jsa_file_cleaning_criticals',
@@ -259,7 +294,7 @@ class ActivityTmsController extends Controller
             'jsa_file_replacement_part',
             'jsa_file_preventive'
         ];
-    
+
         foreach ($jsaFiles as $field) {
             if ($request->hasFile($field)) {
                 if ($activity->$field) {
@@ -268,7 +303,7 @@ class ActivityTmsController extends Controller
                 $activity->$field = $request->file($field)->store('jsa_files', 'public');
             }
         }
-    
+
         // Simpan nama asli JSA
         if ($request->hasFile('jsa_file_cleaning_criticals')) {
             $activity->jsa_filename_cleaning_criticals = $request->file('jsa_file_cleaning_criticals')->getClientOriginalName();
@@ -282,7 +317,7 @@ class ActivityTmsController extends Controller
         if ($request->hasFile('jsa_file_preventive')) {
             $activity->jsa_filename_preventive = $request->file('jsa_file_preventive')->getClientOriginalName();
         }
-    
+
         // --- Update Safety / Production Scan ---
         if ($activity->itemMachine->scope_of_work == "safety") {
             if ($request->hasFile('safety_scan')) {
@@ -301,7 +336,7 @@ class ActivityTmsController extends Controller
                 $activity->production_scan_filename = $request->file('production_scan')->getClientOriginalName();
             }
         }
-    
+
         // --- Update foto relasi ---
         $fotoGroups = [
             'cleaning_criticals' => $activity->cleaningCriticals(),
@@ -309,11 +344,11 @@ class ActivityTmsController extends Controller
             'preventive' => $activity->preventive(),
             'replacement_part' => $activity->replacementPart(),
         ];
-    
+
         foreach ($fotoGroups as $prefix => $relation) {
             foreach (['before', 'after'] as $status) {
                 $field = "{$prefix}_foto_{$status}";
-                
+
                 if ($request->hasFile($field)) {
                     // Hapus lama
                     // $oldPhotos = $relation->where('status', $status)->get();
@@ -321,7 +356,7 @@ class ActivityTmsController extends Controller
                     //     Storage::disk('public')->delete($photo->foto);
                     //     $photo->delete();
                     // }
-    
+
                     // Simpan baru
                     foreach ($request->file($field) as $file) {
                         $path = $file->store('photos', 'public');
@@ -334,21 +369,21 @@ class ActivityTmsController extends Controller
                 // ❌ Tidak ada else → biarkan foto lama tetap ada
             }
         }
-    
+
         // Update field lain
         $activity->item_machine_id = $request->item_machine_id;
         $activity->date = $request->date;
         $activity->temp = $request->temp;
         $activity->deviation = $request->deviation;
-    
+
         $activity->save();
-    
+
         return response()->json([
             'status' => 1,
             'message' => 'Activity TMS berhasil diupdate.',
         ], 200);
     }
-    
+
 
 
     public function destroyActivityTms($id)

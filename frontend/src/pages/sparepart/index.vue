@@ -29,6 +29,7 @@ const headers = [
   { title: "Kategori", key: "category" },
   { title: "Stok", key: "stok" },
   { title: "Incoming", key: "incoming" },
+  { title: "Usage", key: "usages_sum_qty" },
   { title: "Stok Akhir", key: "end_month_stock" },
   { title: "Remark", key: "remark" },
   { title: "Actions", key: "actions", sortable: false },

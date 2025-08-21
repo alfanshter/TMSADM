@@ -461,7 +461,7 @@ onMounted(() => {
           <VCardText>
             <VRow>
               <VCol cols="12" md="4">
-                <VSelect v-model="selectedItemMachine" :items="itemMachines" item-title="name" item-value="id"
+                <VAutocomplete v-model="selectedItemMachine" :items="itemMachines" item-title="name" item-value="id"
                   placeholder="Item Machine" label="Item Machine" />
               </VCol>
               <VCol cols="12" md="6">

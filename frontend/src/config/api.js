@@ -5,6 +5,7 @@ export const ENDPOINTS = {
   login: `${API_BASE_URL}/login`,
   users: `${API_BASE_URL}/users`,
   itemMachines: `${API_BASE_URL}/item-machines`,
+  spareparts: `${API_BASE_URL}/spareparts`,
   activityTms: `${API_BASE_URL}/activity-tms-all`,
   detailActivityTms: (id) => `${API_BASE_URL}/activity-tms/${id}`, // POST update
   addactivityTms: `${API_BASE_URL}/activity-tms`,

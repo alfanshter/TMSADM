@@ -56,6 +56,71 @@ const itemMachines = ref([]);
 const totalItemMachines = ref(0);
 const selectedItemMachine = ref(null);
 
+//sparepart
+const itemSparepart = ref([]);
+const selectedItemSparepart = ref([]);
+const requiredQty = ref(1);
+const sparepartList = ref([]);
+
+// Headers untuk datatable
+const sparepartHeaders = [
+  { title: "Nama Sparepart", key: "nama_sparepart" },
+  { title: "Jumlah", key: "qty" },
+  { title: "Spec", key: "spec" },
+  { title: "Loc", key: "loc" },
+  { title: "Type", key: "type" },
+  { title: "Aksi", key: "actions" },
+];
+
+
+// Dapatkan object sparepart yang dipilih
+const selectedItemSparepartObj = computed(() =>
+  itemSparepart.value.find((item) => item.id === selectedItemSparepart.value)
+);
+
+// Event saat pilih sparepart
+const onSparepartSelect = () => {
+  requiredQty.value = 1; // reset qty saat ganti sparepart
+};
+
+// Tambah ke list
+const addSparepart = () => {
+  if (!selectedItemSparepartObj.value) return;
+  if (requiredQty.value < 1 || requiredQty.value > selectedItemSparepartObj.value.stok) {
+    alert("Jumlah tidak valid!");
+    return;
+  }
+
+  // cek jika sudah ada di list
+  const existIndex = sparepartList.value.findIndex(
+    (s) => s.id === selectedItemSparepartObj.value.id
+  );
+  if (existIndex !== -1) {
+    sparepartList.value[existIndex].qty += requiredQty.value;
+  } else {
+    sparepartList.value.push({
+      id: selectedItemSparepartObj.value.id,
+      nama_sparepart: selectedItemSparepartObj.value.nama_sparepart,
+      qty: requiredQty.value,
+      loc: selectedItemSparepartObj.value.loc,
+      spec: selectedItemSparepartObj.value.spec,
+      type: selectedItemSparepartObj.value.type,
+    });
+  }
+
+  // reset input
+  selectedItemSparepart.value = null;
+  requiredQty.value = 1;
+};
+
+
+// hapus sparepart
+const removeSparepart = (index) => {
+  sparepartList.value.splice(index, 1);
+};
+
+
+
 //scope of work
 const incomingRs = ref("");
 const incomingRt = ref("");
@@ -82,49 +147,53 @@ const fetchItemMachines = async () => {
     itemMachines.value = result;
 
     totalItemMachines.value = Array.isArray(result) ? result.length : 0;
-
-    // Kalau mode edit, langsung set value yang sesuai
-    if (currentItem.value) {
-      selectedItemMachine.value = currentItem.value.item_machine_id;
-    }
   } catch (error) {
     console.error("Error fetching item machines:", error);
   }
 };
 
-const fetchActivityDetail = async () => {
-  if (!activityId) return;
+const fetchItemSparepart = async () => {
   try {
-    const res = await axios.get(`${ENDPOINTS.activityTmsDetail}/${activityId}`);
-    const data = res.data.data ?? res.data;
+    const res = await axios.get(ENDPOINTS.spareparts);
+    const result = res.data.data ?? res.data;
+    itemSparepart.value = result;
 
-    // pastikan sudah ada itemMachines sebelum set value
-    if (!itemMachines.value.length) {
-      await fetchItemMachines();
-    }
-
-    selectedItemMachine.value = Number(data.item_machine_id);
-    code.value = data.code ?? "";
-    location.value = data.location ?? "";
-    scopeOfWork.value = data.scope_of_work ?? "";
-    birthDate.value = data.date ? data.date : "";
-
-    if (data.cleaning_critical) {
-      selectedMaintenanceTypesCleaningCritical.value = ["cleaning_critical"];
-    }
-    if (data.just_cleaning) {
-      selectedMaintenanceTypesJustCleaning.value = ["just_cleaning"];
-    }
-    if (data.replacement_part) {
-      selectedMaintenanceTypesReplacementPart.value = ["replacement_part"];
-    }
-    if (data.preventive_pm) {
-      selectedMaintenanceTypesPreventivePM.value = ["preventive_pm"];
-    }
-  } catch (error) {
-    console.error("Error fetching activity detail:", error);
   }
-};
+  catch (error) {
+    console.error("Error fetching item sparepart", error);
+  }
+}
+
+const headers = [
+  {
+    title: 'Nama',
+    key: 'nama_sparepart',
+  },
+  {
+    title: 'Spec',
+    key: 'spec',
+  },
+  {
+    title: 'Loc',
+    key: 'loc',
+    sortable: false,
+  },
+  {
+    title: 'Category',
+    key: 'category',
+  },
+  {
+    title: 'QTY',
+    key: 'qtc',
+  },
+
+  {
+    title: 'Actions',
+    key: 'actions',
+    sortable: false,
+  },
+]
+
 
 // Sync code/location/scope kalau ganti item machine
 watch(selectedItemMachine, (newVal) => {
@@ -211,6 +280,11 @@ const submitForm = async () => {
   formData.append("temp", temp.value ?? "");
   formData.append("deviation", deviation.value ?? "");
 
+  // Tambah Sparepart List
+  sparepartList.value.forEach((item, index) => {
+    formData.append(`spareparts[${index}][id]`, item.id);
+    formData.append(`spareparts[${index}][qty]`, item.qty);
+  });
   try {
     let res;
     // Tambah
@@ -247,7 +321,7 @@ const submitForm = async () => {
 
 onMounted(() => {
   fetchItemMachines();
-  fetchActivityDetail();
+  fetchItemSparepart();
 });
 </script>
 
@@ -272,8 +346,9 @@ onMounted(() => {
           <VCardText>
             <VRow>
               <VCol cols="12" md="4">
-                <VSelect v-model="selectedItemMachine" :items="itemMachines" item-title="name" item-value="id"
+                <VAutocomplete v-model="selectedItemMachine" :items="itemMachines" item-title="name" item-value="id"
                   placeholder="Item Machine" label="Item Machine" />
+
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField v-model="code" label="Code" readonly placeholder="FXSK123U" />
@@ -411,21 +486,88 @@ onMounted(() => {
               <!-- Replacement Part -->
               <VCheckbox label="Replacement Part" value="replacement_part"
                 v-model="selectedMaintenanceTypesReplacementPart" />
+
               <template v-if="selectedMaintenanceTypesReplacementPart.length">
-                <VCardText class="d-flex gap-4">
-                  <div style="flex: 1">
-                    <DropZone label="BEFORE" v-model="replacementPartBeforeFiles" />
-                  </div>
-                  <div style="flex: 1">
-                    <DropZone label="AFTER" v-model="replacementPartAfterFiles" />
-                  </div>
-                </VCardText>
-                <VCardText>
-                  <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
-                  <VFileInput v-model="replacementJsa" label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
-                </VCardText>
+                <!-- Card utama Replacement Part -->
+                <VCard class="pa-4 my-4" variant="outlined">
+                  <!-- Pilih Item Machine & Input Jumlah -->
+                  <VRow dense>
+                    <VCol cols="12" md="6">
+                      <VAutocomplete v-model="selectedItemSparepart" :items="itemSparepart" item-title="nama_sparepart"
+                        item-value="id" label="Sparepart" placeholder="Cari / pilih sparepart" clearable
+                        density="comfortable" @change="onSparepartSelect" />
+                    </VCol>
+
+                    <VCol cols="12" md="6" v-if="selectedItemSparepartObj">
+                      <VTextField v-model.number="requiredQty" type="number"
+                        :label="`Butuh berapa? (Stok tersedia: ${selectedItemSparepartObj.stok})`"
+                        :max="selectedItemSparepartObj.stok" min="1" />
+                      <VBtn color="primary" class="mt-2" @click="addSparepart">Add</VBtn>
+                    </VCol>
+                  </VRow>
+
+                  <!-- Upload Foto Before & After -->
+                  <VRow class="mt-4" dense>
+                    <VCol cols="12" md="6">
+                      <DropZone label="BEFORE" v-model="replacementPartBeforeFiles" />
+                    </VCol>
+                    <VCol cols="12" md="6">
+                      <DropZone label="AFTER" v-model="replacementPartAfterFiles" />
+                    </VCol>
+                  </VRow>
+
+                  <!-- Upload JSA -->
+                  <VRow class="mt-4" dense>
+                    <VCol cols="12">
+                      <VLabel class="mb-2">Upload JSA File</VLabel>
+                      <VFileInput v-model="replacementJsa" label="Pilih file dokumen"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size
+                        clearable />
+                    </VCol>
+                  </VRow>
+                </VCard>
+
+                <!-- 👉 Datatable  -->
+                <!-- Datatable Sparepart -->
+                <VDataTableServer v-if="sparepartList.length" v-model:model-value="sparepartList"
+                  :headers="sparepartHeaders" :items="sparepartList" class="text-no-wrap rounded-0">
+                  <!-- Nama Sparepart -->
+                  <!-- Nama Sparepart -->
+                  <template #item.nama_sparepart="{ item }">
+                    <span>{{ item.nama_sparepart }}</span>
+                  </template>
+
+                  <!-- Jumlah -->
+                  <template #item.qty="{ item }">
+                    <span>{{ item.qty }}</span>
+                  </template>
+
+                  <!-- Spec -->
+                  <template #item.spec="{ item }">
+                    <span>{{ item.spec || '-' }}</span>
+                  </template>
+
+                  <!-- Loc -->
+                  <template #item.loc="{ item }">
+                    <span>{{ item.loc || '-' }}</span>
+                  </template>
+
+                  <!-- Type -->
+                  <template #item.type="{ item }">
+                    <span>{{ item.type || '-' }}</span>
+                  </template>
+
+                  <!-- Aksi Hapus -->
+                  <template #item.actions="{ index }">
+                    <VBtn icon color="red" @click="removeSparepart(index)">
+                      <VIcon icon="ri-delete-bin-7-line" />
+                    </VBtn>
+
+
+                  </template>
+                </VDataTableServer>
               </template>
+
 
               <!-- Preventive PM -->
               <VCheckbox label="Preventive PM" value="preventive_pm" v-model="selectedMaintenanceTypesPreventivePM" />

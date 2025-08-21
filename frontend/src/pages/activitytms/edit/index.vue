@@ -32,6 +32,21 @@ const selectedMaintenanceTypesReplacementPart = ref([]);
 const selectedMaintenanceTypesPreventivePM = ref([]);
 const birthDate = ref("");
 
+//sparepart
+const spareparts = ref([]);
+// Headers untuk datatable
+const sparepartHeaders = [
+  { title: "Nama Sparepart", key: "nama_sparepart" },
+  { title: "Jumlah", key: "qty" },
+  { title: "Spec", key: "spec" },
+  { title: "Loc", key: "loc" },
+  { title: "Type", key: "type" },
+  { title: "Aksi", key: "actions" },
+];
+
+
+// Dapatkan object spa
+
 // file foto
 const cleaningCriticalBeforeFiles = ref([]);
 const cleaningCriticalAfterFiles = ref([]);
@@ -73,6 +88,8 @@ const production_scan_old = ref(null); // dari backend
 // Snackbar
 const isSnackbarTopEndVisible = ref(false);
 const snackbarMessage = ref("");
+const snackbarColor = ref("success"); // default
+
 
 const itemMachines = ref([]);
 const totalItemMachines = ref(0);
@@ -87,6 +104,12 @@ const outgoingRt = ref("");
 const outgoingSt = ref("");
 const temp = ref("");
 const deviation = ref("");
+
+//sparepart
+const itemSparepart = ref([]);
+const selectedItemSparepart = ref([]);
+const requiredQty = ref(1);
+const sparepartList = ref([]);
 
 if (currentItem.value != null) {
   console.log("date:", currentItem.value);
@@ -144,7 +167,7 @@ const fetchActivityDetail = async () => {
     //Production file Scan
     production_scan_filename.value = data.production_scan_filename ?? "";
     production_scan_old.value = data.production_scan ?? "";
-    
+
     //safety file scan
     safety_filename.value = data.safety_scan_filename ?? "";
     safety_old.value = data.safety_scan ?? "";
@@ -185,7 +208,7 @@ const fetchActivityDetail = async () => {
       selectedMaintenanceTypesJustCleaning.value = ["just_cleaning"];
     }
 
-    if (data.replacement_part && data.replacement_part.length > 0) {
+    if (data.replacement_part && data.replacement_part.length > 0 || data.spareparts && data.spareparts.length > 0) {
       replacementPartBeforeFiles.value = data.replacement_part.filter(
         (item) => item.status === "before"
       );
@@ -193,6 +216,8 @@ const fetchActivityDetail = async () => {
       replacementPartAfterFiles.value = data.replacement_part.filter(
         (item) => item.status === "after"
       );
+
+      spareparts.value = data.spareparts;
       selectedMaintenanceTypesReplacementPart.value = ["replacement_part"];
     }
     //=========Preventife BEFORE==========
@@ -211,6 +236,79 @@ const fetchActivityDetail = async () => {
     console.error("Error fetching activity detail:", error);
   }
 };
+
+
+// Dapatkan object sparepart yang dipilih
+const selectedItemSparepartObj = computed(() =>
+  itemSparepart.value.find((item) => item.id === selectedItemSparepart.value)
+);
+
+// Event saat pilih sparepart
+const onSparepartSelect = () => {
+  requiredQty.value = 1; // reset qty saat ganti sparepart
+};
+
+// Tambah ke list
+const addSparepart = () => {
+  if (!selectedItemSparepartObj.value) return;
+  if (requiredQty.value < 1 || requiredQty.value > selectedItemSparepartObj.value.stok) {
+    alert("Jumlah tidak valid!");
+    return;
+  }
+
+  // cek jika sudah ada di list
+  const existIndex = sparepartList.value.findIndex(
+    (s) => s.id === selectedItemSparepartObj.value.id
+  );
+  if (existIndex !== -1) {
+    sparepartList.value[existIndex].qty += requiredQty.value;
+  } else {
+    sparepartList.value.push({
+      id: selectedItemSparepartObj.value.id,
+      nama_sparepart: selectedItemSparepartObj.value.nama_sparepart,
+      qty: requiredQty.value,
+      loc: selectedItemSparepartObj.value.loc,
+      spec: selectedItemSparepartObj.value.spec,
+      type: selectedItemSparepartObj.value.type,
+    });
+  }
+
+  // reset input
+  selectedItemSparepart.value = null;
+  requiredQty.value = 1;
+};
+
+
+// hapus sparepart
+const removeSparepart = async (index) => {
+  if (!spareparts.value[index]) return;
+
+  const sparepartId = spareparts.value[index].id;
+
+  try {
+    globalLoading?.show();
+
+    // Hapus sparepart di backend
+    await axios.delete(`${ENDPOINTS.deleteTmsSparepart(sparepartId)}`);
+    // Hapus dari array lokal jika sukses
+    spareparts.value.splice(index, 1);
+
+    snackbarMessage.value = "Sparepart berhasil dihapus!";
+    snackbarColor.value = "success";
+    isSnackbarTopEndVisible.value = true;
+
+  } catch (error) {
+    console.error("Gagal menghapus sparepart:", error);
+    snackbarMessage.value = "Gagal menghapus sparepart!";
+    snackbarColor.value = "error";
+    isSnackbarTopEndVisible.value = true;
+
+  } finally {
+    globalLoading?.hide();
+  }
+};
+
+
 
 // Sync code/location/scope kalau ganti item machine
 watch(selectedItemMachine, (newVal) => {
@@ -307,7 +405,7 @@ const submitForm = async () => {
     formData.append(`replacement_part_foto_after_new[${i}]`, f.file);
   });
 
-   // =========JUST CLEANING================
+  // =========JUST CLEANING================
   // ==========BEFORE=========
   // Foto lama → kirim ID saja  
   justCleaningBeforeFiles.value
@@ -434,8 +532,21 @@ const getFileName = (path) => {
 function goBack() {
   window.history.back()
 }
+
+const fetchItemSparepart = async () => {
+  try {
+    const res = await axios.get(ENDPOINTS.spareparts);
+    const result = res.data.data ?? res.data;
+    itemSparepart.value = result;
+
+  }
+  catch (error) {
+    console.error("Error fetching item sparepart", error);
+  }
+}
 onMounted(() => {
   fetchItemMachines();
+  fetchItemSparepart();
   fetchActivityDetail();
 });
 </script>
@@ -488,8 +599,8 @@ onMounted(() => {
             <template #title> Scope of Work </template>
             <div class="d-flex flex-column mt-2">
               <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
-               <!-- Tampilkan file lama jika ada -->
-               <div v-if="safety_filename" class="mb-2">
+              <!-- Tampilkan file lama jika ada -->
+              <div v-if="safety_filename" class="mb-2">
                 <a :href="getFileUrl(safety_old)" target="_blank">
                   {{ getFileName(safety_filename) }}
                 </a>
@@ -635,7 +746,26 @@ onMounted(() => {
               <!-- Replacement Part -->
               <VCheckbox label="Replacement Part" value="replacement_part"
                 v-model="selectedMaintenanceTypesReplacementPart" />
+
               <template v-if="selectedMaintenanceTypesReplacementPart.length">
+                <VRow dense>
+                  <!-- Pilih Sparepart -->
+                  <VCol cols="12" md="6">
+                    <VAutocomplete v-model="selectedItemSparepart" :items="itemSparepart" item-title="nama_sparepart"
+                      item-value="id" label="Sparepart" placeholder="Cari / pilih sparepart" clearable
+                      density="comfortable" @change="onSparepartSelect" />
+                  </VCol>
+
+                  <!-- Jumlah yang dibutuhkan -->
+                  <VCol cols="12" md="6" v-if="selectedItemSparepartObj">
+                    <VTextField v-model.number="requiredQty" type="number"
+                      :label="`Butuh berapa? (Stok tersedia: ${selectedItemSparepartObj.stok})`"
+                      :max="selectedItemSparepartObj.stok" min="1" />
+                    <VBtn color="primary" class="mt-2" @click="addSparepart">Add</VBtn>
+                  </VCol>
+                </VRow>
+
+                <!-- Upload Foto BEFORE & AFTER -->
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
                     <UpdateDropZone label="BEFORE" v-model="replacementPartBeforeFiles" />
@@ -644,18 +774,59 @@ onMounted(() => {
                     <UpdateDropZone label="AFTER" v-model="replacementPartAfterFiles" />
                   </div>
                 </VCardText>
+
+                <!-- Upload JSA -->
                 <VCardText>
                   <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
+
                   <!-- Tampilkan file lama jika ada -->
                   <div v-if="replacementJsa_filename" class="mb-2">
                     <a :href="getFileUrl(replacementJsa_old)" target="_blank">
                       {{ getFileName(replacementJsa_filename) }}
                     </a>
                   </div>
+
                   <VFileInput v-model="replacementJsa" label="Pilih file dokumen"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
                 </VCardText>
+
+                <!-- Datatable Sparepart -->
+                <VDataTableServer v-if="spareparts.length" v-model:model-value="spareparts" :headers="sparepartHeaders"
+                  :items="spareparts" class="text-no-wrap rounded-0">
+                  <!-- Nama Sparepart -->
+                  <template #item.nama_sparepart="{ item }">
+                    <span>{{ item.nama_sparepart }}</span>
+                  </template>
+
+                  <!-- Jumlah -->
+                  <template #item.qty="{ item }">
+                    <span>{{ item.pivot.qty }}</span>
+                  </template>
+
+                  <!-- Spec -->
+                  <template #item.spec="{ item }">
+                    <span>{{ item.spec || '-' }}</span>
+                  </template>
+
+                  <!-- Loc -->
+                  <template #item.loc="{ item }">
+                    <span>{{ item.loc || '-' }}</span>
+                  </template>
+
+                  <!-- Type -->
+                  <template #item.type="{ item }">
+                    <span>{{ item.type || '-' }}</span>
+                  </template>
+
+                  <!-- Aksi Hapus -->
+                  <template #item.actions="{ item, index }">
+                    <VBtn icon color="red" @click="removeSparepart(index)">
+                      <VIcon icon="ri-delete-bin-7-line" />
+                    </VBtn>
+                  </template>
+                </VDataTableServer>
               </template>
+
 
               <!-- Preventive PM -->
               <VCheckbox label="Preventive PM" value="preventive_pm" v-model="selectedMaintenanceTypesPreventivePM" />
@@ -689,7 +860,8 @@ onMounted(() => {
     </VRow>
 
     <!-- Snackbar -->
-    <VSnackbar v-model="isSnackbarTopEndVisible" :timeout="3000" location="top end" color="success">
+    <!-- Snackbar -->
+    <VSnackbar v-model="isSnackbarTopEndVisible" :timeout="3000" location="top end" :color="snackbarColor">
       {{ snackbarMessage }}
     </VSnackbar>
   </div>

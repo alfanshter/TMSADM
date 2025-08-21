@@ -264,7 +264,7 @@ watch(selectedScopeOfWork, () => {
             </VBtn>
 
             <VBtn
-              v-if="item.replacement_part?.length"
+              v-if="item.replacement_part?.length || item.spareparts?.length"
               variant="text"
               @click="
                 openDialog('replacement_part', item.replacement_part, item)

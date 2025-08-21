@@ -2,6 +2,11 @@
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import avatar1 from '@images/avatars/avatar-1.png'
 
+
+const router = useRouter()
+
+const userData = useCookie('userData')
+
 const userProfileList = [
   { type: 'divider' },
   {
@@ -41,6 +46,25 @@ const userProfileList = [
     href: '#',
   },
 ]
+
+const logout = async () => {
+
+// Remove "accessToken" from cookie
+useCookie('accessToken').value = null
+
+// Remove "userData" from cookie
+userData.value = null
+
+// Redirect to login page
+await router.push('/login')
+
+// ℹ️ We had to remove abilities in then block because if we don't nav menu items mutation is visible while redirecting user to login page
+
+
+// Reset ability to initial ability
+ability.update([])
+}
+
 </script>
 
 <template>
@@ -126,8 +150,7 @@ const userProfileList = [
                 color="error"
                 size="small"
                 append-icon="ri-logout-box-r-line"
-                :to="{ name: 'login' }"
-              >
+                @click="logout"              >
                 Logout
               </VBtn>
             </VListItem>

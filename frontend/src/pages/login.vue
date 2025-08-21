@@ -27,29 +27,35 @@ const form = ref({
   remember: false,
 });
 
+
+
 const handleLogin = async () => {
   try {
-    const response = await axios.post(`${ENDPOINTS.login}`, {
+    const res = await axios.post(`${ENDPOINTS.login}`, {
       email: form.value.email,
       password: form.value.password,
-    });
+    })
 
-    console.log("Response Login:", response.data);
+    const token = res.data.data.token;
+    
+    // Simpan data ke cookie
+    useCookie('userData').value = res.data.data
+    useCookie('accessToken').value = token
 
-    const token = response.data.data.token;
-    if (token) {
-      localStorage.setItem("token", token);
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`; // << WAJIB
-      alert("Login berhasil!");
-      router.push("/");
-    } else {
-      alert("Login gagal: token tidak ditemukan.");
-    }
+    // Set default header axios
+    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
+
+    alert("Login berhasil!")
+
+    await nextTick(() => {
+      router.push(`/`);
+    })
   } catch (error) {
-    alert("Email atau password salah!");
-    console.error(error);
+    console.error("Login error:", error)
+    alert("Email atau password salah!")
   }
-};
+}
+
 
 const isPasswordVisible = ref(false);
 const authV2LoginMask = useGenerateImageVariant(
@@ -76,29 +82,14 @@ const authV2LoginIllustration = useGenerateImageVariant(
   </a>
 
   <VRow no-gutters class="auth-wrapper">
-    <VCol
-      md="8"
-      class="d-none d-md-flex align-center justify-center position-relative"
-    >
+    <VCol md="8" class="d-none d-md-flex align-center justify-center position-relative">
       <div class="d-flex align-center justify-center pa-10">
-        <img
-          :src="authV2LoginIllustration"
-          class="auth-illustration w-100"
-          alt="auth-illustration"
-        />
+        <img :src="authV2LoginIllustration" class="auth-illustration w-100" alt="auth-illustration" />
       </div>
-      <VImg
-        :src="authV2LoginMask"
-        class="d-none d-md-flex auth-footer-mask"
-        alt="auth-mask"
-      />
+      <VImg :src="authV2LoginMask" class="d-none d-md-flex auth-footer-mask" alt="auth-mask" />
     </VCol>
-    <VCol
-      cols="12"
-      md="4"
-      class="auth-card-v2 d-flex align-center justify-center"
-      style="background-color: rgb(var(--v-theme-surface))"
-    >
+    <VCol cols="12" md="4" class="auth-card-v2 d-flex align-center justify-center"
+      style="background-color: rgb(var(--v-theme-surface))">
       <VCard flat :max-width="500" class="mt-12 mt-sm-0 pa-5 pa-lg-7">
         <VCardText>
           <h4 class="text-h4 mb-1">
@@ -116,32 +107,17 @@ const authV2LoginIllustration = useGenerateImageVariant(
             <VRow>
               <!-- email -->
               <VCol cols="12">
-                <VTextField
-                  v-model="form.email"
-                  autofocus
-                  label="Email"
-                  type="email"
-                  placeholder="johndoe@email.com"
-                />
+                <VTextField v-model="form.email" autofocus label="Email" type="email" placeholder="johndoe@email.com" />
               </VCol>
 
               <!-- password -->
               <VCol cols="12">
-                <VTextField
-                  v-model="form.password"
-                  label="Password"
-                  placeholder="············"
-                  :type="isPasswordVisible ? 'text' : 'password'"
-                  :append-inner-icon="
-                    isPasswordVisible ? 'ri-eye-off-line' : 'ri-eye-line'
-                  "
-                  @click:append-inner="isPasswordVisible = !isPasswordVisible"
-                />
+                <VTextField v-model="form.password" label="Password" placeholder="············"
+                  :type="isPasswordVisible ? 'text' : 'password'" :append-inner-icon="isPasswordVisible ? 'ri-eye-off-line' : 'ri-eye-line'
+                    " @click:append-inner="isPasswordVisible = !isPasswordVisible" />
 
                 <!-- remember me checkbox -->
-                <div
-                  class="d-flex align-center justify-space-between flex-wrap my-6 gap-x-2"
-                >
+                <div class="d-flex align-center justify-space-between flex-wrap my-6 gap-x-2">
                   <VCheckbox v-model="form.remember" label="Remember me" />
 
                   <a class="text-primary" href="javascript:void(0)">
@@ -156,10 +132,7 @@ const authV2LoginIllustration = useGenerateImageVariant(
               <!-- create account -->
               <VCol cols="12" class="text-body-1 text-center">
                 <span class="d-inline-block"> New on our platform? </span>
-                <a
-                  class="text-primary ms-1 d-inline-block text-body-1"
-                  href="javascript:void(0)"
-                >
+                <a class="text-primary ms-1 d-inline-block text-body-1" href="javascript:void(0)">
                   Create an account
                 </a>
               </VCol>

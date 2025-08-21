@@ -86,7 +86,7 @@ const onSparepartSelect = () => {
 // Tambah ke list
 const addSparepart = () => {
   if (!selectedItemSparepartObj.value) return;
-  if (requiredQty.value < 1 || requiredQty.value > selectedItemSparepartObj.value.stok) {
+  if (requiredQty.value < 1 || requiredQty.value > selectedItemSparepartObj.value.usages_sum_qty) {
     alert("Jumlah tidak valid!");
     return;
   }
@@ -500,8 +500,8 @@ onMounted(() => {
 
                     <VCol cols="12" md="6" v-if="selectedItemSparepartObj">
                       <VTextField v-model.number="requiredQty" type="number"
-                        :label="`Butuh berapa? (Stok tersedia: ${selectedItemSparepartObj.stok})`"
-                        :max="selectedItemSparepartObj.stok" min="1" />
+                        :label="`Butuh berapa? (Stok tersedia: ${selectedItemSparepartObj.usages_sum_qty})`"
+                        :max="selectedItemSparepartObj.usages_sum_qty" min="1" />
                       <VBtn color="primary" class="mt-2" @click="addSparepart">Add</VBtn>
                     </VCol>
                   </VRow>

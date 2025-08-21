@@ -40,21 +40,17 @@ const fetchScheduleData = async (month) => {
     const res = await axios.get(`${ENDPOINTS.ACTIVITY_SUMMARY}?month=${month}`);
 
     if (res.data.status && res.data.data.length) {
-      // Cari semua tanggal unik dari semua item
-      const allDates = new Set();
-      res.data.data.forEach((item) => {
-        (item.dates || []).forEach((d) => allDates.add(d));
-      });
-      const sortedDates = Array.from(allDates).sort();
-
-      // Update headers dynamic
+      // Header tetap Week 1-4
       headers.value = [
         { title: "No", key: "no" },
         { title: "Nama Mesin", key: "name" },
         { title: "Nomor Mesin", key: "code" },
         { title: "Lokasi", key: "location" },
         { title: "ACT / Month", key: "act" },
-        ...sortedDates.map((d, i) => ({ title: d, key: `date_${i}` })),
+        { title: "Week 1", key: "week_1" },
+        { title: "Week 2", key: "week_2" },
+        { title: "Week 3", key: "week_3" },
+        { title: "Week 4", key: "week_4" },
         { title: "Actions", key: "actions", sortable: false },
       ];
 
@@ -67,10 +63,17 @@ const fetchScheduleData = async (month) => {
           code: item.code,
           location: item.location,
           act: item.act_per_month + "x",
+          week_1: "",
+          week_2: "",
+          week_3: "",
+          week_4: "",
         };
-        sortedDates.forEach((d, i) => {
-          row[`date_${i}`] = item.dates.includes(d) ? "✓" : "";
+
+        // Isi week 1–4 pakai centang ✔
+        item.weeks.forEach((w) => {
+          row[`week_${w.week}`] = w.total > 0 ? "✔" : "";
         });
+
         return row;
       });
     } else {
@@ -115,6 +118,17 @@ const exportPDF = () => {
 
   doc.save("schedule.pdf");
 };
+
+const getWeekLabel = (dateStr) => {
+  if (!dateStr) return "-";
+  const date = new Date(dateStr);
+  const day = date.getDate();
+  if (day >= 1 && day <= 7) return "Week 1";
+  if (day >= 8 && day <= 14) return "Week 2";
+  if (day >= 15 && day <= 21) return "Week 3";
+  return "Week 4"; // 22–31
+};
+
 
 const currentMonth = new Date().toISOString().slice(0, 7);
 onMounted(() => {
@@ -164,9 +178,7 @@ onMounted(() => {
             hide-details
           />
         </div>
-        <VBtn @click="isAddNewItemMachinesDrawerVisible = true">
-          Add New Schedule
-        </VBtn>
+       
       </div>
     </VCardText>
 

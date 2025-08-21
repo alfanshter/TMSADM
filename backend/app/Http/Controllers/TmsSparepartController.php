@@ -18,17 +18,14 @@ class TmsSparepartController extends Controller
         ]);
     }
 
-    function delete(Request $request)
+    function destroy($id)
     {
 
-        // Validasi input
-        $request->validate([
-            'id' => 'required|integer|exists:tms_spareparts,id',
-        ]);
-
+     
         // Hapus data
-        $deleted = TmsSparepart::where('id', $request->id)->delete();
+        $deleted = TmsSparepart::where('id', $id)->delete();
 
+        
         // Cek apakah berhasil dihapus
         if ($deleted) {
             return response()->json([
@@ -41,7 +38,7 @@ class TmsSparepartController extends Controller
         return response()->json([
             'status' => false,
             'data' => null,
-            'message' => 'Gagal menghapus sparepart.'
+            'message' => 'Gagal menghapus spareparts.'
         ], 500);
     }
 }

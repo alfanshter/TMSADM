@@ -14,7 +14,11 @@ return new class extends Migration
         Schema::create('tms_spareparts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('activity_tms_id')->constrained('activity_tms')->onDelete('cascade');
-            $table->foreignId('stock_sparepart_id')->constrained('stock_spareparts')->onDelete('cascade');
+           
+            $table->foreignId('stock_sparepart_id')
+            ->constrained('stock_spareparts')
+            ->onUpdate('cascade')
+            ->onDelete('cascade'); // atau restrict tergantung kebutuhan  
             $table->integer('qty'); // jumlah sparepart yang dipakai
             $table->timestamps();
         

@@ -24,10 +24,9 @@ class StockSparepart extends Model
     ];
 
     public function activities()
-{
-    return $this->belongsToMany(ActivityTMS::class, 'activity_tms_spareparts')
-                ->withPivot('qty')
-                ->withTimestamps();
-}
-    
+    {
+        return $this->belongsToMany(ActivityTMS::class, 'activity_tms_spareparts')
+            ->withPivot('qty')
+            ->withTimestamps();
+    }
 }

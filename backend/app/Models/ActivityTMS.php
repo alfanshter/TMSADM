@@ -42,6 +42,13 @@ class ActivityTMS extends Model
     }
 
 
+    public function spareparts()
+{
+    return $this->belongsToMany(StockSparepart::class, 'activity_tms_spareparts')
+                ->withPivot('qty')
+                ->withTimestamps();
+}
+
     // public function maintenanceType()
     // {
     //     return $this->belongsTo(MaintenanceType::class);

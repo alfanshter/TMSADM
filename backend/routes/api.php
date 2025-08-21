@@ -10,6 +10,7 @@ use App\Http\Controllers\LeakageReportController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\StockSparepartController;
+use App\Http\Controllers\TmsSparepartController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -71,3 +72,6 @@ Route::prefix('spareparts')->group(function () {
     Route::put('/{id}', [StockSparepartController::class, 'update']);
     Route::delete('/{id}', [StockSparepartController::class, 'destroy']);
 });
+
+//tms stok
+Route::get('/tmssparepart', [TmsSparepartController::class, 'index']);

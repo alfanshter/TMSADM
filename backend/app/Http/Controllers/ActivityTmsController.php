@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivityTMS;
 use App\Models\CleaningCritical;
 use App\Models\ItemMachine;
+use App\Models\TmsSparepart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -178,6 +179,20 @@ class ActivityTmsController extends Controller
             'production_scan_filename' => $production_scan_filename,
         ]);
 
+            // Simpan sparepart jika ada
+            $spareparts = $request->input('spareparts', []); // default kosong
+
+            if (!empty($spareparts)) {
+                foreach ($spareparts as $sp) {
+                    TmsSparepart::create([
+                        'activity_tms_id' => $activity->id,
+                        'stock_sparepart_id' => $sp['id'],
+                        'qty' => $sp['qty'],
+                    ]);
+                }
+            }
+
+
         $fotoGroups = [
             'cleaning_criticals' => $activity->cleaningCriticals(),
             'just_cleaning' => $activity->justCleaning(),
@@ -241,8 +256,19 @@ class ActivityTmsController extends Controller
             //scope of work safety
             'safety_scan' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
             'production_scan' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
-            'temp'       => 'nullable|numeric',
-            'deviation'  => 'nullable|string|max:255',
+
+            // angka incoming & outgoing boleh kosong
+            'incoming_rs' => 'nullable|numeric',
+            'incoming_rt' => 'nullable|numeric',
+            'incoming_st' => 'nullable|numeric',
+            'outgoing_rs' => 'nullable|numeric',
+            'outgoing_rt' => 'nullable|numeric',
+            'outgoing_st' => 'nullable|numeric',
+
+            // suhu & deviasi
+            'temp' => 'nullable|string|max:255',
+            'deviation' => 'nullable|string|max:255',
+
         ]);
 
         if ($validator->fails()) {
@@ -305,7 +331,7 @@ class ActivityTmsController extends Controller
             }
         }
 
-         // -----------------------------
+        // -----------------------------
         // REPLACEMENT PART AFTER
         // -----------------------------
         // Ambil array ID lama (foto yg dipertahankan)
@@ -331,7 +357,7 @@ class ActivityTmsController extends Controller
             }
         }
 
-         // -----------------------------
+        // -----------------------------
         // REPLACEMENT PART BEFORE
         // -----------------------------
         // Ambil array ID lama (foto yg dipertahankan)
@@ -357,7 +383,7 @@ class ActivityTmsController extends Controller
             }
         }
 
-         // -----------------------------
+        // -----------------------------
         // Just Cleaning BEFORE
         // -----------------------------
         // Ambil array ID lama (foto yg dipertahankan)
@@ -383,7 +409,7 @@ class ActivityTmsController extends Controller
             }
         }
 
-         // -----------------------------
+        // -----------------------------
         // Just Cleaning AFTER
         // -----------------------------
         // Ambil array ID lama (foto yg dipertahankan)
@@ -409,7 +435,7 @@ class ActivityTmsController extends Controller
             }
         }
 
-         // -----------------------------
+        // -----------------------------
         // Cleaning Cricital AFTER
         // -----------------------------
         // Ambil array ID lama (foto yg dipertahankan)
@@ -435,7 +461,7 @@ class ActivityTmsController extends Controller
             }
         }
 
-         // -----------------------------
+        // -----------------------------
         // Cleaning Cricital BEFORE
         // -----------------------------
         // Ambil array ID lama (foto yg dipertahankan)
@@ -517,6 +543,14 @@ class ActivityTmsController extends Controller
         $activity->temp = $request->temp;
         $activity->deviation = $request->deviation;
 
+        // Safety
+        $activity->incoming_rs = $request->incoming_rs;
+        $activity->incoming_rt = $request->incoming_rt;
+        $activity->incoming_st = $request->incoming_st;
+        $activity->outgoing_rs = $request->outgoing_rs;
+        $activity->outgoing_rt = $request->outgoing_rt;
+        $activity->outgoing_st = $request->outgoing_st;
+
         $activity->save();
 
         return response()->json([
@@ -530,14 +564,14 @@ class ActivityTmsController extends Controller
     public function destroyActivityTms($id)
     {
         $activity = ActivityTMS::find($id);
-    
+
         if (!$activity) {
             return response()->json([
                 'status' => 0,
                 'message' => 'Activity TMS tidak ditemukan.',
             ], 404);
         }
-    
+
         // -----------------------------
         // Hapus file JSA jika ada
         // -----------------------------
@@ -547,24 +581,24 @@ class ActivityTmsController extends Controller
             $activity->jsa_file_replacement_part,
             $activity->jsa_file_preventive,
         ];
-    
+
         foreach ($jsaFiles as $filePath) {
             if ($filePath && Storage::disk('public')->exists($filePath)) {
                 Storage::disk('public')->delete($filePath);
             }
         }
-    
+
         // -----------------------------
         // Hapus Safety Scan & Production Scan
         // -----------------------------
         if ($activity->safety_scan && Storage::disk('public')->exists($activity->safety_scan)) {
             Storage::disk('public')->delete($activity->safety_scan);
         }
-    
+
         if ($activity->production_scan && Storage::disk('public')->exists($activity->production_scan)) {
             Storage::disk('public')->delete($activity->production_scan);
         }
-    
+
         // -----------------------------
         // Hapus semua foto dari setiap relasi
         // -----------------------------
@@ -574,7 +608,7 @@ class ActivityTmsController extends Controller
             'preventive',
             'replacementPart',
         ];
-    
+
         foreach ($fotoRelations as $relation) {
             foreach ($activity->$relation as $foto) {
                 if ($foto->foto && Storage::disk('public')->exists($foto->foto)) {
@@ -583,16 +617,15 @@ class ActivityTmsController extends Controller
                 $foto->delete(); // hapus record di DB
             }
         }
-    
+
         // -----------------------------
         // Hapus activity utama
         // -----------------------------
         $activity->delete();
-    
+
         return response()->json([
             'status' => 1,
             'message' => 'Activity TMS berhasil dihapus.',
         ]);
     }
-    
 }

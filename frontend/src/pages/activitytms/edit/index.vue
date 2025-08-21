@@ -280,18 +280,15 @@ const addSparepart = () => {
 
 
 // hapus sparepart
-const removeSparepart = async (index) => {
-  if (!spareparts.value[index]) return;
-
-  const sparepartId = spareparts.value[index].id;
+const removeSparepart = async (index,idbaris) => {
 
   try {
     globalLoading?.show();
 
     // Hapus sparepart di backend
-    await axios.delete(`${ENDPOINTS.deleteTmsSparepart(sparepartId)}`);
+    await axios.delete(`${ENDPOINTS.deleteTmsSparepart(index)}`);
     // Hapus dari array lokal jika sukses
-    spareparts.value.splice(index, 1);
+    spareparts.value.splice(idbaris, 1);
 
     snackbarMessage.value = "Sparepart berhasil dihapus!";
     snackbarColor.value = "success";
@@ -820,7 +817,7 @@ onMounted(() => {
 
                   <!-- Aksi Hapus -->
                   <template #item.actions="{ item, index }">
-                    <VBtn icon color="red" @click="removeSparepart(index)">
+                    <VBtn icon color="red" @click="removeSparepart(item.pivot.id, index)">
                       <VIcon icon="ri-delete-bin-7-line" />
                     </VBtn>
                   </template>

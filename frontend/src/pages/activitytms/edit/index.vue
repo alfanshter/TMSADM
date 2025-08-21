@@ -141,8 +141,13 @@ const fetchActivityDetail = async () => {
     temp.value = data.temp ?? "";
     deviation.value = data.deviation ?? "";
 
+    //Production file Scan
     production_scan_filename.value = data.production_scan_filename ?? "";
     production_scan_old.value = data.production_scan ?? "";
+    
+    //safety file scan
+    safety_filename.value = data.safety_scan_filename ?? "";
+    safety_old.value = data.safety_scan ?? "";
 
     //cleaning critical 
     cleaningCriticalJsa_filename.value = data.jsa_filename_cleaning_criticals ?? "";
@@ -483,6 +488,13 @@ onMounted(() => {
             <template #title> Scope of Work </template>
             <div class="d-flex flex-column mt-2">
               <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
+               <!-- Tampilkan file lama jika ada -->
+               <div v-if="safety_filename" class="mb-2">
+                <a :href="getFileUrl(safety_old)" target="_blank">
+                  {{ getFileName(safety_filename) }}
+                </a>
+              </div>
+
               <VFileInput v-model="safety_scan" label="Pilih file dokumen"
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp"
                 prepend-icon="ri-upload-2-line" show-size />

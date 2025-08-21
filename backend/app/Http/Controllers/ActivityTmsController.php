@@ -226,18 +226,17 @@ class ActivityTmsController extends Controller
             'jsa_file_preventive' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
 
             // Foto array (lebih konsisten: pakai _foto_before / _foto_after.*)
-            'cleaning_criticals_foto_before.*' => 'nullable|file|mimes:jpg,jpeg,png',
-            'cleaning_criticals_foto_after.*'  => 'nullable|file|mimes:jpg,jpeg,png',
+            'cleaning_cricital_foto_after_new.*' => 'nullable|file|mimes:jpg,jpeg,png',
+            'cleaning_cricital_foto_before_new.*'  => 'nullable|file|mimes:jpg,jpeg,png',
 
-            'just_cleaning_foto_before.*' => 'nullable|file|mimes:jpg,jpeg,png',
-            'just_cleaning_foto_after.*'  => 'nullable|file|mimes:jpg,jpeg,png',
+            'just_cleaning_foto_after_new.*' => 'nullable|file|mimes:jpg,jpeg,png',
+            'just_cleaning_foto_before_new.*'  => 'nullable|file|mimes:jpg,jpeg,png',
 
-            'preventive_foto_before.*' => 'nullable|file|mimes:jpg,jpeg,png',
-            'preventive_foto_after.*'  => 'nullable|file|mimes:jpg,jpeg,png',
-            'preventive_foto_old.*'  => 'nullable|string',
+            'preventive_foto_after_new.*' => 'nullable|file|mimes:jpg,jpeg,png',
+            'preventive_foto_before_new.*'  => 'nullable|file|mimes:jpg,jpeg,png',
 
-            'replacement_part_foto_before.*' => 'nullable|file|mimes:jpg,jpeg,png',
-            'replacement_part_foto_after.*'  => 'nullable|file|mimes:jpg,jpeg,png',
+            'replacement_part_foto_after_new.*' => 'nullable|file|mimes:jpg,jpeg,png',
+            'replacement_part_foto_before_new.*'  => 'nullable|file|mimes:jpg,jpeg,png',
 
             //scope of work safety
             'safety_scan' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
@@ -531,36 +530,51 @@ class ActivityTmsController extends Controller
     public function destroyActivityTms($id)
     {
         $activity = ActivityTMS::find($id);
-
+    
         if (!$activity) {
             return response()->json([
                 'status' => 0,
                 'message' => 'Activity TMS tidak ditemukan.',
             ], 404);
         }
-
+    
+        // -----------------------------
         // Hapus file JSA jika ada
+        // -----------------------------
         $jsaFiles = [
             $activity->jsa_file_cleaning_criticals,
             $activity->jsa_file_just_cleaning,
             $activity->jsa_file_replacement_part,
             $activity->jsa_file_preventive,
         ];
-
+    
         foreach ($jsaFiles as $filePath) {
             if ($filePath && Storage::disk('public')->exists($filePath)) {
                 Storage::disk('public')->delete($filePath);
             }
         }
-
-        // Hapus semua foto dari setiap relasi dan file-nya di storage
+    
+        // -----------------------------
+        // Hapus Safety Scan & Production Scan
+        // -----------------------------
+        if ($activity->safety_scan && Storage::disk('public')->exists($activity->safety_scan)) {
+            Storage::disk('public')->delete($activity->safety_scan);
+        }
+    
+        if ($activity->production_scan && Storage::disk('public')->exists($activity->production_scan)) {
+            Storage::disk('public')->delete($activity->production_scan);
+        }
+    
+        // -----------------------------
+        // Hapus semua foto dari setiap relasi
+        // -----------------------------
         $fotoRelations = [
             'cleaningCriticals',
             'justCleaning',
             'preventive',
             'replacementPart',
         ];
-
+    
         foreach ($fotoRelations as $relation) {
             foreach ($activity->$relation as $foto) {
                 if ($foto->foto && Storage::disk('public')->exists($foto->foto)) {
@@ -569,13 +583,16 @@ class ActivityTmsController extends Controller
                 $foto->delete(); // hapus record di DB
             }
         }
-
-        // Hapus activity
+    
+        // -----------------------------
+        // Hapus activity utama
+        // -----------------------------
         $activity->delete();
-
+    
         return response()->json([
             'status' => 1,
             'message' => 'Activity TMS berhasil dihapus.',
         ]);
     }
+    
 }

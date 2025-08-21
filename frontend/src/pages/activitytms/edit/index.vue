@@ -425,6 +425,10 @@ const getFileName = (path) => {
   return path.split("/").pop();
 };
 
+
+function goBack() {
+  window.history.back()
+}
 onMounted(() => {
   fetchItemMachines();
   fetchActivityDetail();
@@ -439,7 +443,7 @@ onMounted(() => {
       </div>
 
       <div class="d-flex gap-4 align-center flex-wrap">
-        <VBtn variant="outlined" color="secondary"> Discard </VBtn>
+        <VBtn variant="outlined" color="secondary" @click="goBack()"> Discard </VBtn>
         <VBtn variant="outlined" color="primary"> Save Draft </VBtn>
         <VBtn @click="submitForm">Publish Activity TMS</VBtn>
       </div>

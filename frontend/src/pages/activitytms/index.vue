@@ -131,8 +131,10 @@ const deleteActivityTms = async (id) => {
   try {
     globalLoading?.show();
     await axios.delete(`${ENDPOINTS.addactivityTms}/${id}`);
-    await fetchActivityTms();
 
+      // langsung hapus dari list biar reactive
+    activityTms.value = activityTms.value.filter(item => item.id !== id);
+    
     // Tampilkan snackbar
     snackbarMessage.value = "Delete Activity TMS Completed!";
     isSnackbarTopEndVisible.value = true;

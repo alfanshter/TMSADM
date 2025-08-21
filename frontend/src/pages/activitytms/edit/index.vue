@@ -190,7 +190,7 @@ const fetchActivityDetail = async () => {
       );
       selectedMaintenanceTypesReplacementPart.value = ["replacement_part"];
     }
-    
+    //=========Preventife BEFORE==========
     if (data.preventive && data.preventive.length > 0) {
       preventivePmBeforeFiles.value = data.preventive.filter(
         (item) => item.status === "before"
@@ -199,6 +199,7 @@ const fetchActivityDetail = async () => {
       preventivePmAfterFiles.value = data.preventive.filter(
         (item) => item.status === "after"
       );
+
       selectedMaintenanceTypesPreventivePM.value = ["preventive_pm"];
     }
   } catch (error) {
@@ -232,7 +233,7 @@ const submitForm = async () => {
   formData.append("location", location.value);
   formData.append("scope_of_work", scopeOfWork.value);
   formData.append("date", birthDate.value);
-  
+
   // Foto
   cleaningCriticalBeforeFiles.value.forEach((file) => {
     formData.append("cleaning_criticals_foto_before[]", file);
@@ -252,12 +253,104 @@ const submitForm = async () => {
   replacementPartAfterFiles.value.forEach((file) => {
     formData.append("replacement_part_foto_after[]", file);
   });
-  preventivePmBeforeFiles.value.forEach((file) => {
-    formData.append("preventive_foto_before[]", file);
+
+  // =========PREVENTIVE================
+  // ==========BEFORE=========
+  // Foto lama → kirim ID saja
+  preventivePmBeforeFiles.value
+    .filter(f => !f.isNew)
+    .forEach((f, i) => {
+      formData.append(`preventive_foto_before_old[${i}]`, f.id);
+    });
+
+  // Foto lama → kirim File
+  preventivePmBeforeFiles.value
+    .filter(f => f.isNew)
+    .forEach((f, i) => {
+      formData.append(`preventive_foto_before_new[${i}]`, f.file);
+    });
+  // ==========AFTER=========
+  preventivePmAfterFiles.value.filter(f => !f.isNew).forEach((f, i) => {
+    formData.append(`preventive_foto_after_old[${i}]`, f.id);
   });
-  preventivePmAfterFiles.value.forEach((file) => {
-    formData.append("preventive_foto_after[]", file);
+
+  preventivePmAfterFiles.value.filter(f => f.isNew).forEach((f, i) => {
+    formData.append(`preventive_foto_after_new[${i}]`, f.file);
   });
+
+  // =========REPLACEMENT PART================
+  // ==========BEFORE=========
+  // Foto lama → kirim ID saja  
+  replacementPartBeforeFiles.value
+    .filter(f => !f.isNew)
+    .forEach((f, i) => {
+      formData.append(`replacement_part_foto_before_old[${i}]`, f.id);
+    });
+
+  // Foto lama → kirim File
+  replacementPartBeforeFiles.value
+    .filter(f => f.isNew)
+    .forEach((f, i) => {
+      formData.append(`replacement_part_foto_before_new[${i}]`, f.file);
+    });
+  // ==========AFTER=========
+  replacementPartAfterFiles.value.filter(f => !f.isNew).forEach((f, i) => {
+    formData.append(`replacement_part_foto_after_old[${i}]`, f.id);
+  });
+
+  replacementPartAfterFiles.value.filter(f => f.isNew).forEach((f, i) => {
+    formData.append(`replacement_part_foto_after_new[${i}]`, f.file);
+  });
+
+   // =========JUST CLEANING================
+  // ==========BEFORE=========
+  // Foto lama → kirim ID saja  
+  justCleaningBeforeFiles.value
+    .filter(f => !f.isNew)
+    .forEach((f, i) => {
+      formData.append(`just_cleaning_foto_before_old[${i}]`, f.id);
+    });
+
+  // Foto lama → kirim File
+  justCleaningBeforeFiles.value
+    .filter(f => f.isNew)
+    .forEach((f, i) => {
+      formData.append(`just_cleaning_foto_before_new[${i}]`, f.file);
+    });
+  // ==========AFTER=========
+  justCleaningAfterFiles.value.filter(f => !f.isNew).forEach((f, i) => {
+    formData.append(`just_cleaning_foto_after_old[${i}]`, f.id);
+  });
+
+  justCleaningAfterFiles.value.filter(f => f.isNew).forEach((f, i) => {
+    formData.append(`just_cleaning_foto_after_new[${i}]`, f.file);
+  });
+
+  // =========CLEANING CRITICAL================
+  // ==========BEFORE=========
+  // Foto lama → kirim ID saja  
+  cleaningCriticalBeforeFiles.value
+    .filter(f => !f.isNew)
+    .forEach((f, i) => {
+      formData.append(`cleaning_cricital_foto_before_old[${i}]`, f.id);
+    });
+
+  // Foto lama → kirim File
+  cleaningCriticalBeforeFiles.value
+    .filter(f => f.isNew)
+    .forEach((f, i) => {
+      formData.append(`cleaning_cricital_foto_before_new[${i}]`, f.file);
+    });
+  // ==========AFTER=========
+  cleaningCriticalAfterFiles.value.filter(f => !f.isNew).forEach((f, i) => {
+    formData.append(`cleaning_cricital_foto_after_old[${i}]`, f.id);
+  });
+
+  cleaningCriticalAfterFiles.value.filter(f => f.isNew).forEach((f, i) => {
+    formData.append(`cleaning_cricital_foto_after_new[${i}]`, f.file);
+  });
+
+
 
   // JSA
   if (replacementJsa.value) {
@@ -289,6 +382,9 @@ const submitForm = async () => {
   formData.append("outgoing_st", outgoingSt.value ?? "");
   formData.append("temp", temp.value ?? "");
   formData.append("deviation", deviation.value ?? "");
+  for (let [key, value] of formData.entries()) {
+    console.log(key, value);
+  }
 
   try {
     let res;

@@ -31,12 +31,20 @@ watch(
               id: null,
             });
           } else {
-            fileData.value.push({
-              file: null,
-              url: `${apiUrl}/storage/${item.foto}`,
-              isNew: false,
-              id: item.id ?? null,
-            });
+            if (!fileData.value.some((f) => f.id === item.id)) {
+              fileData.value.push({
+                file: null,
+                url: `${apiUrl}/storage/${item.foto}`, // pastikan field `foto` betul
+                isNew: false,
+                id: item.id ?? null,
+              });
+            }
+            // fileData.value.push({
+            //   file: null,
+            //   url: `${apiUrl}/storage/${item.foto}`,
+            //   isNew: false,
+            //   id: item.id ?? null,
+            // });
           }
         }
       });
@@ -88,21 +96,16 @@ function removeFile(index) {
 <template>
   <div class="flex flex-col gap-2">
     <!-- Label -->
-    <div
-      v-if="label"
-      class="text-subtitle-1 font-weight-medium mb-2"
-      :style="{ color: label === 'BEFORE' ? '#f44336' : '#4caf50' }"
-    >
+    <div v-if="label" class="text-subtitle-1 font-weight-medium mb-2"
+      :style="{ color: label === 'BEFORE' ? '#f44336' : '#4caf50' }">
       {{ label }}
     </div>
 
     <div class="w-full h-auto relative">
       <div ref="dropZoneRef" class="cursor-pointer" @click="() => open()">
         <!-- Kosong -->
-        <div
-          v-if="fileData.length === 0"
-          class="d-flex flex-column justify-center align-center gap-y-2 pa-12 border-dashed drop-zone"
-        >
+        <div v-if="fileData.length === 0"
+          class="d-flex flex-column justify-center align-center gap-y-2 pa-12 border-dashed drop-zone">
           <VAvatar variant="tonal" color="secondary" rounded>
             <VIcon icon="ri-upload-2-line" />
           </VAvatar>
@@ -112,32 +115,15 @@ function removeFile(index) {
         </div>
 
         <!-- Ada file -->
-        <div
-          v-else
-          class="d-flex justify-center align-center gap-3 pa-8 border-dashed drop-zone flex-wrap"
-        >
+        <div v-else class="d-flex justify-center align-center gap-3 pa-8 border-dashed drop-zone flex-wrap">
           <VRow class="w-100">
-            <VCol
-              v-for="(item, index) in fileData"
-              :key="index"
-              cols="12"
-              md="6"
-            >
+            <VCol v-for="(item, index) in fileData" :key="index" cols="12" md="6">
               <VCard :ripple="false">
                 <VCardText class="d-flex flex-column" @click.stop>
-                  <VImg
-                    :src="item.url"
-                    width="100%"
-                    height="200px"
-                    class="mx-auto"
-                    cover
-                  />
+                  <VImg :src="item.url" width="100%" height="200px" class="mx-auto" cover />
 
                   <div class="text-center mt-2 font-weight-bold text-uppercase">
-                    <VChip
-                      :color="label === 'BEFORE' ? 'error' : 'success'"
-                      size="small"
-                    >
+                    <VChip :color="label === 'BEFORE' ? 'error' : 'success'" size="small">
                       {{ label }}
                     </VChip>
                   </div>
@@ -145,21 +131,17 @@ function removeFile(index) {
                   <div class="mt-2 text-center">
                     <span class="clamp-text text-wrap">{{
                       item.file ? item.file.name : `File #${item.id}`
-                    }}</span>
+                      }}</span>
                     <br />
                     <span v-if="item.file">{{
                       (item.file.size / 1000).toFixed(1)
-                    }} KB</span>
+                      }} KB</span>
                     <span v-else>Lama (server)</span>
                   </div>
                 </VCardText>
 
                 <VCardActions>
-                  <VBtn
-                    variant="text"
-                    block
-                    @click.stop="removeFile(index)"
-                  >
+                  <VBtn variant="text" block @click.stop="removeFile(index)">
                     Remove File
                   </VBtn>
                 </VCardActions>
@@ -169,13 +151,7 @@ function removeFile(index) {
 
           <!-- Tombol tambah -->
           <div class="w-full flex justify-center mt-4">
-            <VBtn
-              variant="outlined"
-              color="primary"
-              icon
-              @click.stop="open()"
-              title="Tambah Gambar"
-            >
+            <VBtn variant="outlined" color="primary" icon @click.stop="open()" title="Tambah Gambar">
               <VIcon icon="ri-add-line" />
             </VBtn>
           </div>

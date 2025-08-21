@@ -111,6 +111,9 @@ const selectedItemSparepart = ref([]);
 const requiredQty = ref(1);
 const sparepartList = ref([]);
 
+const activity_id = ref("");
+
+
 if (currentItem.value != null) {
   console.log("date:", currentItem.value);
   location.value = currentItem.value.item_machine.location;
@@ -232,6 +235,8 @@ const fetchActivityDetail = async () => {
 
       selectedMaintenanceTypesPreventivePM.value = ["preventive_pm"];
     }
+
+    activity_id = data.id;
   } catch (error) {
     console.error("Error fetching activity detail:", error);
   }
@@ -249,38 +254,73 @@ const onSparepartSelect = () => {
 };
 
 // Tambah ke list
-const addSparepart = () => {
+// Tambah ke list + simpan ke server
+// Tambah sparepart
+const addSparepart = async (activity_id) => {
   if (!selectedItemSparepartObj.value) return;
+
+  // Validasi qty
   if (requiredQty.value < 1 || requiredQty.value > selectedItemSparepartObj.value.stok) {
     alert("Jumlah tidak valid!");
     return;
   }
 
-  // cek jika sudah ada di list
-  const existIndex = sparepartList.value.findIndex(
-    (s) => s.id === selectedItemSparepartObj.value.id
-  );
-  if (existIndex !== -1) {
-    sparepartList.value[existIndex].qty += requiredQty.value;
-  } else {
-    sparepartList.value.push({
-      id: selectedItemSparepartObj.value.id,
-      nama_sparepart: selectedItemSparepartObj.value.nama_sparepart,
-      qty: requiredQty.value,
-      loc: selectedItemSparepartObj.value.loc,
-      spec: selectedItemSparepartObj.value.spec,
-      type: selectedItemSparepartObj.value.type,
-    });
-  }
+  try {
+    globalLoading?.show();
 
-  // reset input
-  selectedItemSparepart.value = null;
-  requiredQty.value = 1;
+    // Data yang dikirim ke server
+    const payload = {
+      activity_tms_id: activity_id,
+      stock_sparepart_id: selectedItemSparepartObj.value.id,
+      qty: requiredQty.value,
+    };
+
+    // Simpan ke server
+    const res = await axios.post(ENDPOINTS.addTmsSparepart, payload);
+
+    // Update array lokal (konsisten sama removeSparepart → pakai spareparts)
+    const existIndex = spareparts.value.findIndex(
+      (s) => s.id === selectedItemSparepartObj.value.id
+    );
+
+    if (existIndex !== -1) {
+      spareparts.value[existIndex].qty += requiredQty.value;
+    } else {
+      spareparts.value.push({
+        id: selectedItemSparepartObj.value.id,
+        nama_sparepart: selectedItemSparepartObj.value.nama_sparepart,
+        pivot: {
+          qty: requiredQty.value,   // 👈 taruh di pivot
+        },
+        loc: selectedItemSparepartObj.value.loc,
+        spec: selectedItemSparepartObj.value.spec,
+        type: selectedItemSparepartObj.value.type,
+      });
+
+    }
+
+    snackbarMessage.value = "Sparepart berhasil ditambahkan!";
+    snackbarColor.value = "success";
+    isSnackbarTopEndVisible.value = true;
+
+    // Reset input
+    selectedItemSparepart.value = null;
+    requiredQty.value = 1;
+
+  } catch (error) {
+    console.error("Error adding data:", error);
+    snackbarMessage.value = "Gagal menambahkan sparepart!";
+    snackbarColor.value = "error";
+    isSnackbarTopEndVisible.value = true;
+  } finally {
+    globalLoading?.hide();
+  }
 };
 
 
+
 // hapus sparepart
-const removeSparepart = async (index,idbaris) => {
+const removeSparepart = async (index, idbaris) => {
 
   try {
     globalLoading?.show();
@@ -758,7 +798,7 @@ onMounted(() => {
                     <VTextField v-model.number="requiredQty" type="number"
                       :label="`Butuh berapa? (Stok tersedia: ${selectedItemSparepartObj.stok})`"
                       :max="selectedItemSparepartObj.stok" min="1" />
-                    <VBtn color="primary" class="mt-2" @click="addSparepart">Add</VBtn>
+                    <VBtn color="primary" class="mt-2" @click="addSparepart(activityId)">Add</VBtn>
                   </VCol>
                 </VRow>
 

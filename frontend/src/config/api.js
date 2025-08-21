@@ -28,5 +28,6 @@ export const ENDPOINTS = {
   deleteSparepart: (id) => `${API_BASE_URL}/spareparts/${id}`, // DELETE
   //tms sparepart
   deleteTmsSparepart: (id) => `${API_BASE_URL}/tmssparepart/${id}`, // DELETE
+  addTmsSparepart:`${API_BASE_URL}/tmssparepart`, // tambah
   
 };

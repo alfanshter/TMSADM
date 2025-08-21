@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\TmsSparepart;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class TmsSparepartController extends Controller
 {
@@ -17,11 +18,49 @@ class TmsSparepartController extends Controller
             'message' => 'List tms sparepart retrieved successfully'
         ]);
     }
+    
+    public function store(Request $request)
+    {
+        try {
+            // Validasi input
+            $validator = Validator::make($request->all(), [
+                'activity_tms_id'    => 'required|integer|exists:activity_tms,id',
+                'stock_sparepart_id' => 'required|integer|exists:stock_spareparts,id',
+                'qty'                => 'required|integer|min:1',
+            ]);
+    
+            // Jika validasi gagal
+            if ($validator->fails()) {
+                return response()->json([
+                    'status'  => 0,
+                    'message' => 'Validasi gagal.',
+                    'errors'  => $validator->errors()
+                ], 422);
+            }
+    
+            // Simpan data
+            $sparepart = TmsSparepart::create($validator->validated());
+    
+            return response()->json([
+                'status'  => 1,
+                'message' => 'Sparepart berhasil ditambahkan.',
+                'data'    => $sparepart
+            ], 201);
+    
+        } catch (\Exception $e) {
+            // Jika ada error tak terduga
+            return response()->json([
+                'status'  => 0,
+                'message' => 'Terjadi kesalahan pada server.',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+    
 
     function destroy($id)
     {
 
-     
         // Hapus data
         $deleted = TmsSparepart::where('id', $id)->delete();
 

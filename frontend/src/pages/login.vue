@@ -129,24 +129,9 @@ const authV2LoginIllustration = useGenerateImageVariant(
                 <VBtn block @click="handleLogin"> Login </VBtn>
               </VCol>
 
-              <!-- create account -->
-              <VCol cols="12" class="text-body-1 text-center">
-                <span class="d-inline-block"> New on our platform? </span>
-                <a class="text-primary ms-1 d-inline-block text-body-1" href="javascript:void(0)">
-                  Create an account
-                </a>
-              </VCol>
+            
 
-              <VCol cols="12" class="d-flex align-center">
-                <VDivider />
-                <span class="mx-4 text-high-emphasis">or</span>
-                <VDivider />
-              </VCol>
-
-              <!-- auth providers -->
-              <VCol cols="12" class="text-center">
-                <AuthProvider />
-              </VCol>
+        
             </VRow>
           </VForm>
         </VCardText>

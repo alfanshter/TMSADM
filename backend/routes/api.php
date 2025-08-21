@@ -73,5 +73,8 @@ Route::prefix('spareparts')->group(function () {
     Route::delete('/{id}', [StockSparepartController::class, 'destroy']);
 });
 
-//tms stok
-Route::get('/tmssparepart', [TmsSparepartController::class, 'index']);
+
+Route::prefix('tmssparepart')->group(function () {
+    Route::get('/', [StockSparepartController::class, 'index']);
+    Route::delete('/{id}', [StockSparepartController::class, 'destroy']);
+});

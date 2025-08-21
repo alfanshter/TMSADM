@@ -13,27 +13,54 @@ use Illuminate\Support\Facades\Validator;
 class ActivityTmsController extends Controller
 {
     public function getAllActivityTms()
-    {
-        $activities = ActivityTMS::with('itemMachine')
-            ->with('cleaningCriticals')
-            ->with('justCleaning')
-            ->with('preventive')
-            ->with('replacementPart')
-            ->get();
-
-        if ($activities->isEmpty()) {
-            return response()->json([
-                'status' => 0,
-                'message' => 'Belum ada data aktivitas TMS.',
-                'data' => []
-            ], 404);
-        }
-
+    {$activities = ActivityTMS::with([
+        'itemMachine',
+        'cleaningCriticals',
+        'justCleaning',
+        'preventive',
+        'replacementPart',
+        'spareparts'
+    ])->get();
+    
+    // Transform data supaya spareparts hanya menampilkan field tertentu
+    $activitiesFormatted = $activities->map(function ($activity) {
+        $spareparts = $activity->spareparts->map(function ($sp) {
+            return [
+                'nama_sparepart' => $sp->nama_sparepart,
+                'spec' => $sp->spec,
+                'loc' => $sp->loc,
+                'type' => $sp->type,
+                'qty' => $sp->pivot->qty,
+            ];
+        });
+    
+        return [
+            'id' => $activity->id,
+            'item_machine' => $activity->itemMachine,
+            'cleaning_criticals' => $activity->cleaningCriticals,
+            'just_cleaning' => $activity->justCleaning,
+            'preventive' => $activity->preventive,
+            'replacement_part' => $activity->replacementPart,
+            'spareparts' => $spareparts,
+            'date' => $activity->date,
+            // tambahkan field lain jika perlu
+        ];
+    });
+    
+    if ($activitiesFormatted->isEmpty()) {
         return response()->json([
-            'status' => 1,
-            'message' => 'Berhasil mengambil semua data aktivitas TMS.',
-            'data' => $activities
-        ], 200);
+            'status' => 0,
+            'message' => 'Belum ada data aktivitas TMS.',
+            'data' => []
+        ], 404);
+    }
+    
+    return response()->json([
+        'status' => 1,
+        'message' => 'Berhasil mengambil semua data aktivitas TMS.',
+        'data' => $activitiesFormatted
+    ], 200);
+    
     }
 
 
@@ -45,7 +72,8 @@ class ActivityTmsController extends Controller
             'cleaningCriticals',
             'justCleaning',
             'preventive',
-            'replacementPart'
+            'replacementPart',
+            'spareparts'
         ])->find($id);
 
         if (!$activity) {
@@ -179,18 +207,18 @@ class ActivityTmsController extends Controller
             'production_scan_filename' => $production_scan_filename,
         ]);
 
-            // Simpan sparepart jika ada
-            $spareparts = $request->input('spareparts', []); // default kosong
+        // Simpan sparepart jika ada
+        $spareparts = $request->input('spareparts', []); // default kosong
 
-            if (!empty($spareparts)) {
-                foreach ($spareparts as $sp) {
-                    TmsSparepart::create([
-                        'activity_tms_id' => $activity->id,
-                        'stock_sparepart_id' => $sp['id'],
-                        'qty' => $sp['qty'],
-                    ]);
-                }
+        if (!empty($spareparts)) {
+            foreach ($spareparts as $sp) {
+                TmsSparepart::create([
+                    'activity_tms_id' => $activity->id,
+                    'stock_sparepart_id' => $sp['id'],
+                    'qty' => $sp['qty'],
+                ]);
             }
+        }
 
 
         $fotoGroups = [

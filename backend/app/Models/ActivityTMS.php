@@ -28,27 +28,31 @@ class ActivityTMS extends Model
 
     public function justCleaning()
     {
-        return $this->hasMany(JustCleaning::class , 'activity_tms_id');
+        return $this->hasMany(JustCleaning::class, 'activity_tms_id');
     }
 
     public function preventive()
     {
-        return $this->hasMany(Preventive::class , 'activity_tms_id');
+        return $this->hasMany(Preventive::class, 'activity_tms_id');
     }
 
     public function replacementPart()
     {
-        return $this->hasMany(ReplacementPart::class ,'activity_tms_id');
+        return $this->hasMany(ReplacementPart::class, 'activity_tms_id');
     }
 
 
     public function spareparts()
-{
-    return $this->belongsToMany(StockSparepart::class, 'activity_tms_spareparts')
-                ->withPivot('qty')
-                ->withTimestamps();
-}
-
+    {
+        return $this->belongsToMany(
+            StockSparepart::class,
+            'tms_spareparts', // nama pivot table yang benar
+            'activity_tms_id',         // foreign key di pivot untuk ActivityTMS
+            'stock_sparepart_id'       // foreign key di pivot untuk StockSparepart
+        )->withPivot('qty')
+         ->withTimestamps();
+    }
+    
     // public function maintenanceType()
     // {
     //     return $this->belongsTo(MaintenanceType::class);

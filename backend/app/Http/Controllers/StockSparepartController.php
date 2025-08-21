@@ -24,10 +24,15 @@ class StockSparepartController extends Controller
             $query->where('loc', 'LIKE', "%{$request->loc}%");
         }
 
+          // Tambahin usage (jumlah qty dari relasi tms_spareparts)
+        $query->withSum('usages', 'qty');
+
 
         $data = $query->orderBy('nama_sparepart', 'ASC')
             ->get()
             ->map(function ($item) {
+                 // pakai hasil dari withSum
+                $item->usage = $item->usages_sum_qty ?? 0;
                 $item->end_month_stock = $item->stok + $item->incoming - $item->usage;
                 return $item;
             });

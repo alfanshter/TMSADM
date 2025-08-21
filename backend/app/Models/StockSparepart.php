@@ -29,4 +29,10 @@ class StockSparepart extends Model
             ->withPivot('qty')
             ->withTimestamps();
     }
+
+
+    public function usages()
+    {
+        return $this->hasMany(TmsSparepart::class, 'stock_sparepart_id');
+    }
 }

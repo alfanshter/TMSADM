@@ -54,7 +54,7 @@ const isPositive = computed(() => Math.sign(props.change) === 1)
           class="text-body-1"
           :class="isPositive ? 'text-success' : 'text-error'"
         >
-          {{ isPositive ? `+${props.change}` : props.change }}%
+          {{ isPositive ? `+${props.change}` : props.change }}
         </div>
       </div>
     </VCardText>

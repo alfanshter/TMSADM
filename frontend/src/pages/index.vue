@@ -1,162 +1,72 @@
 <script setup>
-import CrmCongratulationsNorris from '@/views/dashboards/crm/CrmCongratulationsNorris.vue'
-import CrmExternalLinks from '@/views/dashboards/crm/CrmExternalLinks.vue'
-import CrmGrowthDonutCharts from '@/views/dashboards/crm/CrmGrowthDonutCharts.vue'
-import CrmMeetingSchedule from '@/views/dashboards/crm/CrmMeetingSchedule.vue'
-import CrmMonthlyBudget from '@/views/dashboards/crm/CrmMonthlyBudget.vue'
-import CrmMostSalesInCountries from '@/views/dashboards/crm/CrmMostSalesInCountries.vue'
-import CrmOrganicSessions from '@/views/dashboards/crm/CrmOrganicSessions.vue'
-import CrmPaymentHistory from '@/views/dashboards/crm/CrmPaymentHistory.vue'
-import CrmProfitBarWithGapCharts from '@/views/dashboards/crm/CrmProfitBarWithGapCharts.vue'
-import CrmProjectTimeline from '@/views/dashboards/crm/CrmProjectTimeline.vue'
-import CrmSocialNetworkVisits from '@/views/dashboards/crm/CrmSocialNetworkVisits.vue'
-import CrmUserList from '@/views/dashboards/crm/CrmUserList.vue'
-import CrmWeeklyOverview from '@/views/dashboards/crm/CrmWeeklyOverview.vue'
+import EcommerceSalesOverview from '@/views/dashboards/ecommerce/EcommerceSalesOverview.vue'
+import illustration1 from '@images/cards/illustration-1.png'
+import illustration2 from '@images/cards/illustration-2.png'
+import illustration3 from '@images/cards/illustration-3.png'
+import illustration4 from '@images/cards/illustration-4.png'
 
-const statisticsVertical = [
+const statisticsWithImages = [
   {
-    title: 'Total Orders',
+    title: 'Activity TMS',
+    subtitle: 'Year of 2025',
+    stats: '10',
+    image: illustration1,
+    imgWidth: 99,
     color: 'primary',
-    icon: 'ri-shopping-cart-line',
-    stats: '155k',
-    change: 22,
-    subtitle: 'Last 4 months',
   },
   {
-    title: 'Total Sales',
+    title: 'FAW Report',
+    subtitle: 'Year of 2025',
+    stats: '20',
+    image: illustration2,
+    imgWidth: 85,
     color: 'success',
-    icon: 'ri-handbag-line',
-    stats: '13.4k',
-    change: 38,
-    subtitle: 'Last Six months',
+  },
+  {
+    title: 'Leakage Report',
+    subtitle: 'Year of 2025',
+    stats: '25',
+    image: illustration3,
+    imgWidth: 85,
+    color: 'success',
+  },
+
+  {
+    title: 'Schedule',
+    subtitle: 'Year of 2025',
+    stats: '10',
+    image: illustration4,
+    imgWidth: 85,
+    color: 'success',
   },
 ]
 </script>
 
 <template>
   <VRow class="match-height">
-    <!-- 👉 Award -->
+    <!-- 👉 Sales Overview -->
     <VCol
       cols="12"
-      md="4"
+      md="6"
     >
-      <CrmCongratulationsNorris />
+      <EcommerceSalesOverview />
     </VCol>
 
-    <!-- 👉 Total Orders -->
+    <!-- 👉 Images Cards -->
     <VCol
-      v-for="statistics in statisticsVertical"
+      v-for="statistics in statisticsWithImages"
       :key="statistics.title"
       cols="12"
-      sm="3"
-      md="2"
-    >
-      <CardStatisticsVertical v-bind="statistics" />
-    </VCol>
-
-    <!-- 👉 Profile Line Charts -->
-    <VCol
-      cols="12"
-      sm="3"
-      md="2"
-    >
-      <CrmProfitBarWithGapCharts />
-    </VCol>
-
-    <!-- 👉 Total Growth -->
-    <VCol
-      cols="12"
-      md="2"
-      sm="3"
-    >
-      <CrmGrowthDonutCharts />
-    </VCol>
-
-    <!-- 👉 Organic Sessions -->
-    <VCol
-      cols="12"
-      md="4"
-    >
-      <CrmOrganicSessions />
-    </VCol>
-
-    <!-- 👉 Project Timeline -->
-    <VCol
-      cols="12"
-      md="8"
-    >
-      <CrmProjectTimeline />
-    </VCol>
-
-    <!-- 👉 Weekly Overview -->
-    <VCol
-      cols="12"
       sm="6"
-      md="4"
+      md="3"
     >
-      <CrmWeeklyOverview />
+      <CardStatisticsWithImages v-bind="statistics" />
     </VCol>
 
-    <!-- 👉 Social Network Visits -->
-    <VCol
-      cols="12"
-      sm="6"
-      md="4"
-    >
-      <CrmSocialNetworkVisits />
-    </VCol>
 
-    <!-- 👉 Monthly Budget -->
-    <VCol
-      cols="12"
-      md="4"
-      sm="6"
-    >
-      <CrmMonthlyBudget />
-    </VCol>
-
-    <!-- 👉 Meeting Schedule -->
-    <VCol
-      cols="12"
-      md="4"
-      sm="6"
-    >
-      <CrmMeetingSchedule />
-    </VCol>
-
-    <!-- 👉 External Links -->
-    <VCol
-      cols="12"
-      sm="6"
-      md="4"
-    >
-      <CrmExternalLinks />
-    </VCol>
-
-    <!-- 👉 Payment History -->
-    <VCol
-      cols="12"
-      sm="6"
-      md="4"
-    >
-      <CrmPaymentHistory />
-    </VCol>
-
-    <!-- 👉 Most Sales in Countries -->
-    <VCol
-      cols="12"
-      md="4"
-    >
-      <CrmMostSalesInCountries />
-    </VCol>
-
-    <!-- 👉 User List -->
-    <VCol
-      cols="12"
-      md="8"
-    >
-      <CrmUserList />
-    </VCol>
+    
+  
+    
   </VRow>
 </template>
 

@@ -28,6 +28,7 @@ const selectedMaintenanceTypesJustCleaning = ref([]);
 const selectedMaintenanceTypesReplacementPart = ref([]);
 const selectedMaintenanceTypesPreventivePM = ref([]);
 const birthDate = ref("");
+const production_downtime = ref("");
 
 // file foto
 const cleaningCriticalBeforeFiles = ref([]);
@@ -137,6 +138,7 @@ if (currentItem.value != null) {
   code.value = currentItem.value.item_machine.code;
   scopeOfWork.value = currentItem.value.item_machine.scope_of_work;
   birthDate.value = currentItem.value.date;
+  production_downtime.value = currentItem.value.production_downtime;
 }
 
 // Ambil item machines
@@ -221,6 +223,7 @@ const submitForm = async () => {
   formData.append("location", location.value);
   formData.append("scope_of_work", scopeOfWork.value);
   formData.append("date", birthDate.value);
+  formData.append("production_downtime", production_downtime.value);
 
   // Foto
   cleaningCriticalBeforeFiles.value.forEach((file) => {
@@ -434,6 +437,18 @@ onMounted(() => {
               <VFileInput v-model="production_scan" label="Pilih file dokumen"
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
 
+            </div>
+            <!-- Checkbox -->
+
+          </VCardItem>
+
+          <VCardItem>
+            <div class="d-flex flex-column">
+              <VLabel class=" mb-1">Downtime Production</VLabel>
+              <VCol cols="12" md="6">
+                <VTextField v-model="production_downtime" label="Downtime Production"  placeholder="minute" type="number" />
+              </VCol>
+           
             </div>
             <!-- Checkbox -->
 

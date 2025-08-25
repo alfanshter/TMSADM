@@ -22,7 +22,9 @@ watch(
   () => props.sparepart,
   (val) => {
     if (val) {
-      stok_awal.value = val.stok_awal || 0;
+      console.log("dinda", val);
+      
+      stok_awal.value = val.stok || 0;
       incoming.value = val.incoming || 0;
       usage.value = val.usage || 0;
     }
@@ -52,7 +54,7 @@ const submitForm = () => {
     @update:model-value="handleDrawerModelValueUpdate"
   >
     <AppDrawerHeaderSection
-      title="Update Stok"
+      title="Add Incoming"
       @cancel="() => emit('update:isDrawerOpen', false)"
     />
     <VDivider />
@@ -67,6 +69,17 @@ const submitForm = () => {
                   v-model.number="stok_awal"
                   type="number"
                   label="Stok Awal"
+                  readonly
+                  :rules="[requiredValidator]"
+                />
+              </VCol>
+
+              <VCol cols="12">
+                <VTextField
+                  v-model.number="usage"
+                  type="number"
+                  label="Usage"
+                  readonly
                   :rules="[requiredValidator]"
                 />
               </VCol>
@@ -80,14 +93,7 @@ const submitForm = () => {
                 />
               </VCol>
 
-              <VCol cols="12">
-                <VTextField
-                  v-model.number="usage"
-                  type="number"
-                  label="Usage"
-                  :rules="[requiredValidator]"
-                />
-              </VCol>
+           
 
               <VCol cols="12">
                 <div class="d-flex justify-start">

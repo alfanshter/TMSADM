@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\StockSparepartsExport;
 use App\Models\StockSparepart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Excel;
+use Maatwebsite\Excel\Facades\Excel as FacadesExcel;
 
 class StockSparepartController extends Controller
 {
@@ -168,6 +172,36 @@ class StockSparepartController extends Controller
             'status' => true,
             'data' => null,
             'message' => 'Spare part deleted successfully'
+        ]);
+    }
+
+    public function export(Request $request)
+    {
+        $year = $request->get('year');
+    
+        if (!$year || !is_numeric($year)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Tahun tidak valid',
+                'data' => null
+            ], 422);
+        }
+    
+        $filename = "stock_spareparts_{$year}.xlsx";
+        $path = "exports/{$filename}";
+    
+        // Simpan file di storage/app/public/exports
+        FacadesExcel::store(new StockSparepartsExport($year), $path, 'public');
+    
+        // Buat URL yang bisa diakses
+        $downloadUrl = Storage::url($path);
+    
+        return response()->json([
+            'status' => true,
+            'message' => 'Export berhasil',
+            'data' => [
+                'download_link' => url($downloadUrl)
+            ]
         ]);
     }
 }

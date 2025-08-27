@@ -68,6 +68,7 @@ Route::get('/activity-summary', [ScheduleController::class, 'index']);
 Route::prefix('spareparts')->group(function () {
     Route::get('/', [StockSparepartController::class, 'index']);
     Route::post('/', [StockSparepartController::class, 'store']);
+    Route::get('/export', [StockSparepartController::class, 'export']);
     Route::get('/{id}', [StockSparepartController::class, 'show']);
     Route::put('/{id}', [StockSparepartController::class, 'update']);
     Route::delete('/{id}', [StockSparepartController::class, 'destroy']);

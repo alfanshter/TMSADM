@@ -31,6 +31,7 @@ return new class extends Migration
             $table->float('outgoing_st')->nullable();
             $table->string('temp')->nullable();
             $table->string('deviation')->nullable();
+            $table->integer('production_downtime')->nullable();
             $table->string('production_scan')->nullable();
             $table->string('production_scan_filename')->nullable();
             $table->string('safety_scan')->nullable();

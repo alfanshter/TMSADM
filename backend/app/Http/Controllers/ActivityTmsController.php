@@ -162,6 +162,8 @@ class ActivityTmsController extends Controller
         $production_scan = null;
         $production_scan_filename = null;
 
+        $production_downtime = null;
+
         if ($itemmachine->scope_of_work == "safety") {
             $incoming_rs = $request->incoming_rs;
             $incoming_rt = $request->incoming_rt;
@@ -175,8 +177,10 @@ class ActivityTmsController extends Controller
             $safety_scan = $request->file('safety_scan')?->store('safety_scan', 'public');
             $safety_scan_filename = $request->file('safety_scan')?->getClientOriginalName();
         } else if ($itemmachine->scope_of_work == "production") {
+
             $production_scan = $request->file('production_scan')?->store('production_scan', 'public');
             $production_scan_filename = $request->file('production_scan')?->getClientOriginalName();
+            $production_downtime = $request->production_downtime;
         }
 
 
@@ -205,6 +209,7 @@ class ActivityTmsController extends Controller
             'production_scan' => $production_scan,
             'safety_scan_filename' => $safety_scan_filename,
             'production_scan_filename' => $production_scan_filename,
+            'production_downtime' => $production_downtime,
         ]);
 
         // Simpan sparepart jika ada

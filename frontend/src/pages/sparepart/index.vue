@@ -13,9 +13,18 @@ const spareparts = ref([]);
 const totalSpareparts = ref(0);
 const searchQuery = ref("");
 const selectedCategory = ref(null);
+const selectedYear = ref(null);   // <-- state baru untuk tahun
 const itemsPerPage = ref(10);
 const page = ref(1);
 const isLoading = ref(false);
+
+
+// Dropdown tahun (5 tahun terakhir)
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 5 }, (_, i) => ({
+  title: String(currentYear - i),
+  value: currentYear - i,
+}));
 
 // SNACKBAR
 const isSnackbarTopEndVisible = ref(false);
@@ -60,6 +69,27 @@ const fetchSpareparts = async () => {
 
 onMounted(() => fetchSpareparts());
 
+// EXPORT TO EXCEL
+const exportToExcel = async (year) => {
+  if (!year) {
+    console.error("Tahun belum dipilih");
+    return;
+  }
+  try {
+    const res = await axios.get(ENDPOINTS.exportSpareparts(year), { responseType: "blob" });
+    console.log("export url", ENDPOINTS.exportSpareparts(year));
+
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `stock_spareparts_${year}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+  } catch (err) {
+    console.error("Gagal export excel:", err);
+  }
+};
+
 // ADD SPAREPART
 const isAddNewSparepartDrawerVisible = ref(false);
 const addNewSparepart = (newSparepart) => {
@@ -92,7 +122,7 @@ const handleUpdateStok = async (data) => {
       usage: Number(data.usage) || 0,
     };
 
-    const res = await axios.post(`${ENDPOINTS.spareparts}/${sparepartId}`, {
+    const res = await axios.put(`${ENDPOINTS.spareparts}/${sparepartId}`, {
       nama_sparepart: selectedSparepart.value.nama_sparepart,
       loc: selectedSparepart.value.loc,
       category: selectedSparepart.value.category,
@@ -196,6 +226,17 @@ watch(selectedCategory, () => {
               clear-icon="ri-close-line"
             />
           </VCol>
+          <VCol cols="12" sm="4">
+           <VSelect
+             v-model="selectedYear"
+             label="Select Year"
+             :items="years"
+             item-title="title"
+             item-value="value"
+             clearable
+             clear-icon="ri-close-line"
+           />
+          </VCol>
         </VRow>
       </VCardText>
       <VDivider />
@@ -203,11 +244,14 @@ watch(selectedCategory, () => {
       <!-- SEARCH + ADD -->
       <VCardText class="d-flex flex-wrap gap-4 align-center">
         <VBtn
-          variant="outlined"
-          color="secondary"
-          prepend-icon="ri-upload-2-line"
-          >Export</VBtn
-        >
+  variant="outlined"
+  color="secondary"
+  prepend-icon="ri-upload-2-line"
+  :disabled="!selectedYear"
+  @click="exportToExcel(selectedYear)"
+>
+  Export to Excel
+</VBtn>
         <VSpacer />
         <div class="d-flex align-center gap-4 flex-wrap">
           <div class="app-user-search-filter">

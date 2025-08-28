@@ -592,8 +592,6 @@ class ActivityTmsController extends Controller
         ], 200);
     }
 
-
-
     public function destroyActivityTms($id)
     {
         $activity = ActivityTMS::find($id);

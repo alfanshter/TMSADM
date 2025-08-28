@@ -260,7 +260,7 @@ const addSparepart = async (activity_id) => {
   if (!selectedItemSparepartObj.value) return;
 
   // Validasi qty
-  if (requiredQty.value < 1 || requiredQty.value > selectedItemSparepartObj.value.usages_sum_qty) {
+  if (requiredQty.value < 1 || requiredQty.value > selectedItemSparepartObj.value.end_month_stock) {
     alert("Jumlah tidak valid!");
     return;
   }
@@ -278,26 +278,37 @@ const addSparepart = async (activity_id) => {
     // Simpan ke server
     const res = await axios.post(ENDPOINTS.addTmsSparepart, payload);
 
+    // asumsi res.data.data.pivot = data pivot lengkap dari backend
+    const newPivot = res.data.data.pivot;
+
     // Update array lokal (konsisten sama removeSparepart → pakai spareparts)
     const existIndex = spareparts.value.findIndex(
       (s) => s.id === selectedItemSparepartObj.value.id
     );
 
     if (existIndex !== -1) {
-      spareparts.value[existIndex].qty += requiredQty.value;
+      // update stok yang sudah ada
+      spareparts.value[existIndex].pivot.qty += requiredQty.value;
+
     } else {
+      // tambah baru kalau belum ada
       spareparts.value.push({
         id: selectedItemSparepartObj.value.id,
         nama_sparepart: selectedItemSparepartObj.value.nama_sparepart,
         pivot: {
           qty: requiredQty.value,   // 👈 taruh di pivot
+          id: res.data.data.id
         },
         loc: selectedItemSparepartObj.value.loc,
         spec: selectedItemSparepartObj.value.spec,
         type: selectedItemSparepartObj.value.type,
+
       });
 
     }
+
+    // 🔑 Update stok tersedia di objek yang dipilih
+    selectedItemSparepartObj.value.end_month_stock -= requiredQty.value;
 
     snackbarMessage.value = "Sparepart berhasil ditambahkan!";
     snackbarColor.value = "success";
@@ -320,15 +331,19 @@ const addSparepart = async (activity_id) => {
 
 
 // hapus sparepart
-const removeSparepart = async (index, idbaris) => {
+const removeSparepart = async (index, idbaris,stokakhir) => {
 
   try {
     globalLoading?.show();
+
 
     // Hapus sparepart di backend
     await axios.delete(`${ENDPOINTS.deleteTmsSparepart(index)}`);
     // Hapus dari array lokal jika sukses
     spareparts.value.splice(idbaris, 1);
+
+    // 🔑 Update stok tersedia di objek yang dipilih
+    selectedItemSparepartObj.value.end_month_stock += stokakhir;
 
     snackbarMessage.value = "Sparepart berhasil dihapus!";
     snackbarColor.value = "success";
@@ -796,8 +811,8 @@ onMounted(() => {
                   <!-- Jumlah yang dibutuhkan -->
                   <VCol cols="12" md="6" v-if="selectedItemSparepartObj">
                     <VTextField v-model.number="requiredQty" type="number"
-                      :label="`Butuh berapa? (Stok tersedia: ${selectedItemSparepartObj.usages_sum_qty})`"
-                      :max="selectedItemSparepartObj.usages_sum_qty" min="1" />
+                      :label="`Butuh berapa? (Stok tersedia: ${selectedItemSparepartObj.end_month_stock})`"
+                      :max="selectedItemSparepartObj.end_month_stock" min="1" />
                     <VBtn color="primary" class="mt-2" @click="addSparepart(activityId)">Add</VBtn>
                   </VCol>
                 </VRow>
@@ -857,7 +872,7 @@ onMounted(() => {
 
                   <!-- Aksi Hapus -->
                   <template #item.actions="{ item, index }">
-                    <VBtn icon color="red" @click="removeSparepart(item.pivot.id, index)">
+                    <VBtn icon color="red" @click="removeSparepart(item.pivot.id, index,item.pivot.qty)">
                       <VIcon icon="ri-delete-bin-7-line" />
                     </VBtn>
                   </template>

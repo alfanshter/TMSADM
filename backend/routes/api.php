@@ -11,6 +11,7 @@ use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\StockSparepartController;
 use App\Http\Controllers\TmsSparepartController;
+use App\Http\Controllers\PicaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -74,9 +75,19 @@ Route::prefix('spareparts')->group(function () {
     Route::delete('/{id}', [StockSparepartController::class, 'destroy']);
 });
 
-
+//tms sparepart
 Route::prefix('tmssparepart')->group(function () {
     Route::get('/', [TmsSparepartController::class, 'index']);
     Route::post('/', [TmsSparepartController::class, 'store']);
     Route::delete('/{id}', [TmsSparepartController::class, 'destroy']);
 });
+
+//pica
+Route::prefix('picas')->group(function () {
+    Route::get('/', [PicaController::class, 'index']);
+    Route::get('/{id}', [PicaController::class, 'show']);
+    Route::post('/', [PicaController::class, 'store']);
+    Route::put('/{id}', [PicaController::class, 'update']);
+    Route::delete('/{id}', [PicaController::class, 'destroy']);
+});
+

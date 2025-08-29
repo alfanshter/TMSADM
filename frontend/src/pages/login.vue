@@ -37,13 +37,17 @@ const handleLogin = async () => {
     })
 
     const token = res.data.data.token;
-    
-    // Simpan data ke cookie
-    useCookie('userData').value = res.data.data
-    useCookie('accessToken').value = token
 
-    // Set default header axios
-    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
+// Simpan ke localStorage (lebih konsisten)
+localStorage.setItem("token", token)
+localStorage.setItem("userData", JSON.stringify(res.data.data))
+
+// (Opsional) tetap simpan di cookie kalau perlu
+useCookie('userData').value = res.data.data
+useCookie('accessToken').value = token
+
+// Set axios header sekarang (biar langsung bisa dipakai)
+axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
     alert("Login berhasil!")
 
@@ -55,6 +59,7 @@ const handleLogin = async () => {
     alert("Email atau password salah!")
   }
 }
+
 
 
 const isPasswordVisible = ref(false);

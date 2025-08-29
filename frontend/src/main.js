@@ -5,16 +5,20 @@ import { createApp } from "vue";
 import "vue-loading-overlay/dist/css/index.css";
 import VueToast from "vue-toast-notification";
 import "vue-toast-notification/dist/theme-sugar.css";
+import Cookies from "js-cookie";
+
 
 // Styles
 import "@core/scss/template/index.scss";
 import "@styles/styles.scss";
-// Ambil token dari localStorage
-const token = localStorage.getItem("token");
+
+axios.defaults.baseURL = "http://127.0.0.1:8000/api";
+
+// Ambil token dari cookie, bukan localStorage
+const token = localStorage.getItem("token") || Cookies.get("accessToken");
 if (token) {
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 }
-axios.defaults.baseURL = "http://127.0.0.1:8000/api";
 
 // Create vue app
 const app = createApp(App);

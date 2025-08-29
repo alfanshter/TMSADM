@@ -33,4 +33,9 @@ export const ENDPOINTS = {
   // export excel
   exportSpareparts: (year) => `${API_BASE_URL}/spareparts/export?year=${year}`,
 
+  // PICA endpoints
+  picas: `${API_BASE_URL}/picas`, // GET list & POST create
+  getPica: (id) => `${API_BASE_URL}/picas/${id}`, // GET detail
+  updatePica: (id) => `${API_BASE_URL}/picas/${id}`, // PUT update
+  deletePica: (id) => `${API_BASE_URL}/picas/${id}`, // DELETE
 };

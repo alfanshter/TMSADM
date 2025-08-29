@@ -57,4 +57,9 @@ export default [
     to: { name: "sparepart" },
     icon: { icon: "ri-hammer-line" },
   },
+  {
+    title: "Pica",
+    to: { name: "pica" },
+    icon: { icon: "ri-send-plane-line" },
+  },
 ];

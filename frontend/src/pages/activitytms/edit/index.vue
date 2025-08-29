@@ -236,7 +236,7 @@ const fetchActivityDetail = async () => {
       selectedMaintenanceTypesPreventivePM.value = ["preventive_pm"];
     }
 
-    activity_id = data.id;
+    activity_id.value = data.id;
   } catch (error) {
     console.error("Error fetching activity detail:", error);
   }

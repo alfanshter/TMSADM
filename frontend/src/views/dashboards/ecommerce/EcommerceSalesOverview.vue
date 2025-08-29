@@ -1,39 +1,71 @@
 <script setup>
-const statistics = [
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
+import { ENDPOINTS } from '@/config/api'
+
+const statistics = ref([
   {
     title: 'User',
-    stats: '10',
+    stats: '0',
     icon: 'ri-user-star-line',
     color: 'primary',
   },
   {
     title: 'Item Machine',
-    stats: '25',
+    stats: '0',
     icon: 'ri-pie-chart-2-line',
     color: 'warning',
   },
   {
     title: 'Sparepart',
-    stats: '30',
+    stats: '0',
     icon: 'ri-arrow-left-right-line',
     color: 'info',
   },
-]
+])
 
 const moreList = [
-  {
-    title: 'Last 28 Days',
-    value: 'Last 28 Days',
-  },
-  {
-    title: 'Last Month',
-    value: 'Last Month',
-  },
-  {
-    title: 'Last Year',
-    value: 'Last Year',
-  },
+  { title: 'Last 28 Days', value: 'Last 28 Days' },
+  { title: 'Last Month', value: 'Last Month' },
+  { title: 'Last Year', value: 'Last Year' },
 ]
+
+onMounted(async () => {
+  try {
+    // Ambil data paralel
+    const [usersRes, itemsRes, sparepartsRes] = await Promise.all([
+      axios.get(ENDPOINTS.users),
+      axios.get(ENDPOINTS.itemMachines),
+      axios.get(ENDPOINTS.spareparts)
+    ])
+
+    // Deteksi apakah API mengembalikan array langsung atau dibungkus dalam objek data
+    const getCount = (res) => Array.isArray(res.data) ? res.data.length : res.data.data.length
+
+    statistics.value = [
+      {
+        title: 'User',
+        stats: getCount(usersRes).toString(),
+        icon: 'ri-user-star-line',
+        color: 'primary',
+      },
+      {
+        title: 'Item Machine',
+        stats: getCount(itemsRes).toString(),
+        icon: 'ri-pie-chart-2-line',
+        color: 'warning',
+      },
+      {
+        title: 'Sparepart',
+        stats: getCount(sparepartsRes).toString(),
+        icon: 'ri-arrow-left-right-line',
+        color: 'info',
+      },
+    ]
+  } catch (err) {
+    console.error('Gagal mengambil data statistik:', err)
+  }
+})
 </script>
 
 <template>
@@ -61,19 +93,12 @@ const moreList = [
             size="40"
             class="me-3"
           >
-            <VIcon
-              size="24"
-              :icon="item.icon"
-            />
+            <VIcon size="24" :icon="item.icon" />
           </VAvatar>
 
           <div class="d-flex flex-column">
-            <h5 class="text-h5">
-              {{ item.stats }}
-            </h5>
-            <div class="text-body-1">
-              {{ item.title }}
-            </div>
+            <h5 class="text-h5">{{ item.stats }}</h5>
+            <div class="text-body-1">{{ item.title }}</div>
           </div>
         </div>
       </div>

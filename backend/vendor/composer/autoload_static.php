@@ -572,12 +572,14 @@ class ComposerStaticInitc7846695e316e8adffb3e9eaf1b37dc4
 
     public static $classMap = array (
         'App\\Console\\Commands\\ClearTmpPhotos' => __DIR__ . '/../..' . '/app/Console/Commands/ClearTmpPhotos.php',
+        'App\\Exports\\StockSparepartsExport' => __DIR__ . '/../..' . '/app/Exports/StockSparepartsExport.php',
         'App\\Http\\Controllers\\ActivityTmsController' => __DIR__ . '/../..' . '/app/Http/Controllers/ActivityTmsController.php',
         'App\\Http\\Controllers\\AuthController' => __DIR__ . '/../..' . '/app/Http/Controllers/AuthController.php',
         'App\\Http\\Controllers\\Controller' => __DIR__ . '/../..' . '/app/Http/Controllers/Controller.php',
         'App\\Http\\Controllers\\FawReportController' => __DIR__ . '/../..' . '/app/Http/Controllers/FawReportController.php',
         'App\\Http\\Controllers\\ItemMachineController' => __DIR__ . '/../..' . '/app/Http/Controllers/ItemMachineController.php',
         'App\\Http\\Controllers\\LeakageReportController' => __DIR__ . '/../..' . '/app/Http/Controllers/LeakageReportController.php',
+        'App\\Http\\Controllers\\PicaController' => __DIR__ . '/../..' . '/app/Http/Controllers/PicaController.php',
         'App\\Http\\Controllers\\ProfileController' => __DIR__ . '/../..' . '/app/Http/Controllers/ProfileController.php',
         'App\\Http\\Controllers\\ScheduleController' => __DIR__ . '/../..' . '/app/Http/Controllers/ScheduleController.php',
         'App\\Http\\Controllers\\StockSparepartController' => __DIR__ . '/../..' . '/app/Http/Controllers/StockSparepartController.php',
@@ -593,6 +595,7 @@ class ComposerStaticInitc7846695e316e8adffb3e9eaf1b37dc4
         'App\\Models\\ItemMachine' => __DIR__ . '/../..' . '/app/Models/ItemMachine.php',
         'App\\Models\\JustCleaning' => __DIR__ . '/../..' . '/app/Models/JustCleaning.php',
         'App\\Models\\LeakageReport' => __DIR__ . '/../..' . '/app/Models/LeakageReport.php',
+        'App\\Models\\Pica' => __DIR__ . '/../..' . '/app/Models/Pica.php',
         'App\\Models\\Preventive' => __DIR__ . '/../..' . '/app/Models/Preventive.php',
         'App\\Models\\ReplacementPart' => __DIR__ . '/../..' . '/app/Models/ReplacementPart.php',
         'App\\Models\\StockSparepart' => __DIR__ . '/../..' . '/app/Models/StockSparepart.php',

@@ -88,7 +88,6 @@ const headers = [
   { title: "Code", key: "code" },
   { title: "Lokasi", key: "location" },
   { title: "Scope of Work", key: "scope_of_work" },
-  { title: "Maintenance Type", key: "maintenance_type" },
   { title: "Date", key: "date" },
   { title: "Actions", key: "actions", sortable: false },
 ];
@@ -237,47 +236,6 @@ watch(selectedScopeOfWork, () => {
         <!-- Scope of Work -->
         <template #item.scope_of_work="{ item }">
           {{ item.item_machine?.scope_of_work }}
-        </template>
-
-        <!-- Maintenance Type -->
-        <template #item.maintenance_type="{ item }">
-          <div class="d-flex flex-column gap-1">
-            <VBtn
-              v-if="item.cleaning_criticals?.length"
-              variant="text"
-              @click="
-                openDialog('cleaning_criticals', item.cleaning_criticals, item)
-              "
-            >
-              Cleaning Critical
-            </VBtn>
-
-            <VBtn
-              v-if="item.just_cleaning?.length"
-              variant="text"
-              @click="openDialog('just_cleaning', item.just_cleaning, item)"
-            >
-              Just Cleaning
-            </VBtn>
-
-            <VBtn
-              v-if="item.preventive?.length"
-              variant="text"
-              @click="openDialog('preventive', item.preventive, item)"
-            >
-              Preventive
-            </VBtn>
-
-            <VBtn
-              v-if="item.replacement_part?.length || item.spareparts?.length"
-              variant="text"
-              @click="
-                openDialog('replacement_part', item.replacement_part, item)
-              "
-            >
-              Replacement Part
-            </VBtn>
-          </div>
         </template>
 
         <!-- date -->

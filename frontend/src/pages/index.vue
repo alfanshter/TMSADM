@@ -10,6 +10,7 @@ import illustration3 from "@images/cards/illustration-3.png";
 import illustration4 from "@images/cards/illustration-4.png";
 
 const statisticsWithImages = ref([]);
+const isLoading = ref(true); // loader lokal
 
 onMounted(async () => {
   try {
@@ -17,28 +18,16 @@ onMounted(async () => {
     const year = now.getFullYear();
     const monthNum = String(now.getMonth() + 1).padStart(2, "0");
     const month = `${year}-${monthNum}`;
-    const [activityRes, fawRes, leakageRes, scheduleRes] = await Promise.all([
-      axios.get(ENDPOINTS.activityTms),
-      axios.get(ENDPOINTS.fawreport),
-      axios.get(ENDPOINTS.leakageReports),
-      axios.get(`${ENDPOINTS.ACTIVITY_SUMMARY}?month=${month}`),
-      
-    ]);
 
-    // helper untuk hitung jumlah data (array langsung atau data.data)
-    const getCount = (res) => {
-      if (!res || !res.data) return 0;
-      // Kalau res.data langsung array
-      if (Array.isArray(res.data)) return res.data.length;
-      // Kalau res.data.data array (untuk endpoint lain)
-      if (Array.isArray(res.data.data)) return res.data.data.length;
-      return 0;
-    };
+    // Ambil semua data statistik dari 1 endpoint
+    const res = await axios.get(`${ENDPOINTS.dashboardStatistics}?month=${month}`);
+    const data = res.data?.data || {};
+
     statisticsWithImages.value = [
       {
         title: "Activity TMS",
-        subtitle: "Year of 2025",
-        stats: getCount(activityRes).toString(),
+        subtitle: `Year of ${year}`,
+        stats: (data.activity_tms_count || 0).toString(),
         image: illustration1,
         imgWidth: 99,
         color: "primary",
@@ -46,8 +35,8 @@ onMounted(async () => {
       },
       {
         title: "FAW Report",
-        subtitle: "Year of 2025",
-        stats: getCount(fawRes).toString(),
+        subtitle: `Year of ${year}`,
+        stats: (data.faw_report_count || 0).toString(),
         image: illustration2,
         imgWidth: 85,
         color: "success",
@@ -55,8 +44,8 @@ onMounted(async () => {
       },
       {
         title: "Leakage Report",
-        subtitle: "Year of 2025",
-        stats: getCount(leakageRes).toString(),
+        subtitle: `Year of ${year}`,
+        stats: (data.leakage_report_count || 0).toString(),
         image: illustration3,
         imgWidth: 85,
         color: "success",
@@ -64,8 +53,8 @@ onMounted(async () => {
       },
       {
         title: "Schedule",
-        subtitle: "Year of 2025",
-        stats: getCount(scheduleRes).toString(),
+        subtitle: `Year of ${year}`,
+        stats: (data.schedule_count || 0).toString(),
         image: illustration4,
         imgWidth: 85,
         color: "success",
@@ -74,6 +63,8 @@ onMounted(async () => {
     ];
   } catch (error) {
     console.error("Gagal memuat statistik dashboard:", error);
+  } finally {
+    isLoading.value = false; // matikan loader
   }
 });
 </script>
@@ -85,17 +76,16 @@ onMounted(async () => {
       <EcommerceSalesOverview />
     </VCol>
 
-    <!-- 👉 Images Cards -->
-    <VCol
-      v-for="statistics in statisticsWithImages"
-      :key="statistics.title"
-      cols="12"
-      sm="6"
-      md="3"
-    >
+    <!-- Skeleton loader saat data belum ada -->
+    <VCol v-if="isLoading" v-for="n in 4" :key="n" cols="12" sm="6" md="3">
+      <VSkeletonLoader type="card" />
+    </VCol>
+
+    <!-- 👉 Images Cards muncul setelah selesai loading -->
+    <VCol v-else v-for="statistics in statisticsWithImages" :key="statistics.title" cols="12" sm="6" md="3">
       <router-link :to="statistics.url" style="text-decoration:none; color:inherit;">
-    <CardStatisticsWithImages v-bind="statistics" />
-  </router-link>
+        <CardStatisticsWithImages v-bind="statistics" />
+      </router-link>
     </VCol>
   </VRow>
 </template>

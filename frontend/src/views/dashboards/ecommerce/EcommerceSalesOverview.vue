@@ -30,40 +30,42 @@ const moreList = [
   { title: 'Last Year', value: 'Last Year' },
 ]
 
+const isLoading = ref(true) // loader lokal
+
 onMounted(async () => {
   try {
-    // Ambil data paralel
-    const [usersRes, itemsRes, sparepartsRes] = await Promise.all([
-      axios.get(ENDPOINTS.users),
-      axios.get(ENDPOINTS.itemMachines),
-      axios.get(ENDPOINTS.spareparts)
-    ])
+    const now = new Date()
+    const year = now.getFullYear()
+    const monthNum = String(now.getMonth() + 1).padStart(2, '0')
+    const month = `${year}-${monthNum}`
 
-    // Deteksi apakah API mengembalikan array langsung atau dibungkus dalam objek data
-    const getCount = (res) => Array.isArray(res.data) ? res.data.length : res.data.data.length
+    const res = await axios.get(`${ENDPOINTS.dashboardStatistics}?month=${month}`)
+    const data = res.data?.data || {}
 
     statistics.value = [
       {
         title: 'User',
-        stats: getCount(usersRes).toString(),
+        stats: (data.user_count || 0).toString(),
         icon: 'ri-user-star-line',
         color: 'primary',
       },
       {
         title: 'Item Machine',
-        stats: getCount(itemsRes).toString(),
+        stats: (data.item_machine_count || 0).toString(),
         icon: 'ri-pie-chart-2-line',
         color: 'warning',
       },
       {
         title: 'Sparepart',
-        stats: getCount(sparepartsRes).toString(),
+        stats: (data.stok_sparepart_count || 0).toString(),
         icon: 'ri-arrow-left-right-line',
         color: 'info',
       },
     ]
   } catch (err) {
     console.error('Gagal mengambil data statistik:', err)
+  } finally {
+    isLoading.value = false
   }
 })
 </script>
@@ -81,26 +83,34 @@ onMounted(async () => {
 
     <VCardText>
       <div class="d-flex justify-space-between flex-column flex-sm-row gap-4 flex-wrap">
-        <div
-          v-for="item in statistics"
-          :key="item.title"
-          class="d-flex align-center"
-        >
-          <VAvatar
-            :color="item.color"
-            rounded
-            variant="tonal"
-            size="40"
-            class="me-3"
-          >
-            <VIcon size="24" :icon="item.icon" />
-          </VAvatar>
+        <!-- Skeleton loader -->
+        <template v-if="isLoading">
+          <VSkeletonLoader v-for="n in 3" :key="n" type="list-item-avatar" />
+        </template>
 
-          <div class="d-flex flex-column">
-            <h5 class="text-h5">{{ item.stats }}</h5>
-            <div class="text-body-1">{{ item.title }}</div>
+        <!-- Data muncul setelah loading selesai -->
+        <template v-else>
+          <div
+            v-for="item in statistics"
+            :key="item.title"
+            class="d-flex align-center"
+          >
+            <VAvatar
+              :color="item.color"
+              rounded
+              variant="tonal"
+              size="40"
+              class="me-3"
+            >
+              <VIcon size="24" :icon="item.icon" />
+            </VAvatar>
+
+            <div class="d-flex flex-column">
+              <h5 class="text-h5">{{ item.stats }}</h5>
+              <div class="text-body-1">{{ item.title }}</div>
+            </div>
           </div>
-        </div>
+        </template>
       </div>
     </VCardText>
   </VCard>

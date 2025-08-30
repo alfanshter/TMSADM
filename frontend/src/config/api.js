@@ -38,4 +38,7 @@ export const ENDPOINTS = {
   getPica: (id) => `${API_BASE_URL}/picas/${id}`, // GET detail
   updatePica: (id) => `${API_BASE_URL}/picas/${id}`, // PUT update
   deletePica: (id) => `${API_BASE_URL}/picas/${id}`, // DELETE
+
+  //dashboard
+  dashboardStatistics: `${API_BASE_URL}/dashboard-statistics`,
 };

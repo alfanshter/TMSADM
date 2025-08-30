@@ -8,7 +8,7 @@ import { useTheme } from "vuetify";
 
 const { global } = useTheme();
 
-// Sync current theme with initial loader theme
+// Sync current theme with initial loader bro
 initCore();
 initConfigStore();
 const configStore = useConfigStore();

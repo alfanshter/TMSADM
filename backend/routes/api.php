@@ -12,6 +12,7 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\StockSparepartController;
 use App\Http\Controllers\TmsSparepartController;
 use App\Http\Controllers\PicaController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -90,4 +91,8 @@ Route::prefix('picas')->group(function () {
     Route::put('/{id}', [PicaController::class, 'update']);
     Route::delete('/{id}', [PicaController::class, 'destroy']);
 });
+
+
+// monitoring dashboard
+Route::get('/dashboard-statistics', [DashboardController::class, 'index']);
 

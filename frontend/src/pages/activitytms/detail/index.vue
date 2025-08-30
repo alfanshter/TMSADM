@@ -1,5 +1,5 @@
 <script setup>
-import UpdateDropZone from "@/@core/components/UpdateDropZone.vue";
+import PreviewDropZone from "@/@core/components/PreviewDropZone.vue";
 import { ENDPOINTS } from "@/config/api";
 import { useActivityStore } from "@/stores/useActivityStore";
 import axios from "axios";
@@ -38,7 +38,6 @@ const sparepartHeaders = [
   { title: "Spec", key: "spec" },
   { title: "Loc", key: "loc" },
   { title: "Type", key: "type" },
-  { title: "Aksi", key: "actions" },
 ];
 
 
@@ -267,291 +266,192 @@ onMounted(() => {
         <h4 class="text-h4 mb-1">Activity TMS</h4>
       </div>
 
-     
+
     </div>
 
     <VRow>
       <VCol md="12">
         <!-- item machine -->
-        <VCard class="mb-6">
-          <VCardText>
-            <VRow>
-              <VCol cols="12" md="4">
-                <VTextField v-model="selectedItemMachine" label="Item Machine" readonly placeholder="FXSK123U" />
-              </VCol>
-              <VCol cols="12" md="6">
-                <VTextField v-model="code" label="Code" readonly placeholder="FXSK123U" />
-              </VCol>
-              <VCol cols="12" md="6">
-                <VTextField v-model="location" label="Location" readonly placeholder="Tower 1" />
-              </VCol>
+        <!-- Item Machine & Scope -->
+        <VRow align="stretch">
+          <!-- Card Kiri: Info Mesin -->
+          <VCol cols="12" md="6">
+            <VCard class="h-100">
+              <VCardText>
+                <div class="mb-2"><strong>Item Machine:</strong> {{ selectedItemMachine }}</div>
+                <div class="mb-2"><strong>Code:</strong> {{ code }}</div>
+                <div class="mb-2"><strong>Location:</strong> {{ location }}</div>
+                <div class="mb-2"><strong>Scope of Work:</strong> {{ scopeOfWork }}</div>
+                <div class="mb-2"><strong>Date:</strong> {{ birthDate }}</div>
+              </VCardText>
+            </VCard>
+          </VCol>
 
-              <VCol cols="12" md="6">
-                <VTextField v-model="scopeOfWork" label="Scope_of_work" readonly placeholder="Safety" />
-              </VCol>
+          <!-- Card Kanan: Safety -->
+          <VCol cols="12" md="6" v-if="scopeOfWork == 'safety'">
+            <VCard class="h-100">
+              <VCardText class="d-flex flex-column justify-space-between h-100">
+                <div>
+                  <div class="mb-3">
+                    <VLabel class="mb-1">JSA File</VLabel>
+                    <div v-if="safety_filename">
+                      <a :href="getFileUrl(safety_old)" target="_blank">
+                        {{ getFileName(safety_filename) }}
+                      </a>
+                    </div>
+                  </div>
 
-              <VCol>
-                <AppDateTimePicker v-model="birthDate" label="Date" placeholder="Select Date"  readonly/>
-              </VCol>
-            </VRow>
-          </VCardText>
-        </VCard>
+                  <div class="mb-3">
+                    <VLabel class="mb-1">Incoming</VLabel>
+                    <div>R-S: {{ incomingRs }} | R-T: {{ incomingRt }} | S-T: {{ incomingSt }}</div>
+                  </div>
 
-        <!-- safety -->
-        <VCard class="mb-6" v-if="scopeOfWork == 'safety'">
-          <VCardItem>
-            <template #title> Scope of Work </template>
-            <div class="d-flex flex-column mt-2">
-              <VLabel class="mt-2 mb-1"> JSA file</VLabel>
-              <!-- Tampilkan file lama jika ada -->
-              <div v-if="safety_filename" class="mb-2">
-                <a :href="getFileUrl(safety_old)" target="_blank">
-                  {{ getFileName(safety_filename) }}
-                </a>
-              </div>
+                  <div class="mb-3">
+                    <VLabel class="mb-1">Outgoing</VLabel>
+                    <div>R-S: {{ outgoingRs }} | R-T: {{ outgoingRt }} | S-T: {{ outgoingSt }}</div>
+                  </div>
+                </div>
 
-          
-            </div>
-            <!-- Checkbox -->
+                <!-- Condition taruh bawah -->
+                <div>
+                  <VLabel class="mb-1">Condition</VLabel>
+                  <div>Temp: {{ temp }} °C | Deviation: {{ deviation }}</div>
+                </div>
+              </VCardText>
+            </VCard>
+          </VCol>
+        </VRow>
 
-          </VCardItem>
 
-          <VCardItem>
-            <VLabel class="mb-1">Incoming</VLabel>
-            <VRow>
-              <VCol cols="12" md="4">
-                <VTextField v-model="incomingRs" label="Incoming R-S" readonly placeholder="Incoming R-S" type="number" />
-              </VCol>
-              <VCol cols="12" md="4">
-                <VTextField v-model="incomingRt" label="Incoming R-T" readonly placeholder="Incoming R-T" type="number" />
-              </VCol>
-              <VCol cols="12" md="4">
-                <VTextField v-model="incomingSt" label="Incoming S-T" readonly placeholder="Incoming S-T" type="number" />
-              </VCol>
-            </VRow>
-          </VCardItem>
 
-          <VCardItem>
-            <VLabel class="mb-1">Outgoing</VLabel>
-            <VRow>
-              <VCol cols="12" md="4">
-                <VTextField v-model="outgoingRs" label="Outgoing R-S" readonly placeholder="Outgoing R-S" type="number" />
-              </VCol>
-              <VCol cols="12" md="4">
-                <VTextField v-model="outgoingRt" label="Outgoing R-T" readonly placeholder="Outgoing R-T" type="number" />
-              </VCol>
-              <VCol cols="12" md="4">
-                <VTextField v-model="outgoingSt" label="Outgoing S-T" readonly placeholder="Outgoing S-T" type="number" />
-              </VCol>
-            </VRow>
-          </VCardItem>
 
-          <VCardItem>
-            <VRow class="mt-1">
-              <VCol cols="12" md="6">
-                <VTextField v-model="temp" label="Temp in der C" readonly placeholder="Temp in der C" type="number" />
-              </VCol>
-              <VCol cols="12" md="6">
-                <VTextField v-model="deviation" label="Deviation Status" readonly placeholder="Deviation Status" />
-              </VCol>
-            </VRow>
-          </VCardItem>
-        </VCard>
-
-        <!-- production -->
-        <VCard class="mb-6" v-if="scopeOfWork == 'production'">
-          <VCardItem>
-            <template #title> Scope of Work </template>
-            <div class="d-flex flex-column mt-2">
-              <VLabel class="mt-2 mb-1">JSA file (Production)</VLabel>
-
-              <!-- Tampilkan file lama jika ada -->
-              <div v-if="production_scan_filename" class="mb-2">
-                <a :href="getFileUrl(production_scan_old)" target="_blank">
-                  {{ getFileName(production_scan_filename) }}
-                </a>
-              </div>
-
-      
-            </div>
-            <!-- Checkbox -->
-
-          </VCardItem>
-        </VCard>
         <!-- 👉 Product Image -->
-        <VCard class="mb-6">
+        <VCard class="mb-6 mt-4">
           <VCardItem>
-            <template #title> Maintenance Type </template>
+            <template #title> Maintenance Types</template>
 
-            <!-- Checkbox -->
             <div class="d-flex flex-column mt-2">
               <!-- Cleaning Critical -->
-              <VCheckbox label="Cleaning Critical" value="cleaning_critical"
-                v-model="selectedMaintenanceTypesCleaningCritical" />
               <template v-if="selectedMaintenanceTypesCleaningCritical.length">
+                <h3 class="text-h6 mt-4">Cleaning Critical</h3>
+
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <UpdateDropZone label="BEFORE" v-model="cleaningCriticalBeforeFiles" />
+                    <PreviewDropZone label="BEFORE" v-model="cleaningCriticalBeforeFiles" />
                   </div>
                   <div style="flex: 1">
-                    <UpdateDropZone label="AFTER" v-model="cleaningCriticalAfterFiles" />
+                    <PreviewDropZone label="AFTER" v-model="cleaningCriticalAfterFiles" />
                   </div>
                 </VCardText>
-                <VCardText>
-                  <VLabel class="mt-2 mb-1">Upload JSA file (Cleaning Critical)</VLabel>
 
-                  <!-- Tampilkan file lama jika ada -->
-                  <div v-if="cleaningCriticalJsa_filename" class="mb-2">
+                <VCardText>
+                  <VLabel class="mt-2 mb-1">JSA File (Cleaning Critical)</VLabel>
+                  <div v-if="cleaningCriticalJsa_filename">
                     <a :href="getFileUrl(cleaningCriticalJsa_old)" target="_blank">
                       {{ getFileName(cleaningCriticalJsa_filename) }}
                     </a>
                   </div>
-
-                  <!-- File input baru -->
-                  <VFileInput v-model="cleaningCriticalJsa" label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png" prepend-icon="ri-upload-2-line"
-                    show-size />
                 </VCardText>
               </template>
 
               <!-- Just Cleaning -->
-              <VCheckbox label="Just Cleaning" value="just_cleaning" v-model="selectedMaintenanceTypesJustCleaning" />
               <template v-if="selectedMaintenanceTypesJustCleaning.length">
+                <h3 class="text-h6 mt-4">Just Cleaning</h3>
+
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <UpdateDropZone label="BEFORE" v-model="justCleaningBeforeFiles" />
+                    <PreviewDropZone label="BEFORE" v-model="justCleaningBeforeFiles" />
                   </div>
                   <div style="flex: 1">
-                    <UpdateDropZone label="AFTER" v-model="justCleaningAfterFiles" />
+                    <PreviewDropZone label="AFTER" v-model="justCleaningAfterFiles" />
                   </div>
                 </VCardText>
-                <VCardText>
-                  <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
 
-                  <!-- Tampilkan file lama jika ada -->
-                  <div v-if="justCleaningJsa_filename" class="mb-2">
+                <VCardText>
+                  <VLabel class="mt-2 mb-1">JSA File</VLabel>
+                  <div v-if="justCleaningJsa_filename">
                     <a :href="getFileUrl(justCleaningJsa_old)" target="_blank">
                       {{ getFileName(justCleaningJsa_filename) }}
                     </a>
                   </div>
-
-
-                  <VFileInput v-model="justCleaningJsa" label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
                 </VCardText>
               </template>
 
               <!-- Replacement Part -->
-              <VCheckbox label="Replacement Part" value="replacement_part"
-                v-model="selectedMaintenanceTypesReplacementPart" />
-
               <template v-if="selectedMaintenanceTypesReplacementPart.length">
-                <VRow dense>
-                  <!-- Pilih Sparepart -->
-                  <VCol cols="12" md="6">
-                    <VAutocomplete v-model="selectedItemSparepart" :items="itemSparepart" item-title="nama_sparepart"
-                      item-value="id" label="Sparepart" placeholder="Cari / pilih sparepart" clearable
-                      density="comfortable" @change="onSparepartSelect" />
-                  </VCol>
+                <h3 class="text-h6 mt-4">Replacement Part</h3>
 
-                  <!-- Jumlah yang dibutuhkan -->
-                  <VCol cols="12" md="6" v-if="selectedItemSparepartObj">
-                    <VTextField v-model.number="requiredQty" type="number"
-                      :label="`Butuh berapa? (Stok tersedia: ${selectedItemSparepartObj.end_month_stock})`"
-                      :max="selectedItemSparepartObj.end_month_stock" min="1" />
-                    <VBtn color="primary" class="mt-2" @click="addSparepart(activityId)">Add</VBtn>
-                  </VCol>
-                </VRow>
-
-                <!-- Upload Foto BEFORE & AFTER -->
+                <!-- Foto BEFORE & AFTER -->
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <UpdateDropZone label="BEFORE" v-model="replacementPartBeforeFiles" />
+                    <PreviewDropZone label="BEFORE" v-model="replacementPartBeforeFiles" />
                   </div>
                   <div style="flex: 1">
-                    <UpdateDropZone label="AFTER" v-model="replacementPartAfterFiles" />
+                    <PreviewDropZone label="AFTER" v-model="replacementPartAfterFiles" />
                   </div>
                 </VCardText>
 
-                <!-- Upload JSA -->
+                <!-- JSA -->
                 <VCardText>
-                  <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
-
-                  <!-- Tampilkan file lama jika ada -->
-                  <div v-if="replacementJsa_filename" class="mb-2">
+                  <VLabel class="mt-2 mb-1">JSA File</VLabel>
+                  <div v-if="replacementJsa_filename">
                     <a :href="getFileUrl(replacementJsa_old)" target="_blank">
                       {{ getFileName(replacementJsa_filename) }}
                     </a>
                   </div>
-
-                  <VFileInput v-model="replacementJsa" label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
                 </VCardText>
 
                 <!-- Datatable Sparepart -->
                 <VDataTableServer v-if="spareparts.length" v-model:model-value="spareparts" :headers="sparepartHeaders"
                   :items="spareparts" class="text-no-wrap rounded-0">
-                  <!-- Nama Sparepart -->
                   <template #item.nama_sparepart="{ item }">
                     <span>{{ item.nama_sparepart }}</span>
                   </template>
 
-                  <!-- Jumlah -->
                   <template #item.qty="{ item }">
                     <span>{{ item.pivot.qty }}</span>
                   </template>
 
-                  <!-- Spec -->
                   <template #item.spec="{ item }">
                     <span>{{ item.spec || '-' }}</span>
                   </template>
 
-                  <!-- Loc -->
                   <template #item.loc="{ item }">
                     <span>{{ item.loc || '-' }}</span>
                   </template>
 
-                  <!-- Type -->
                   <template #item.type="{ item }">
                     <span>{{ item.type || '-' }}</span>
-                  </template>
-
-                  <!-- Aksi Hapus -->
-                  <template #item.actions="{ item, index }">
-                    <VBtn icon color="red" @click="removeSparepart(item.pivot.id, index,item.pivot.qty)">
-                      <VIcon icon="ri-delete-bin-7-line" />
-                    </VBtn>
                   </template>
                 </VDataTableServer>
               </template>
 
-
               <!-- Preventive PM -->
-              <VCheckbox label="Preventive PM" value="preventive_pm" v-model="selectedMaintenanceTypesPreventivePM" />
               <template v-if="selectedMaintenanceTypesPreventivePM.length">
+                <h3 class="text-h6 mt-4">Preventive PM</h3>
+
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <UpdateDropZone label="BEFORE" v-model="preventivePmBeforeFiles" />
+                    <PreviewDropZone label="BEFORE" v-model="preventivePmBeforeFiles" />
                   </div>
                   <div style="flex: 1">
-                    <UpdateDropZone label="AFTER" v-model="preventivePmAfterFiles" />
+                    <PreviewDropZone label="AFTER" v-model="preventivePmAfterFiles" />
                   </div>
                 </VCardText>
+
                 <VCardText>
-                  <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
-                  <div v-if="preventiveJsa_filename" class="mb-2">
+                  <VLabel class="mt-2 mb-1">JSA File</VLabel>
+                  <div v-if="preventiveJsa_filename">
                     <a :href="getFileUrl(preventiveJsa_old)" target="_blank">
                       {{ getFileName(preventiveJsa_filename) }}
                     </a>
                   </div>
-
-                  <VFileInput v-model="preventiveJsa" label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
                 </VCardText>
               </template>
             </div>
           </VCardItem>
         </VCard>
+
       </VCol>
 
       <VCol md="4" cols="12"> </VCol>

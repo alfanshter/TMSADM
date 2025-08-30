@@ -122,6 +122,11 @@ function handleEdit(item) {
   router.push(`/activitytms/edit?id=${item.id}`);
 }
 
+function handleDetail(item) {
+  activityStore.setCurrentItem(item); // simpan data di store
+  router.push(`/activitytms/detail?id=${item.id}`);
+}
+
 onMounted(() => {
   fetchActivityTms();
 });
@@ -295,6 +300,14 @@ watch(selectedScopeOfWork, () => {
           <!-- Tombol Edit -->
           <IconBtn size="small" @click="handleEdit(item)">
             <VIcon icon="ri-edit-box-line" />
+          </IconBtn>
+
+
+          <IconBtn
+            size="small"
+            @click="handleDetail(item)"
+          >
+            <VIcon icon="ri-eye-line" />
           </IconBtn>
 
           <!-- Tombol Delete -->

@@ -14,7 +14,7 @@ export const redirects = [
       const userRole = userData.user.role
       console.log("tester role", userRole)
 
-      if (userRole === 'admin')
+      if (userRole === 'admin', 'team_leader', 'supervisor')
         return { name: 'root' }
 
       return { name: 'login', query: to.query }

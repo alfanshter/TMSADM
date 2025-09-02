@@ -36,29 +36,40 @@ const handleLogin = async () => {
       password: form.value.password,
     })
 
-    const token = res.data.data.token;
+    const userData = res.data.data
+    const token = userData.token
 
-// Simpan ke localStorage (lebih konsisten)
-localStorage.setItem("token", token)
-localStorage.setItem("userData", JSON.stringify(res.data.data))
+    // Simpan token & data user
+    localStorage.setItem("token", token)
+    localStorage.setItem("userData", JSON.stringify(userData))
+    useCookie('userData').value = userData
+    useCookie('accessToken').value = token
 
-// (Opsional) tetap simpan di cookie kalau perlu
-useCookie('userData').value = res.data.data
-useCookie('accessToken').value = token
-
-// Set axios header sekarang (biar langsung bisa dipakai)
-axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
+    // Set header default
+    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
     alert("Login berhasil!")
 
-    await nextTick(() => {
-      router.push(`/`);
-    })
+    // Daftar role yang boleh masuk dashboard
+    const allowedRoles = ['admin', 'team_leader', 'supervisor']
+
+    if (allowedRoles.includes(userData.role)) {
+      await nextTick(() => {
+        router.push('/dashboard')
+      })
+    } else {
+      await nextTick(() => {
+        router.push('/')
+      })
+    }
+
   } catch (error) {
     console.error("Login error:", error)
     alert("Email atau password salah!")
   }
 }
+
+
 
 
 

@@ -87,32 +87,6 @@ const updateFawReportInList = (updatedReport) => {
   }
 };
 
-// Tambah report baru
-const addNewFawReport = async (formData) => {
-  try {
-    const res = await axios.post(ENDPOINTS.fawreport, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    const newReport = res.data.data;
-
-    fawReports.value.unshift({
-      id: newReport.id,
-      description: stripHtml(newReport.description),
-      result: stripHtml(newReport.result),
-      date: newReport.date,
-      image: newReport.photos?.[0]
-        ? `${baseUrl}/storage/${newReport.photos[0].photo_path}`
-        : "",
-    });
-
-    totalFawReports.value++;
-    snackbarMessage.value = "FAW Report berhasil dipublish!";
-    isSnackbarTopEndVisible.value = true;
-  } catch (err) {
-    console.error("Error submit FAW Report:", err.response?.data || err);
-  }
-};
-
 // Edit report
 const openEditDrawer = (report) => {
   editedFawReport.value = { ...report };
@@ -260,17 +234,20 @@ onMounted(() => {
 
         <!-- Actions -->
         <template #item.actions="{ item }">
-          <VBtn size="small" color="primary" @click="handleEdit(item)">
-            Edit
-          </VBtn>
-          <VBtn
-            class="ml-2"
+          <IconBtn size="small" @click="deleteFawReport(item.id)">
+            <VIcon icon="ri-delete-bin-7-line" />
+          </IconBtn>
+
+          <IconBtn
             size="small"
-            color="error"
-            @click="deleteFawReport(item.id)"
+            @click="$router.push(`/fawreport/detail?id=${item.id}`)"
           >
-            Delete
-          </VBtn>
+            <VIcon icon="ri-eye-line" />
+          </IconBtn>
+          
+          <IconBtn size="small" @click="handleEdit(item)">
+            <VIcon icon="ri-edit-box-line" />
+          </IconBtn>
         </template>
       </VDataTable>
     </VCard>

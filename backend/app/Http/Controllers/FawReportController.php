@@ -23,12 +23,12 @@ class FawReportController extends Controller
     {
         $validated = $request->validate([
             'description' => 'required|string',
+            'result' => 'required|string',
             'date' => 'required|date',
             'photos.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // result sama dengan description
-        $validated['result'] = $validated['description'];
+      
 
         $report = FawReport::create($validated);
 

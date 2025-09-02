@@ -76,19 +76,20 @@ const exportToExcel = async (year) => {
     return;
   }
   try {
-    const res = await axios.get(ENDPOINTS.exportSpareparts(year), { responseType: "blob" });
-    console.log("export url", ENDPOINTS.exportSpareparts(year));
+    const res = await axios.get(ENDPOINTS.exportSpareparts(year));
+    
+    if (res.data && res.data.file) {
+      // Buka URL file di tab baru
+      window.open(res.data.file, "_blank");
+    } else {
+      console.error("Response tidak mengandung file URL");
+    }
 
-    const url = window.URL.createObjectURL(new Blob([res.data]));
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `stock_spareparts_${year}.xlsx`);
-    document.body.appendChild(link);
-    link.click();
   } catch (err) {
     console.error("Gagal export excel:", err);
   }
 };
+
 
 // ADD SPAREPART
 const isAddNewSparepartDrawerVisible = ref(false);

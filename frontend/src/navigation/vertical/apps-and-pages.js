@@ -1,4 +1,10 @@
-export default [
+import Cookies from "js-cookie"
+
+const userData = Cookies.get("userData") ? JSON.parse(Cookies.get("userData")) : null
+const role = userData?.user?.role
+
+
+const item = [
   { heading: "Apps & Pages" },
 
   {
@@ -63,3 +69,8 @@ export default [
     icon: { icon: "ri-send-plane-line" },
   },
 ];
+
+
+export default item.filter(item => {
+  return !item.role || item.role.includes(role)
+})

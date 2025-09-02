@@ -11,7 +11,9 @@ export const ENDPOINTS = {
   addactivityTms: `${API_BASE_URL}/activity-tms`,
   activityTmsDetail: `${API_BASE_URL}/activity-tms`,
   updateActivityTms: `${API_BASE_URL}/activity-tms-update`,
+  // FAWReport endpoints
   fawreport: `${API_BASE_URL}/faw-reports`,
+  fawReportDetail: (id) => `${API_BASE_URL}/faw-reports/${id}`,
 
   // LeakageReport endpoints
   leakageReports: `${API_BASE_URL}/leakage-reports`, // GET list & POST create
@@ -21,7 +23,7 @@ export const ENDPOINTS = {
 
   // schedule
   ACTIVITY_SUMMARY: `${API_BASE_URL}/activity-summary`,
-  exportSchedule: (year,month) => `${API_BASE_URL}/export-pm-schedule?month=${year}-${month}`,
+  exportSchedule: (year, month) => `${API_BASE_URL}/export-pm-schedule?month=${year}-${month}`,
 
   // Sparepart endpoints
   getSparepart: (id) => `${API_BASE_URL}/spareparts/${id}`, // GET detail

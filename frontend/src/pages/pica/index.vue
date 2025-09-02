@@ -292,28 +292,12 @@ const openEditDrawer = (item) => {
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>
 
-          <IconBtn size="small">
+          <IconBtn size="small" @click="$router.push(`/pica/detail?id=${item.id}`)">
             <VIcon icon="ri-eye-line" />
           </IconBtn>
 
-          <IconBtn size="small" color="medium-emphasis">
-            <VIcon icon="ri-more-2-line" />
-            <VMenu activator="parent">
-              <VList>
-                <VListItem link>
-                  <template #prepend>
-                    <VIcon icon="ri-download-line" />
-                  </template>
-                  <VListItemTitle>Download</VListItemTitle>
-                </VListItem>
-                <VListItem link @click="openEditDrawer(item)">
-                  <template #prepend>
-                    <VIcon icon="ri-edit-box-line" />
-                  </template>
-                  <VListItemTitle>Edit</VListItemTitle>
-                </VListItem>
-              </VList>
-            </VMenu>
+           <IconBtn size="small" @click="openEditDrawer(item)">
+            <VIcon icon="ri-edit-box-line" />
           </IconBtn>
         </template>
 

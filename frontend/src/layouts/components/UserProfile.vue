@@ -2,48 +2,27 @@
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import avatar1 from '@images/avatars/avatar-1.png'
 
-
 const router = useRouter()
-
 const userData = useCookie('userData')
 
+// Ambil data user dari cookie (pastikan ada user di dalamnya)
+const user = userData.value?.user || { name: 'Unknown', role: 'guest' }
+
 const userProfileList = [
-  // { type: 'divider' },
-  // {
-  //   type: 'navItem',
-  //   icon: 'ri-user-line',
-  //   title: 'Profile',
-  //   href: '#',
-  // },
-  // {
-  //   type: 'navItem',
-  //   icon: 'ri-settings-4-line',
-  //   title: 'Settings',
-  //   href: '#',
-  // },
-
-  // { type: 'divider' },
-
+  // Bisa tambahkan menu profil kalau perlu
 ]
 
 const logout = async () => {
+  // Hapus token & user data
+  useCookie('accessToken').value = null
+  userData.value = null
 
-// Remove "accessToken" from cookie
-useCookie('accessToken').value = null
+  // Redirect ke login
+  await router.push('/login')
 
-// Remove "userData" from cookie
-userData.value = null
-
-// Redirect to login page
-await router.push('/login')
-
-// ℹ️ We had to remove abilities in then block because if we don't nav menu items mutation is visible while redirecting user to login page
-
-
-// Reset ability to initial ability
-ability.update([])
+  // Reset ability ke default
+  ability.update([])
 }
-
 </script>
 
 <template>
@@ -56,19 +35,11 @@ ability.update([])
     color="success"
     class="user-profile-badge"
   >
-    <VAvatar
-      class="cursor-pointer"
-      size="38"
-    >
+    <VAvatar class="cursor-pointer" size="38">
       <VImg :src="avatar1" />
 
       <!-- SECTION Menu -->
-      <VMenu
-        activator="parent"
-        width="230"
-        location="bottom end"
-        offset="15px"
-      >
+      <VMenu activator="parent" width="230" location="bottom end" offset="15px">
         <VList>
           <VListItem class="px-4">
             <div class="d-flex gap-x-2 align-center">
@@ -77,50 +48,37 @@ ability.update([])
               </VAvatar>
 
               <div>
+                <!-- Nama user dari cookie -->
                 <div class="text-body-2 font-weight-medium text-high-emphasis">
-                  Tms Admin 
+                  {{ user.name }}
                 </div>
+                <!-- Role user dari cookie -->
                 <div class="text-capitalize text-caption text-disabled">
-                  Admin
+                  {{ user.role }}
                 </div>
               </div>
             </div>
           </VListItem>
 
           <PerfectScrollbar :options="{ wheelPropagation: false }">
-            <template
-              v-for="item in userProfileList"
-              :key="item.title"
-            >
+            <template v-for="item in userProfileList" :key="item.title">
               <VListItem
                 v-if="item.type === 'navItem'"
                 :href="item.href"
                 class="px-4"
               >
                 <template #prepend>
-                  <VIcon
-                    :icon="item.icon"
-                    size="22"
-                  />
+                  <VIcon :icon="item.icon" size="22" />
                 </template>
 
                 <VListItemTitle>{{ item.title }}</VListItemTitle>
 
-                <template
-                  v-if="item.chipsProps"
-                  #append
-                >
-                  <VChip
-                    v-bind="item.chipsProps"
-                    variant="elevated"
-                  />
+                <template v-if="item.chipsProps" #append>
+                  <VChip v-bind="item.chipsProps" variant="elevated" />
                 </template>
               </VListItem>
 
-              <VDivider
-                v-else
-                class="my-1"
-              />
+              <VDivider v-else class="my-1" />
             </template>
 
             <VListItem class="px-4">
@@ -129,7 +87,8 @@ ability.update([])
                 color="error"
                 size="small"
                 append-icon="ri-logout-box-r-line"
-                @click="logout"              >
+                @click="logout"
+              >
                 Logout
               </VBtn>
             </VListItem>
@@ -140,6 +99,7 @@ ability.update([])
     </VAvatar>
   </VBadge>
 </template>
+
 
 <style lang="scss">
 .user-profile-badge {

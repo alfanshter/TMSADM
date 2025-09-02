@@ -168,17 +168,17 @@ const getFileIcon = (fileName) => {
 
         <!-- Actions -->
         <template #item.actions="{ item }">
-          <VBtn size="small" color="primary" @click="openEditDrawer(item)">
-            Edit
-          </VBtn>
-          <VBtn
-            class="ml-2"
-            size="small"
-            color="error"
-            @click="deleteLeakageReport(item.id)"
-          >
-            Delete
-          </VBtn>
+          <IconBtn size="small" @click="deleteLeakageReport(item.id)">
+            <VIcon icon="ri-delete-bin-7-line" />
+          </IconBtn>
+
+          <IconBtn size="small">
+            <VIcon icon="ri-eye-line" />
+          </IconBtn>
+
+           <IconBtn size="small" @click="openEditDrawer(item)">
+            <VIcon icon="ri-edit-box-line" />
+          </IconBtn>
         </template>
       </VDataTable>
     </VCard>

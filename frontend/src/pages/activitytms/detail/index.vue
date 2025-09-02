@@ -100,6 +100,7 @@ const outgoingRt = ref("");
 const outgoingSt = ref("");
 const temp = ref("");
 const deviation = ref("");
+const production_downtime = ref("");
 
 //sparepart
 const itemSparepart = ref([]);
@@ -141,6 +142,7 @@ const fetchActivityDetail = async () => {
     outgoingSt.value = data.outgoing_st ?? "";
     temp.value = data.temp ?? "";
     deviation.value = data.deviation ?? "";
+    production_downtime.value = data.production_downtime ?? "";
 
     //Production file Scan
     production_scan_filename.value = data.production_scan_filename ?? "";
@@ -283,6 +285,7 @@ onMounted(() => {
                 <div class="mb-2"><strong>Location:</strong> {{ location }}</div>
                 <div class="mb-2"><strong>Scope of Work:</strong> {{ scopeOfWork }}</div>
                 <div class="mb-2"><strong>Date:</strong> {{ birthDate }}</div>
+                <div class="mb-2"><strong>Downtime:</strong> {{ production_downtime }} minutes</div>
               </VCardText>
             </VCard>
           </VCol>

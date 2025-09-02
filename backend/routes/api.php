@@ -65,6 +65,7 @@ Route::prefix('leakage-reports')->group(function () {
 
 //Schedule
 Route::get('/activity-summary', [ScheduleController::class, 'index']);
+Route::get('/export-pm-schedule', [ScheduleController::class, 'export']);
 
 //sparepart
 Route::prefix('spareparts')->group(function () {

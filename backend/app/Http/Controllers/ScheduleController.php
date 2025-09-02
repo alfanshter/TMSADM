@@ -113,15 +113,10 @@ class ScheduleController extends Controller
 
         $data = $this->getDataFromQuery($month); // <-- isi dengan query kamu tadi
 
+        
+    
         $fileName = "pm-schedule-{$month}.xlsx";
         $path = "exports/{$fileName}";
-
-
-        // return response()->json([
-        //     'status' => $data,
-        //     'message' => 'Export berhasil',
-         
-        // ]);
 
         Excel::store(new PMScheduleReport($month, $data), $path, 'public');
 

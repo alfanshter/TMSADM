@@ -659,4 +659,41 @@ class ActivityTmsController extends Controller
             'message' => 'Activity TMS berhasil dihapus.',
         ]);
     }
+
+    public function getActivityByScheduleList(Request $request)
+    {
+        // Ambil array ID dari request
+        $ids = $request->input('ids', []); // misal frontend ngirim {0: '11', 1: '10'}
+    
+        // Pastikan array valid dan cast ke integer
+        $ids = array_filter($ids, fn($id) => !empty($id));
+        $ids = array_map('intval', $ids);
+    
+        if (empty($ids)) {
+            return response()->json([
+                'status' => 0,
+                'message' => 'Tidak ada ID activity yang diberikan.',
+                'data' => []
+            ], 400);
+        }
+    
+        // Ambil activity berdasarkan ID
+        $activities = ActivityTMS::with([
+            'itemMachine',
+            'cleaningCriticals',
+            'justCleaning',
+            'preventive',
+            'replacementPart',
+            'spareparts'
+        ])
+        ->whereIn('id', $ids)
+        ->get();
+    
+        return response()->json([
+            'status' => 1,
+            'message' => 'Berhasil mengambil daftar aktivitas TMS.',
+            'data' => $activities
+        ], 200);
+    }
+    
 }

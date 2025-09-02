@@ -21,6 +21,7 @@ export const ENDPOINTS = {
 
   // schedule
   ACTIVITY_SUMMARY: `${API_BASE_URL}/activity-summary`,
+  exportSchedule: (year,month) => `${API_BASE_URL}/export-pm-schedule?month=${year}-${month}`,
 
   // Sparepart endpoints
   getSparepart: (id) => `${API_BASE_URL}/spareparts/${id}`, // GET detail

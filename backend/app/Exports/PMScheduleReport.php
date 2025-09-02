@@ -62,75 +62,75 @@ class PMScheduleReport implements FromCollection, WithHeadings, WithMapping, Wit
     }
 
     public function styles(Worksheet $sheet)
-{
-    // Judul besar
-    $sheet->mergeCells('A1:C2');
-    $sheet->setCellValue('A1', 'PM SCHEDULE - FY 2025');
-    $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
-    $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-    $sheet->getStyle('A1')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+    {
+        // Judul besar
+        $sheet->mergeCells('A1:C2');
+        $sheet->setCellValue('A1', 'PM SCHEDULE - FY 2025');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A1')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
 
-    // Header merges
-    $sheet->mergeCells('A3:A4');
-    $sheet->mergeCells('B3:B4');
-    $sheet->mergeCells('C3:C4');
-    $sheet->mergeCells('D3:D4');
-    $sheet->mergeCells('E3:E4');
-    $sheet->mergeCells('F3:I3');
+        // Header merges
+        $sheet->mergeCells('A3:A4');
+        $sheet->mergeCells('B3:B4');
+        $sheet->mergeCells('C3:C4');
+        $sheet->mergeCells('D3:D4');
+        $sheet->mergeCells('E3:E4');
+        $sheet->mergeCells('F3:I3');
 
-    // Nama bulan
-    $monthName = date('F');
-    $sheet->setCellValue('F3', $monthName);
+        // Nama bulan
+        $monthName = date('F');
+        $sheet->setCellValue('F3', $monthName);
 
-    // Isi header
-    $sheet->setCellValue('A3', 'No');
-    $sheet->setCellValue('B3', 'Nama Mesin');
-    $sheet->setCellValue('C3', 'Nomor Mesin');
-    $sheet->setCellValue('D3', 'Lokasi');
-    $sheet->setCellValue('E3', "PM IMPROVE By Actual\nACT / Month");
-    $sheet->getStyle('E3')->getAlignment()->setWrapText(true);
+        // Isi header
+        $sheet->setCellValue('A3', 'No');
+        $sheet->setCellValue('B3', 'Nama Mesin');
+        $sheet->setCellValue('C3', 'Nomor Mesin');
+        $sheet->setCellValue('D3', 'Lokasi');
+        $sheet->setCellValue('E3', "PM IMPROVE By Actual\nACT / Month");
+        $sheet->getStyle('E3')->getAlignment()->setWrapText(true);
 
-    // Subheader minggu
-    $sheet->setCellValue('F4', 'Week 1');
-    $sheet->setCellValue('G4', 'Week 2');
-    $sheet->setCellValue('H4', 'Week 3');
-    $sheet->setCellValue('I4', 'Week 4');
+        // Subheader minggu
+        $sheet->setCellValue('F4', 'Week 1');
+        $sheet->setCellValue('G4', 'Week 2');
+        $sheet->setCellValue('H4', 'Week 3');
+        $sheet->setCellValue('I4', 'Week 4');
 
-    // Styling header
-    $sheet->getStyle('A3:I4')->getFont()->setBold(true);
-    $sheet->getStyle('A3:I4')->getFill()->setFillType(Fill::FILL_SOLID)
-        ->getStartColor()->setARGB('FFFF00');
+        // Styling header
+        $sheet->getStyle('A3:I4')->getFont()->setBold(true);
+        $sheet->getStyle('A3:I4')->getFill()->setFillType(Fill::FILL_SOLID)
+            ->getStartColor()->setARGB('FFFF00');
 
-    // 🔥 Semua teks di sheet center horizontal + vertical
-    $highestRow = $sheet->getHighestRow();
-    $highestCol = $sheet->getHighestColumn();
-    $range = "A1:{$highestCol}{$highestRow}";
+        // 🔥 Semua teks di sheet center horizontal + vertical
+        $highestRow = $sheet->getHighestRow();
+        $highestCol = $sheet->getHighestColumn();
+        $range = "A1:{$highestCol}{$highestRow}";
 
-    $sheet->getStyle($range)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-    $sheet->getStyle($range)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle($range)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle($range)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
 
-    // Auto width
-    foreach (range('A', 'I') as $col) {
-        $sheet->getColumnDimension($col)->setAutoSize(true);
-    }
+        // Auto width
+        foreach (range('A', 'I') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
 
-    // Tinggi baris
-    for ($row = 1; $row <= $highestRow; $row++) {
-        $sheet->getRowDimension($row)->setRowHeight(30);
-    }
+        // Tinggi baris
+        for ($row = 1; $row <= $highestRow; $row++) {
+            $sheet->getRowDimension($row)->setRowHeight(30);
+        }
 
-    // 🔲 Tambahkan border mulai A3 sampai I(last row)
-    $sheet->getStyle("A3:I{$highestRow}")->applyFromArray([
-        'borders' => [
-            'allBorders' => [
-                'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                'color' => ['argb' => 'FF000000'],
+        // 🔲 Tambahkan border mulai A3 sampai I(last row)
+        $sheet->getStyle("A3:I{$highestRow}")->applyFromArray([
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['argb' => 'FF000000'],
+                ],
             ],
-        ],
-    ]);
+        ]);
 
-    return [];
-}
+        return [];
+    }
 
 
 

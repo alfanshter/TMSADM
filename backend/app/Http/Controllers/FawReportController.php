@@ -6,6 +6,7 @@ use App\Models\FawReport;
 use App\Models\FawReportPhoto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class FawReportController extends Controller
 {
@@ -28,7 +29,7 @@ class FawReportController extends Controller
             'photos.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-      
+
 
         $report = FawReport::create($validated);
 
@@ -81,24 +82,60 @@ class FawReportController extends Controller
             ], 404);
         }
 
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'description' => 'sometimes|required|string',
-            'date' => 'sometimes|required|date',
-            'photos.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'result'      => 'nullable|string',
+            'date'        => 'sometimes|required|date',
+
+            // foto lama → ID array
+            'photos_old'  => 'array',
+            'photos_old.*' => 'integer|exists:faw_report_photos,id',
+
+            // foto baru
+            'photos_new.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        if (isset($validated['description'])) {
-            $validated['result'] = $validated['description'];
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 0,
+                'message' => $validator->errors()->first(),
+            ], 422);
         }
 
-        $report->update($validated);
+        $data = $validator->validated();
 
-        if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $photo) {
-                $path = $photo->store('faw_reports', 'public');
-                FawReportPhoto::create([
-                    'faw_report_id' => $report->id,
-                    'photo_path' => $path
+        // Update field dasar
+        if (isset($data['description'])) {
+            $report->description = $data['description'];
+        }
+        if (isset($data['result'])) {
+            $report->result = $data['result'];
+        }
+        if (isset($data['date'])) {
+            $report->date = $data['date'];
+        }
+        $report->save();
+
+        // -----------------------------
+        // Handle Photos
+        // -----------------------------
+        $photosOld = $request->input('photos_old', []);
+
+        // Hapus foto lama yang tidak ada di "photos_old"
+        $report->photos()
+            ->whereNotIn('id', $photosOld)
+            ->get()
+            ->each(function ($photo) {
+                Storage::disk('public')->delete($photo->photo_path);
+                $photo->delete();
+            });
+
+        // Simpan foto baru
+        if ($request->hasFile('photos_new')) {
+            foreach ($request->file('photos_new') as $file) {
+                $path = $file->store('faw_reports', 'public');
+                $report->photos()->create([
+                    'photo_path' => $path,
                 ]);
             }
         }
@@ -109,6 +146,7 @@ class FawReportController extends Controller
             'data' => $report->load('photos')
         ]);
     }
+
 
     public function destroy($id)
     {

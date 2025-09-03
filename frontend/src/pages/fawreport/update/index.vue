@@ -1,29 +1,32 @@
 <script setup>
-import { ENDPOINTS } from "@/config/api";
-import axios from "axios";
-import { inject, onMounted, ref } from "vue";
+import { ref, onMounted, inject } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import axios from "axios";
+import { ENDPOINTS } from "@/config/api";
 
 const route = useRoute();
 const router = useRouter();
+const globalLoading = inject("globalLoading");
 
-// Ambil id dari query ?id=... atau dari route param /:id
-const id = route.query.id || route.params.id;
+const id = route.query.id || route.params.id; // ambil id
 const isEditMode = ref(false);
 
-// Field form
-const content = ref(""); // Description
-const result = ref(""); // Result
-const birthDate = ref(null); // Date
-const image = ref([]); // Dari DropZone
-
-const baseUrl = import.meta.env.VITE_API_URL;
-
-// Inject global loading
-const globalLoading = inject("globalLoading");
+// Form fields
+const content = ref("");
+const result = ref("");
+const birthDate = ref(null);
+const images = ref([]); // DropZone
 
 const isSnackbarTopEndVisible = ref(false);
 const snackbarMessage = ref("");
+
+// Fungsi strip HTML
+const stripHtml = (html) => {
+  if (!html) return "";
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = html;
+  return tempDiv.textContent || tempDiv.innerText || "";
+};
 
 // Reset form
 const resetForm = () => {
@@ -33,55 +36,76 @@ const resetForm = () => {
   images.value = [];
 };
 
-// Fetch data kalau edit
+// Fetch detail FAW Report
 const fetchFawReportDetail = async () => {
+  if (!id) return;
+
+  isEditMode.value = true;
+
   try {
     globalLoading?.show();
-    const res = await axios.get(`${ENDPOINTS.fawreport}/${id}`);
+    const res = await axios.get(ENDPOINTS.fawReportDetail(id)); // <- perbaikan
+
     const data = res.data.data;
 
-    // Tetap ambil dari API, tidak fallback
+    
     content.value = data.description || "";
     result.value = data.result ? stripHtml(data.result) : "";
     birthDate.value = data.date || null;
 
-    // Preview foto lama
+    // Preview image lama
     if (data.photos && data.photos.length > 0) {
-      image.value = data.photos.map(
-        (photo) => `${baseUrl}/storage/${photo.photo_path}`
-      );
-    }
-  } catch (error) {
-    console.error("Gagal ambil detail FAW Report:", error);
+  images.value = data.photos.map((photo) => ({
+    id: photo.id,
+    foto: photo.photo_path, // sesuai yang dipakai UpdateDropZone
+  }));
+}
+
+    
+  } catch (err) {
+    console.error("Gagal ambil detail FAW Report:", err);
+    alert("Gagal mengambil detail FAW Report");
   } finally {
     globalLoading?.hide();
   }
 };
 
-// Submit
+// Submit form (create/update)
 const submitFawReport = async () => {
   try {
     globalLoading?.show();
+
     const formData = new FormData();
     formData.append("description", content.value);
     formData.append("result", result.value);
     formData.append("date", birthDate.value);
 
-    // Append image baru kalau ada
-    image.value.forEach((file) => {
-      if (file instanceof File) {
-        formData.append("photos[]", file);
-      }
-    });
+    // ✅ Bedakan file lama & baru
+    images.value
+      .filter((f) => !f.isNew) // file lama → kirim ID
+      .forEach((f, i) => {
+        formData.append(`photos_old[${i}]`, f.id);
+      });
 
+    images.value
+      .filter((f) => f.isNew) // file baru → kirim file
+      .forEach((f, i) => {
+        formData.append(`photos_new[${i}]`, f.file);
+      });
+
+   
+      
+ 
+      
+    let res;
+    console.log([...formData.entries()]);
     if (isEditMode.value) {
-      formData.append("_method", "PUT");
-      await axios.post(`${ENDPOINTS.fawreport}/${id}`, formData, {
+      res = await axios.post(`${ENDPOINTS.fawReportUpdate}/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       snackbarMessage.value = "FAW Report berhasil diupdate!";
     } else {
-      await axios.post(ENDPOINTS.fawreport, formData, {
+      res = await axios.post(ENDPOINTS.fawreport, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       snackbarMessage.value = "FAW Report berhasil dipublish!";
@@ -89,29 +113,21 @@ const submitFawReport = async () => {
 
     isSnackbarTopEndVisible.value = true;
     router.push("/fawreport");
-  } catch (error) {
-    console.error("Error submit FAW Report:", error);
+  } catch (err) {
+    console.error("Gagal submit FAW Report:", err);
     alert("Gagal mengirim FAW Report");
   } finally {
     globalLoading?.hide();
   }
 };
 
-// Fungsi untuk hilangkan tag HTML
-const stripHtml = (html) => {
-  if (!html) return "";
-  const tempDiv = document.createElement("div");
-  tempDiv.innerHTML = html;
-  return tempDiv.textContent || tempDiv.innerText || "";
-};
 
+// On mounted, fetch data jika edit mode
 onMounted(() => {
-  if (id) {
-    isEditMode.value = true;
-    fetchFawReportDetail();
-  }
+  if (id) fetchFawReportDetail();
 });
 </script>
+
 
 <template>
   <VCol md="8" class="mx-auto">
@@ -159,7 +175,7 @@ onMounted(() => {
       </VCardItem>
 
       <VCardText>
-        <DropZone v-model="image" />
+        <UpdateDropZone label="AFTER" v-model="images" />
       </VCardText>
     </VCard>
 

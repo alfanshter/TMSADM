@@ -126,10 +126,9 @@ const filteredFawReports = computed(() => {
 const router = useRouter();
 
 function handleEdit(item) {
-  FawReportStore.setCurrentItem(item); // simpan data di store
-  console.log("Item yang dipilih:", item);
-  console.log("ID yang dipilih:", item.id);
-  router.push(`/fawreport/form?id=${item.id}`);
+ // Navigasi ke form edit dengan query id
+ router.push(`/fawreport/update?id=${item.id}`);
+
 }
 
 // Tambahan: dengarkan event dari store setelah update

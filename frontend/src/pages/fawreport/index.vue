@@ -2,8 +2,9 @@
 import { ENDPOINTS } from "@/config/api";
 import { useFawReportStore } from "@/stores/useFawReportStore";
 import axios from "axios";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, inject } from "vue";
 import { useRouter } from "vue-router";
+import Cookies from "js-cookie";
 
 // Snackbar
 const isSnackbarTopEndVisible = ref(false);
@@ -28,14 +29,23 @@ const editedFawReport = ref(null);
 
 const baseUrl = import.meta.env.VITE_API_URL;
 
-// Table headers
-const headers = [
-  { title: "Description", key: "description" },
-  { title: "Result", key: "result" },
-  { title: "Date", key: "date" },
-  { title: "Report Image", key: "image" },
-  { title: "Actions", key: "actions", sortable: false },
-];
+// Ambil role dari cookie
+const userData = Cookies.get("userData") ? JSON.parse(Cookies.get("userData")) : null;
+const role = userData?.user?.role;
+
+// Headers (Actions hanya untuk admin/team_leader)
+const headers = computed(() => {
+  const baseHeaders = [
+    { title: "Description", key: "description" },
+    { title: "Result", key: "result" },
+    { title: "Date", key: "date" },
+    { title: "Report Image", key: "image" },
+  ];
+  if (role === "admin" || role === "team_leader") {
+    baseHeaders.push({ title: "Actions", key: "actions", sortable: false });
+  }
+  return baseHeaders;
+});
 
 // Fungsi untuk hilangkan tag HTML
 const stripHtml = (html) => {

@@ -4,6 +4,7 @@ import { useActivityStore } from "@/stores/useActivityStore";
 import axios from "axios";
 import { computed, inject, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
+import Cookies from "js-cookie";
 
 //Pinia send another activity
 const activityStore = useActivityStore();
@@ -83,14 +84,25 @@ const itemsPerPage = ref(10);
 const page = ref(1);
 const isLoading = ref(false);
 
-const headers = [
-  { title: "Nama Mesin", key: "name" },
-  { title: "Code", key: "code" },
-  { title: "Lokasi", key: "location" },
-  { title: "Scope of Work", key: "scope_of_work" },
-  { title: "Date", key: "date" },
-  { title: "Actions", key: "actions", sortable: false },
-];
+// Ambil role dari cookie
+const userData = Cookies.get("userData") ? JSON.parse(Cookies.get("userData")) : null;
+const role = userData?.user?.role;
+
+
+// Headers table (Actions hanya untuk admin/team_leader)
+const headers = computed(() => {
+  const baseHeaders = [
+    { title: "Nama Mesin", key: "name" },
+    { title: "Code", key: "code" },
+    { title: "Lokasi", key: "location" },
+    { title: "Scope of Work", key: "scope_of_work" },
+    { title: "Date", key: "date" },
+  ];
+  if (role === "admin" || role === "team_leader") {
+    baseHeaders.push({ title: "Actions", key: "actions", sortable: false });
+  }
+  return baseHeaders;
+});
 
 const scope_of_work = [
   { title: "Safety", value: "safety" },
@@ -254,21 +266,18 @@ watch(selectedScopeOfWork, () => {
         </template>
 
         <!-- Actions -->
-        <template #item.actions="{ item }">
-          <!-- Tombol Edit -->
+        <template
+          v-if="role === 'admin' || role === 'team_leader'"
+          #item.actions="{ item }"
+        >
           <IconBtn size="small" @click="handleEdit(item)">
             <VIcon icon="ri-edit-box-line" />
           </IconBtn>
 
-
-          <IconBtn
-            size="small"
-            @click="handleDetail(item)"
-          >
+          <IconBtn size="small" @click="handleDetail(item)">
             <VIcon icon="ri-eye-line" />
           </IconBtn>
 
-          <!-- Tombol Delete -->
           <IconBtn size="small" @click="deleteActivityTms(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>

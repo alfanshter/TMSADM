@@ -18,6 +18,12 @@ const itemsPerPage = ref(10);
 const page = ref(1);
 const isLoading = ref(false);
 
+// Ambil data userData dari localStorage
+const userData = JSON.parse(localStorage.getItem("userData"))
+
+// Ambil role
+const role = userData?.user?.role
+
 
 // Dropdown tahun (5 tahun terakhir)
 const currentYear = new Date().getFullYear();
@@ -262,7 +268,8 @@ watch(selectedCategory, () => {
               density="compact"
             />
           </div>
-          <VBtn @click="isAddNewSparepartDrawerVisible = true"
+          <VBtn   v-if="['admin', 'team_leader'].includes(role?.toLowerCase())"
+          @click="isAddNewSparepartDrawerVisible = true"
             >Add New Sparepart</VBtn
           >
         </div>
@@ -296,15 +303,18 @@ watch(selectedCategory, () => {
 
     <!-- DRAWERS -->
     <AddNewSparepartDrawer
+     v-if="['admin', 'team_leader'].includes(role?.toLowerCase())"
       v-model:isDrawerOpen="isAddNewSparepartDrawerVisible"
       @sparepart-added="addNewSparepart"
     />
     <AddNewStokDrawer
+     v-if="['admin', 'team_leader'].includes(role?.toLowerCase())"
       v-model:isDrawerOpen="isAddNewStokDrawerVisible"
       :sparepart="selectedSparepart"
       @submit="handleUpdateStok"
     />
     <EditSparepartDrawer
+     v-if="['admin', 'team_leader'].includes(role?.toLowerCase())"
       v-model:isDrawerOpen="isEditSparepartDrawerVisible"
       :sparepart="editedSparepart"
       @sparepart-updated="updateSparepart"

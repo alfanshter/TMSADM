@@ -23,6 +23,13 @@ const itemsPerPage = ref(10);
 const page = ref(1);
 const isLoading = ref(false);
 
+
+// Ambil data userData dari localStorage
+const userData = JSON.parse(localStorage.getItem("userData"))
+
+// Ambil role
+const role = userData?.user?.role
+
 // Headers sesuai data backend PICA
 const headers = [
   { title: "No", key: "no" },
@@ -242,7 +249,7 @@ const openEditDrawer = (item) => {
             />
           </div>
           <!-- 👉 Add pica button -->
-          <VBtn @click="isAddNewpicaDrawerVisible = true"> Add PICA </VBtn>
+          <VBtn v-if="['admin', 'team_leader'].includes(role?.toLowerCase())" @click="isAddNewpicaDrawerVisible = true"> Add PICA </VBtn>
         </div>
       </VCardText>
 
@@ -288,7 +295,7 @@ const openEditDrawer = (item) => {
 
         <!-- Actions -->
         <template #item.actions="{ item }">
-          <IconBtn size="small" @click="deleteData(item.id)">
+          <IconBtn v-if="['admin', 'team_leader'].includes(role?.toLowerCase())" size="small" @click="deleteData(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>
 
@@ -296,7 +303,7 @@ const openEditDrawer = (item) => {
             <VIcon icon="ri-eye-line" />
           </IconBtn>
 
-           <IconBtn size="small" @click="openEditDrawer(item)">
+           <IconBtn v-if="['admin', 'team_leader'].includes(role?.toLowerCase())" size="small" @click="openEditDrawer(item)">
             <VIcon icon="ri-edit-box-line" />
           </IconBtn>
         </template>

@@ -2,7 +2,8 @@
 import { ENDPOINTS } from "@/config/api";
 import AddNewleakagereportDrawer from "@/views/apps/leakagereport/AddNewleakagereportDrawer.vue";
 import axios from "axios";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, inject } from "vue";
+import Cookies from "js-cookie";
 
 // Snackbar
 const isSnackbarTopEndVisible = ref(false);
@@ -11,26 +12,37 @@ const snackbarMessage = ref("");
 // Drawer
 const isDrawerVisible = ref(false);
 const editedLeakageReport = ref(null); // untuk edit
-
 const openDrawer = () => {
   editedLeakageReport.value = null;
   isDrawerVisible.value = true;
 };
 
-// State
+// Table state
 const leakageReports = ref([]);
 const searchQuery = ref("");
 const page = ref(1);
 const itemsPerPage = ref(10);
 const isLoading = ref(false);
 
-// Table headers
-const headers = [
-  { title: "Location", key: "lokasi" },
-  { title: "Date", key: "date" },
-  { title: "Files", key: "file_scan" },
-  { title: "Actions", key: "actions", sortable: false },
-];
+// Ambil role dari cookie
+const userData = Cookies.get("userData") ? JSON.parse(Cookies.get("userData")) : null;
+const role = userData?.user?.role;
+
+// Global loading
+const globalLoading = inject("globalLoading");
+
+// Table headers (Actions hanya untuk admin/team_leader)
+const headers = computed(() => {
+  const baseHeaders = [
+    { title: "Location", key: "lokasi" },
+    { title: "Date", key: "date" },
+    { title: "Files", key: "file_scan" },
+  ];
+  if (role === "admin" || role === "team_leader") {
+    baseHeaders.push({ title: "Actions", key: "actions", sortable: false });
+  }
+  return baseHeaders;
+});
 
 // Fetch data
 const fetchLeakageReports = async () => {
@@ -57,13 +69,12 @@ const fetchLeakageReports = async () => {
   }
 };
 
-onMounted(fetchLeakageReports);
-
 // Delete report
 const deleteLeakageReport = async (id) => {
   if (!confirm("Yakin ingin menghapus report ini?")) return;
   try {
-    await axios.delete(ENDPOINTS.deleteLeakageReport(id));
+    globalLoading?.show();
+    await axios.delete(`${ENDPOINTS.leakageReports}/${id}`);
     snackbarMessage.value = "Delete Leakage Report Completed!";
     isSnackbarTopEndVisible.value = true;
     fetchLeakageReports();
@@ -71,6 +82,8 @@ const deleteLeakageReport = async (id) => {
     console.error(err);
     snackbarMessage.value = "Failed to delete report";
     isSnackbarTopEndVisible.value = true;
+  } finally {
+    globalLoading?.hide();
   }
 };
 
@@ -81,26 +94,26 @@ const openEditDrawer = (report) => {
 };
 
 // Filter data
-const filteredLeakageReports = computed(() => {
-  return leakageReports.value.filter((item) => {
+const filteredLeakageReports = computed(() =>
+  leakageReports.value.filter((item) => {
     if (!searchQuery.value) return true;
     return (
       item.lokasi?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       item.date?.toLowerCase().includes(searchQuery.value.toLowerCase())
     );
-  });
-});
+  })
+);
 
 // Fungsi ikon file
 const getFileIcon = (fileName) => {
   const ext = fileName.split(".").pop().toLowerCase();
   if (ext === "pdf") return { icon: "mdi-file-pdf-box", color: "red" };
-  if (["xls", "xlsx"].includes(ext))
-    return { icon: "mdi-file-excel-box", color: "green" };
-  if (["doc", "docx"].includes(ext))
-    return { icon: "mdi-file-word-box", color: "blue" };
+  if (["xls", "xlsx"].includes(ext)) return { icon: "mdi-file-excel-box", color: "green" };
+  if (["doc", "docx"].includes(ext)) return { icon: "mdi-file-word-box", color: "blue" };
   return { icon: "mdi-file", color: "grey" };
 };
+
+onMounted(fetchLeakageReports);
 </script>
 
 <template>
@@ -120,13 +133,11 @@ const getFileIcon = (fileName) => {
       </VCardItem>
 
       <VCardText class="d-flex flex-wrap gap-4 align-center">
-        <VTextField
-          v-model="searchQuery"
-          placeholder="Search Report"
-          density="compact"
-        />
+        <VTextField v-model="searchQuery" placeholder="Search Report" density="compact" />
         <VSpacer />
-        <VBtn @click="openDrawer"> Add New Leakage Report </VBtn>
+        <VBtn v-if="role === 'admin' || role === 'team_leader'" @click="openDrawer">
+          Add New Leakage Report
+        </VBtn>
       </VCardText>
 
       <VDataTable
@@ -150,24 +161,16 @@ const getFileIcon = (fileName) => {
         <!-- Files -->
         <template #item.file_scan="{ item }">
           <div v-if="item.files.length">
-            <div
-              v-for="file in item.files"
-              :key="file.name"
-              class="d-flex align-center my-1"
-            >
-              <VIcon
-                :icon="getFileIcon(file.name).icon"
-                :color="getFileIcon(file.name).color"
-                start
-              />
+            <div v-for="file in item.files" :key="file.name" class="d-flex align-center my-1">
+              <VIcon :icon="getFileIcon(file.name).icon" :color="getFileIcon(file.name).color" start />
               <a :href="file.url" target="_blank">{{ file.name }}</a>
             </div>
           </div>
           <span v-else>No Files</span>
         </template>
 
-        <!-- Actions -->
-        <template #item.actions="{ item }">
+        <!-- Actions (hanya admin/team_leader) -->
+        <template v-if="role === 'admin' || role === 'team_leader'" #item.actions="{ item }">
           <IconBtn size="small" @click="deleteLeakageReport(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>
@@ -176,7 +179,7 @@ const getFileIcon = (fileName) => {
             <VIcon icon="ri-eye-line" />
           </IconBtn>
 
-           <IconBtn size="small" @click="openEditDrawer(item)">
+          <IconBtn size="small" @click="openEditDrawer(item)">
             <VIcon icon="ri-edit-box-line" />
           </IconBtn>
         </template>

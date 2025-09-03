@@ -1,10 +1,8 @@
-import Cookies from "js-cookie"
+import { computed } from "vue"
+import { storeToRefs } from "pinia"
+import { useUserStore } from "@/stores/user"
 
-const userData = Cookies.get("userData") ? JSON.parse(Cookies.get("userData")) : null
-const role = userData?.user?.role
-
-
-const item = [
+const items = [
   { heading: "Apps & Pages" },
 
   {
@@ -17,7 +15,7 @@ const item = [
     title: "User",
     to: { name: "user" },
     icon: { icon: "ri-user-line" },
-    role: ["admin"]
+    role: ["admin"],
   },
 
   {
@@ -30,7 +28,7 @@ const item = [
     title: "Activity TMS",
     children: [
       { title: "List", to: "activitytms" },
-      { title: "Add", to: "activitytms-form" },
+      { title: "Add", to: "activitytms-form",role: ["admin","team_leader"] },
     ],
     icon: { icon: "ri-tools-line" },
   },
@@ -39,7 +37,7 @@ const item = [
     title: "FAW Report",
     children: [
       { title: "List", to: "fawreport" },
-      { title: "Add", to: "fawreport-form" },
+      { title: "Add", to: "fawreport-form",role: ["admin","team_leader"] },
     ],
     icon: { icon: "ri-customer-service-2-line" },
   },
@@ -48,7 +46,7 @@ const item = [
     title: "Leakage Report",
     children: [
       { title: "List", to: "leakagereport" },
-      { title: "Add", to: "leakagereport-form" },
+      { title: "Add", to: "leakagereport-form", role: ["admin","team_leader"] },
     ],
     icon: { icon: "ri-alarm-warning-fill" },
   },
@@ -69,9 +67,27 @@ const item = [
     to: { name: "pica" },
     icon: { icon: "ri-send-plane-line" },
   },
-];
+]
 
+export function useNavItems() {
+  const userStore = useUserStore()
+  const { user } = storeToRefs(userStore) // reactive user dari Pinia
 
-export default item.filter(item => {
-  return !item.role || item.role.includes(role)
-})
+  return computed(() => {
+    const role = user.value.role
+
+    return items
+      .map(i => {
+        if (i.children) {
+          return {
+            ...i,
+            children: i.children.filter(
+              c => !c.role || c.role.includes(role) // filter child
+            ),
+          }
+        }
+        return i
+      })
+      .filter(i => !i.role || i.role.includes(role)) // filter parent
+  })
+}

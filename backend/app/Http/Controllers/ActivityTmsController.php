@@ -45,6 +45,16 @@ class ActivityTmsController extends Controller
                 'spareparts' => $spareparts,
                 'date' => $activity->date,
                 // tambahkan field lain jika perlu
+                // 👉 catatan
+                'catatan_teamleader_cleaning_criticals' => $activity->catatan_teamleader_cleaning_criticals,
+                'catatan_supervisor_cleaning_criticals' => $activity->catatan_supervisor_cleaning_criticals,
+                'catatan_teamleader_just_cleaning' => $activity->catatan_teamleader_just_cleaning,
+                'catatan_supervisor_justcleaning' => $activity->catatan_supervisor_justcleaning,
+                'catatan_teamleader_replacement_part' => $activity->catatan_teamleader_replacement_part,
+                'catatan_supervisor_replacement_part' => $activity->catatan_supervisor_replacement_part,
+                'catatan_teamleader_preventive_pm' => $activity->catatan_teamleader_preventive_pm,
+                'catatan_supervisor_preventive_pm' => $activity->catatan_supervisor_preventive_pm,
+
             ];
         });
 
@@ -321,6 +331,17 @@ class ActivityTmsController extends Controller
             // suhu & deviasi
             'temp' => 'nullable|string|max:255',
             'deviation' => 'nullable|string|max:255',
+
+            // ✅ Catatan baru
+            'catatan_teamleader_cleaning_criticals' => 'nullable|string',
+            'catatan_supervisor_cleaning_criticals' => 'nullable|string',
+            'catatan_teamleader_just_cleaning' => 'nullable|string',
+            'catatan_supervisor_justcleaning' => 'nullable|string',
+            'catatan_teamleader_replacement_part' => 'nullable|string',
+            'catatan_supervisor_replacement_part' => 'nullable|string',
+            'catatan_teamleader_preventive_pm' => 'nullable|string',
+            'catatan_supervisor_preventive_pm' => 'nullable|string',
+
 
         ]);
 
@@ -603,6 +624,17 @@ class ActivityTmsController extends Controller
         $activity->outgoing_rs = $request->outgoing_rs;
         $activity->outgoing_rt = $request->outgoing_rt;
         $activity->outgoing_st = $request->outgoing_st;
+
+        // ✅ Update catatan
+        $activity->catatan_teamleader_cleaning_criticals = $request->catatan_teamleader_cleaning_criticals;
+        $activity->catatan_supervisor_cleaning_criticals = $request->catatan_supervisor_cleaning_criticals;
+        $activity->catatan_teamleader_just_cleaning = $request->catatan_teamleader_just_cleaning;
+        $activity->catatan_supervisor_justcleaning = $request->catatan_supervisor_justcleaning;
+        $activity->catatan_teamleader_replacement_part = $request->catatan_teamleader_replacement_part;
+        $activity->catatan_supervisor_replacement_part = $request->catatan_supervisor_replacement_part;
+        $activity->catatan_teamleader_preventive_pm = $request->catatan_teamleader_preventive_pm;
+        $activity->catatan_supervisor_preventive_pm = $request->catatan_supervisor_preventive_pm;
+
 
         $activity->save();
 

@@ -13,54 +13,54 @@ use Illuminate\Support\Facades\Validator;
 class ActivityTmsController extends Controller
 {
     public function getAllActivityTms()
-    {$activities = ActivityTMS::with([
-        'itemMachine',
-        'cleaningCriticals',
-        'justCleaning',
-        'preventive',
-        'replacementPart',
-        'spareparts'
-    ])->get();
-    
-    // Transform data supaya spareparts hanya menampilkan field tertentu
-    $activitiesFormatted = $activities->map(function ($activity) {
-        $spareparts = $activity->spareparts->map(function ($sp) {
+    {
+        $activities = ActivityTMS::with([
+            'itemMachine',
+            'cleaningCriticals',
+            'justCleaning',
+            'preventive',
+            'replacementPart',
+            'spareparts'
+        ])->get();
+
+        // Transform data supaya spareparts hanya menampilkan field tertentu
+        $activitiesFormatted = $activities->map(function ($activity) {
+            $spareparts = $activity->spareparts->map(function ($sp) {
+                return [
+                    'nama_sparepart' => $sp->nama_sparepart,
+                    'spec' => $sp->spec,
+                    'loc' => $sp->loc,
+                    'type' => $sp->type,
+                    'qty' => $sp->pivot->qty,
+                ];
+            });
+
             return [
-                'nama_sparepart' => $sp->nama_sparepart,
-                'spec' => $sp->spec,
-                'loc' => $sp->loc,
-                'type' => $sp->type,
-                'qty' => $sp->pivot->qty,
+                'id' => $activity->id,
+                'item_machine' => $activity->itemMachine,
+                'cleaning_criticals' => $activity->cleaningCriticals,
+                'just_cleaning' => $activity->justCleaning,
+                'preventive' => $activity->preventive,
+                'replacement_part' => $activity->replacementPart,
+                'spareparts' => $spareparts,
+                'date' => $activity->date,
+                // tambahkan field lain jika perlu
             ];
         });
-    
-        return [
-            'id' => $activity->id,
-            'item_machine' => $activity->itemMachine,
-            'cleaning_criticals' => $activity->cleaningCriticals,
-            'just_cleaning' => $activity->justCleaning,
-            'preventive' => $activity->preventive,
-            'replacement_part' => $activity->replacementPart,
-            'spareparts' => $spareparts,
-            'date' => $activity->date,
-            // tambahkan field lain jika perlu
-        ];
-    });
-    
-    if ($activitiesFormatted->isEmpty()) {
+
+        if ($activitiesFormatted->isEmpty()) {
+            return response()->json([
+                'status' => 0,
+                'message' => 'Belum ada data aktivitas TMS.',
+                'data' => []
+            ], 404);
+        }
+
         return response()->json([
-            'status' => 0,
-            'message' => 'Belum ada data aktivitas TMS.',
-            'data' => []
-        ], 404);
-    }
-    
-    return response()->json([
-        'status' => 1,
-        'message' => 'Berhasil mengambil semua data aktivitas TMS.',
-        'data' => $activitiesFormatted
-    ], 200);
-    
+            'status' => 1,
+            'message' => 'Berhasil mengambil semua data aktivitas TMS.',
+            'data' => $activitiesFormatted
+        ], 200);
     }
 
 
@@ -127,6 +127,16 @@ class ActivityTmsController extends Controller
             'replacement_part' => 'nullable|array',
             'replacement_part.*.foto_before' => 'nullable|file|mimes:jpg,jpeg,png',
             'replacement_part.*.foto_after' => 'nullable|file|mimes:jpg,jpeg,png',
+            //catatan
+            'catatan_teamleader_cleaning_criticals' => 'nullable|string|max:255',
+            'catatan_supervisor_cleaning_criticals' => 'nullable|string|max:255',
+            'catatan_teamleader_just_cleaning' => 'nullable|string|max:255',
+            'catatan_supervisor_justcleaning' => 'nullable|string|max:255',
+            'catatan_teamleader_replacement_part' => 'nullable|string|max:255',
+            'catatan_supervisor_replacement_part' => 'nullable|string|max:255',
+            'catatan_teamleader_preventive_pm' => 'nullable|string|max:255',
+            'catatan_supervisor_preventive_pm' => 'nullable|string|max:255',
+
         ]);
 
         if ($validator->fails()) {
@@ -210,6 +220,16 @@ class ActivityTmsController extends Controller
             'safety_scan_filename' => $safety_scan_filename,
             'production_scan_filename' => $production_scan_filename,
             'production_downtime' => $production_downtime,
+            // 👉 catatan
+            'catatan_teamleader_cleaning_criticals' => $request->catatan_teamleader_cleaning_criticals,
+            'catatan_supervisor_cleaning_criticals' => $request->catatan_supervisor_cleaning_criticals,
+            'catatan_teamleader_just_cleaning' => $request->catatan_teamleader_just_cleaning,
+            'catatan_supervisor_justcleaning' => $request->catatan_supervisor_justcleaning,
+            'catatan_teamleader_replacement_part' => $request->catatan_teamleader_replacement_part,
+            'catatan_supervisor_replacement_part' => $request->catatan_supervisor_replacement_part,
+            'catatan_teamleader_preventive_pm' => $request->catatan_teamleader_preventive_pm,
+            'catatan_supervisor_preventive_pm' => $request->catatan_supervisor_preventive_pm,
+
         ]);
 
         // Simpan sparepart jika ada
@@ -664,11 +684,11 @@ class ActivityTmsController extends Controller
     {
         // Ambil array ID dari request
         $ids = $request->input('ids', []); // misal frontend ngirim {0: '11', 1: '10'}
-    
+
         // Pastikan array valid dan cast ke integer
         $ids = array_filter($ids, fn($id) => !empty($id));
         $ids = array_map('intval', $ids);
-    
+
         if (empty($ids)) {
             return response()->json([
                 'status' => 0,
@@ -676,7 +696,7 @@ class ActivityTmsController extends Controller
                 'data' => []
             ], 400);
         }
-    
+
         // Ambil activity berdasarkan ID
         $activities = ActivityTMS::with([
             'itemMachine',
@@ -686,14 +706,13 @@ class ActivityTmsController extends Controller
             'replacementPart',
             'spareparts'
         ])
-        ->whereIn('id', $ids)
-        ->get();
-    
+            ->whereIn('id', $ids)
+            ->get();
+
         return response()->json([
             'status' => 1,
             'message' => 'Berhasil mengambil daftar aktivitas TMS.',
             'data' => $activities
         ], 200);
     }
-    
 }

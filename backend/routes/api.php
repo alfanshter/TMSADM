@@ -35,12 +35,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 // Item Machines hanya untuk team_leader
-Route::middleware(['auth:sanctum', 'role:team_leader,admin'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:team_leader,admin,supervisor'])->group(function () {
     Route::apiResource('item-machines', ItemMachineController::class);
 });
 
 // Maintenance API Routes
-Route::middleware(['auth:sanctum', 'role:team_leader,admin'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:team_leader,admin,supervisor'])->group(function () {
     Route::get('/activity-tms-all', [ActivityTmsController::class, 'getAllActivityTms']);
     Route::get('/activity-tms/{id}', [ActivityTmsController::class, 'getActivityTmsById']);
     Route::post('/activity-tms', [ActivityTmsController::class, 'storeActivityTms']);
@@ -51,7 +51,7 @@ Route::middleware(['auth:sanctum', 'role:team_leader,admin'])->group(function ()
 });
 
 //FAW REPORT
-Route::middleware(['auth:sanctum', 'role:team_leader,admin'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:team_leader,admin,supervisor'])->group(function () {
     // Route::apiResource('faw-reports', FawReportController::class);
     Route::get('/faw-reports', [FawReportController::class, 'index']);
     Route::get('/faw-reports/{id}', [FawReportController::class, 'show']);
@@ -103,4 +103,3 @@ Route::prefix('picas')->group(function () {
 
 // monitoring dashboard
 Route::get('/dashboard-statistics', [DashboardController::class, 'index']);
-

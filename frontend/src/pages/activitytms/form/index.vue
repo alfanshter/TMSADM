@@ -4,7 +4,7 @@ import { useActivityStore } from "@/stores/useActivityStore";
 import axios from "axios";
 import { onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { VCardItem, VRow } from "vuetify/components";
+
 
 //get pinia
 const activityStore = useActivityStore();
@@ -30,6 +30,24 @@ const selectedMaintenanceTypesPreventivePM = ref([]);
 const birthDate = ref("");
 const production_downtime = ref("");
 
+// Tambahan untuk downtime
+const startTime = ref("");
+const endTime = ref("");
+
+// Watcher: hitung downtime otomatis
+watch([startTime, endTime], () => {
+  if (startTime.value && endTime.value) {
+    const start = new Date(`1970-01-01T${startTime.value}:00`);
+    const end = new Date(`1970-01-01T${endTime.value}:00`);
+    let diff = (end - start) / 1000 / 60; // selisih menit
+
+    // Jika end < start (lewat tengah malam), tambahin 24 jam
+    if (diff < 0) diff += 24 * 60;
+
+    production_downtime.value = diff;
+  }
+});
+
 // file foto
 const cleaningCriticalBeforeFiles = ref([]);
 const cleaningCriticalAfterFiles = ref([]);
@@ -46,12 +64,10 @@ const preventiveJsa = ref(null);
 const safety_scan = ref(null);
 const production_scan = ref(null);
 
-
 // Snackbar
 const isSnackbarTopEndVisible = ref(false);
 const snackbarMessage = ref("");
 const snackbarColor = ref("success"); // default
-
 
 const itemMachines = ref([]);
 const totalItemMachines = ref(0);
@@ -73,7 +89,6 @@ const sparepartHeaders = [
   { title: "Aksi", key: "actions" },
 ];
 
-
 // Dapatkan object sparepart yang dipilih
 const selectedItemSparepartObj = computed(() =>
   itemSparepart.value.find((item) => item.id === selectedItemSparepart.value)
@@ -87,7 +102,10 @@ const onSparepartSelect = () => {
 // Tambah ke list
 const addSparepart = () => {
   if (!selectedItemSparepartObj.value) return;
-  if (requiredQty.value < 1 || requiredQty.value > selectedItemSparepartObj.value.usages_sum_qty) {
+  if (
+    requiredQty.value < 1 ||
+    requiredQty.value > selectedItemSparepartObj.value.usages_sum_qty
+  ) {
     alert("Jumlah tidak valid!");
     return;
   }
@@ -114,13 +132,10 @@ const addSparepart = () => {
   requiredQty.value = 1;
 };
 
-
 // hapus sparepart
 const removeSparepart = (index) => {
   sparepartList.value.splice(index, 1);
 };
-
-
 
 //scope of work
 const incomingRs = ref("");
@@ -159,43 +174,40 @@ const fetchItemSparepart = async () => {
     const res = await axios.get(ENDPOINTS.spareparts);
     const result = res.data.data ?? res.data;
     itemSparepart.value = result;
-
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error fetching item sparepart", error);
   }
-}
+};
 
 const headers = [
   {
-    title: 'Nama',
-    key: 'nama_sparepart',
+    title: "Nama",
+    key: "nama_sparepart",
   },
   {
-    title: 'Spec',
-    key: 'spec',
+    title: "Spec",
+    key: "spec",
   },
   {
-    title: 'Loc',
-    key: 'loc',
+    title: "Loc",
+    key: "loc",
     sortable: false,
   },
   {
-    title: 'Category',
-    key: 'category',
+    title: "Category",
+    key: "category",
   },
   {
-    title: 'QTY',
-    key: 'qtc',
+    title: "QTY",
+    key: "qtc",
   },
 
   {
-    title: 'Actions',
-    key: 'actions',
+    title: "Actions",
+    key: "actions",
     sortable: false,
   },
-]
-
+];
 
 // Sync code/location/scope kalau ganti item machine
 watch(selectedItemMachine, (newVal) => {
@@ -297,7 +309,6 @@ const submitForm = async () => {
     snackbarMessage.value = "Add New Activity TMS Success!";
     snackbarColor.value = "success"; // warna hijau
 
-
     // Redirect setelah sukses (opsional)
 
     isSnackbarTopEndVisible.value = true;
@@ -351,7 +362,6 @@ onMounted(() => {
               <VCol cols="12" md="4">
                 <VAutocomplete v-model="selectedItemMachine" :items="itemMachines" item-title="name" item-value="id"
                   placeholder="Item Machine" label="Item Machine" />
-
               </VCol>
               <VCol cols="12" md="6">
                 <VTextField v-model="code" label="Code" readonly placeholder="FXSK123U" />
@@ -380,10 +390,8 @@ onMounted(() => {
               <VFileInput v-model="safety_scan" label="Pilih file dokumen"
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp"
                 prepend-icon="ri-upload-2-line" show-size />
-
             </div>
             <!-- Checkbox -->
-
           </VCardItem>
 
           <VCardItem>
@@ -436,22 +444,46 @@ onMounted(() => {
               <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
               <VFileInput v-model="production_scan" label="Pilih file dokumen"
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
-
             </div>
             <!-- Checkbox -->
-
           </VCardItem>
 
           <VCardItem>
             <div class="d-flex flex-column">
-              <VLabel class=" mb-1">Downtime Production</VLabel>
-              <VCol cols="12" md="6">
-                <VTextField v-model="production_downtime" label="Downtime Production"  placeholder="minute" type="number" />
-              </VCol>
-           
-            </div>
-            <!-- Checkbox -->
+              <VLabel class="mb-3">Downtime Production</VLabel>
+              <VRow>
+                <!-- Waktu Start -->
 
+                <VCol cols="12" md="4">
+                  <AppDateTimePicker v-model="startTime" label="Start Time" placeholder="Select Time" :config="{
+                    enableTime: true,
+                    noCalendar: true,
+                    dateFormat: 'H:i',   // format jam:menit (24 jam)
+                    time_24hr: true      // kalau mau pakai format 24 jam
+                  }" />
+                </VCol>
+
+                <!-- Waktu End -->
+                <VCol cols="12" md="4">
+                  <AppDateTimePicker v-model="endTime" label="End Time" placeholder="Select Time" :config="{
+                    enableTime: true,
+                    noCalendar: true,
+                    dateFormat: 'H:i',   // format jam:menit (24 jam)
+                    time_24hr: true      // kalau mau pakai format 24 jam
+                  }" />
+                </VCol>
+
+                <!-- Downtime (otomatis terhitung) -->
+                <VCol cols="12" md="4">
+                  <VTextField v-model="production_downtime" label="Downtime Production" placeholder="minute"
+                    type="number" readonly>
+                    <template v-slot:append-inner>
+                      <span class="text-caption">minute</span>
+                    </template>
+                  </VTextField>
+                </VCol>
+              </VRow>
+            </div>
           </VCardItem>
         </VCard>
         <!-- 👉 Product Image -->
@@ -478,6 +510,7 @@ onMounted(() => {
                   <VFileInput v-model="cleaningCriticalJsa" label="Pilih file dokumen"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
                 </VCardText>
+
               </template>
 
               <!-- Just Cleaning -->
@@ -559,17 +592,17 @@ onMounted(() => {
 
                   <!-- Spec -->
                   <template #item.spec="{ item }">
-                    <span>{{ item.spec || '-' }}</span>
+                    <span>{{ item.spec || "-" }}</span>
                   </template>
 
                   <!-- Loc -->
                   <template #item.loc="{ item }">
-                    <span>{{ item.loc || '-' }}</span>
+                    <span>{{ item.loc || "-" }}</span>
                   </template>
 
                   <!-- Type -->
                   <template #item.type="{ item }">
-                    <span>{{ item.type || '-' }}</span>
+                    <span>{{ item.type || "-" }}</span>
                   </template>
 
                   <!-- Aksi Hapus -->
@@ -577,12 +610,9 @@ onMounted(() => {
                     <VBtn icon color="red" @click="removeSparepart(index)">
                       <VIcon icon="ri-delete-bin-7-line" />
                     </VBtn>
-
-
                   </template>
                 </VDataTableServer>
               </template>
-
 
               <!-- Preventive PM -->
               <VCheckbox label="Preventive PM" value="preventive_pm" v-model="selectedMaintenanceTypesPreventivePM" />

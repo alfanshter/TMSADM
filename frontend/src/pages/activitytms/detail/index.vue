@@ -231,7 +231,7 @@ const onSparepartSelect = () => {
 };
 
 const getFileUrl = (path) => {
-  return `http://127.0.0.1:8000/storage/${path}`; // sesuaikan URL file
+  return `https://backtmsadm.bimasaktiluhur.com/storage/${path}`; // sesuaikan URL file
 };
 
 const getFileName = (path) => {

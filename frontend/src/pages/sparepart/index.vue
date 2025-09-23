@@ -268,7 +268,7 @@ watch(selectedCategory, () => {
               density="compact"
             />
           </div>
-          <VBtn   v-if="['admin', 'team_leader'].includes(role?.toLowerCase())"
+          <VBtn   v-if="['admin', 'team_leader',].includes(role?.toLowerCase())"
           @click="isAddNewSparepartDrawerVisible = true"
             >Add New Sparepart</VBtn
           >

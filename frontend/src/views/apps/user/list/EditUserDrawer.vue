@@ -143,7 +143,7 @@ const handleDrawerModelValueUpdate = (val) => {
                 <VSelect
                   v-model="form.role"
                   label="Pilih Role"
-                  :items="['admin', 'supervisor', 'team_leader']"
+                  :items="['admin', 'supervisor', 'team_leader','teknisi']"
                   :rules="[requiredValidator]"
                   placeholder="Pilih Role"
                 />

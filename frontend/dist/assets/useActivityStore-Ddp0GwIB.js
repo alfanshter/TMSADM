@@ -1,0 +1,1 @@
+import{aR as e}from"./index-WOtHOg2s.js";const n=e("activity",{state:()=>({currentItem:null}),actions:{setCurrentItem(t){this.currentItem=t},clearCurrentItem(){this.currentItem=null}}});export{n as u};

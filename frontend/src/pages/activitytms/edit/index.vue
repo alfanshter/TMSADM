@@ -5,6 +5,7 @@ import { useActivityStore } from "@/stores/useActivityStore";
 import axios from "axios";
 import { onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useUserStore } from "@/stores/user";
 import { VCardItem, VRow } from "vuetify/components";
 
 //get pinia
@@ -13,6 +14,12 @@ const currentItem = computed(() => activityStore.currentItem);
 
 // Inject global loading
 const globalLoading = inject("globalLoading");
+
+
+const userStore = useUserStore();
+const role = computed(() => userStore.role);
+console.log("User Role:", role.value);
+
 
 const code = ref("");
 const location = ref("");
@@ -43,7 +50,6 @@ const sparepartHeaders = [
   { title: "Type", key: "type" },
   { title: "Aksi", key: "actions" },
 ];
-
 
 // Dapatkan object spa
 
@@ -84,12 +90,10 @@ const production_scan = ref(null);
 const production_scan_filename = ref(null); // dari backend
 const production_scan_old = ref(null); // dari backend
 
-
 // Snackbar
 const isSnackbarTopEndVisible = ref(false);
 const snackbarMessage = ref("");
 const snackbarColor = ref("success"); // default
-
 
 const itemMachines = ref([]);
 const totalItemMachines = ref(0);
@@ -113,6 +117,18 @@ const sparepartList = ref([]);
 
 const activity_id = ref("");
 
+// catatan
+const cleaningCriticalSupervisorNote = ref("");
+const cleaningCriticalTeamleaderNote = ref("");
+
+const justCleaningSupervisorNote = ref("");
+const justCleaningTeamleaderNote = ref("");
+
+const replacementSupervisorNote = ref("");
+const replacementTeamleaderNote = ref("");
+
+const preventiveSupervisorNote = ref("");
+const preventiveTeamleaderNote = ref("");
 
 if (currentItem.value != null) {
   console.log("date:", currentItem.value);
@@ -167,6 +183,35 @@ const fetchActivityDetail = async () => {
     temp.value = data.temp ?? "";
     deviation.value = data.deviation ?? "";
 
+    // catatan: mapping semua catatan supervisor & teamleader (jika ada)
+    // cleaning critical
+    cleaningCriticalTeamleaderNote.value =
+      data.catatan_teamleader_cleaning_criticals ?? "";
+    cleaningCriticalSupervisorNote.value =
+      data.catatan_supervisor_cleaning_criticals ?? "";
+
+    // just cleaning (backend naming inconsistent: supervisor maybe catatan_supervisor_justcleaning)
+    justCleaningTeamleaderNote.value =
+      data.catatan_teamleader_just_cleaning ?? "";
+    // try both possible supervisor keys
+    justCleaningSupervisorNote.value =
+      data.catatan_supervisor_justcleaning ??
+      data.catatan_supervisor_just_cleaning ??
+      "";
+
+    // replacement part
+    replacementTeamleaderNote.value =
+      data.catatan_teamleader_replacement_part ?? "";
+    replacementSupervisorNote.value =
+      data.catatan_supervisor_replacement_part ?? "";
+
+    // preventive
+    preventiveTeamleaderNote.value =
+      data.catatan_teamleader_preventive_pm ?? "";
+    preventiveSupervisorNote.value =
+      data.catatan_supervisor_preventive_pm ?? "";
+   
+
     //Production file Scan
     production_scan_filename.value = data.production_scan_filename ?? "";
     production_scan_old.value = data.production_scan ?? "";
@@ -175,8 +220,9 @@ const fetchActivityDetail = async () => {
     safety_filename.value = data.safety_scan_filename ?? "";
     safety_old.value = data.safety_scan ?? "";
 
-    //cleaning critical 
-    cleaningCriticalJsa_filename.value = data.jsa_filename_cleaning_criticals ?? "";
+    //cleaning critical
+    cleaningCriticalJsa_filename.value =
+      data.jsa_filename_cleaning_criticals ?? "";
     cleaningCriticalJsa_old.value = data.jsa_file_cleaning_criticals ?? "";
     //just cleaning
     justCleaningJsa_filename.value = data.jsa_filename_just_cleaning ?? "";
@@ -187,7 +233,6 @@ const fetchActivityDetail = async () => {
     //preventive
     preventiveJsa_filename.value = data.jsa_filename_preventive ?? "";
     preventiveJsa_old.value = data.jsa_file_preventive ?? "";
-
 
     if (data.cleaning_criticals && data.cleaning_criticals.length > 0) {
       cleaningCriticalBeforeFiles.value = data.cleaning_criticals.filter(
@@ -200,7 +245,6 @@ const fetchActivityDetail = async () => {
       selectedMaintenanceTypesCleaningCritical.value = ["cleaning_critical"];
     }
     if (data.just_cleaning && data.just_cleaning.length > 0) {
-
       justCleaningBeforeFiles.value = data.just_cleaning.filter(
         (item) => item.status === "before"
       );
@@ -211,7 +255,10 @@ const fetchActivityDetail = async () => {
       selectedMaintenanceTypesJustCleaning.value = ["just_cleaning"];
     }
 
-    if (data.replacement_part && data.replacement_part.length > 0 || data.spareparts && data.spareparts.length > 0) {
+    if (
+      (data.replacement_part && data.replacement_part.length > 0) ||
+      (data.spareparts && data.spareparts.length > 0)
+    ) {
       replacementPartBeforeFiles.value = data.replacement_part.filter(
         (item) => item.status === "before"
       );
@@ -242,7 +289,6 @@ const fetchActivityDetail = async () => {
   }
 };
 
-
 // Dapatkan object sparepart yang dipilih
 const selectedItemSparepartObj = computed(() =>
   itemSparepart.value.find((item) => item.id === selectedItemSparepart.value)
@@ -260,7 +306,10 @@ const addSparepart = async (activity_id) => {
   if (!selectedItemSparepartObj.value) return;
 
   // Validasi qty
-  if (requiredQty.value < 1 || requiredQty.value > selectedItemSparepartObj.value.end_month_stock) {
+  if (
+    requiredQty.value < 1 ||
+    requiredQty.value > selectedItemSparepartObj.value.end_month_stock
+  ) {
     alert("Jumlah tidak valid!");
     return;
   }
@@ -289,22 +338,19 @@ const addSparepart = async (activity_id) => {
     if (existIndex !== -1) {
       // update stok yang sudah ada
       spareparts.value[existIndex].pivot.qty += requiredQty.value;
-
     } else {
       // tambah baru kalau belum ada
       spareparts.value.push({
         id: selectedItemSparepartObj.value.id,
         nama_sparepart: selectedItemSparepartObj.value.nama_sparepart,
         pivot: {
-          qty: requiredQty.value,   // 👈 taruh di pivot
-          id: res.data.data.id
+          qty: requiredQty.value, // 👈 taruh di pivot
+          id: res.data.data.id,
         },
         loc: selectedItemSparepartObj.value.loc,
         spec: selectedItemSparepartObj.value.spec,
         type: selectedItemSparepartObj.value.type,
-
       });
-
     }
 
     // 🔑 Update stok tersedia di objek yang dipilih
@@ -317,7 +363,6 @@ const addSparepart = async (activity_id) => {
     // Reset input
     selectedItemSparepart.value = null;
     requiredQty.value = 1;
-
   } catch (error) {
     console.error("Error adding data:", error);
     snackbarMessage.value = "Gagal menambahkan sparepart!";
@@ -328,14 +373,10 @@ const addSparepart = async (activity_id) => {
   }
 };
 
-
-
 // hapus sparepart
-const removeSparepart = async (index, idbaris,stokakhir) => {
-
+const removeSparepart = async (index, idbaris, stokakhir) => {
   try {
     globalLoading?.show();
-
 
     // Hapus sparepart di backend
     await axios.delete(`${ENDPOINTS.deleteTmsSparepart(index)}`);
@@ -348,19 +389,15 @@ const removeSparepart = async (index, idbaris,stokakhir) => {
     snackbarMessage.value = "Sparepart berhasil dihapus!";
     snackbarColor.value = "success";
     isSnackbarTopEndVisible.value = true;
-
   } catch (error) {
     console.error("Gagal menghapus sparepart:", error);
     snackbarMessage.value = "Gagal menghapus sparepart!";
     snackbarColor.value = "error";
     isSnackbarTopEndVisible.value = true;
-
   } finally {
     globalLoading?.hide();
   }
 };
-
-
 
 // Sync code/location/scope kalau ganti item machine
 watch(selectedItemMachine, (newVal) => {
@@ -388,6 +425,8 @@ const submitForm = async () => {
   formData.append("location", location.value);
   formData.append("scope_of_work", scopeOfWork.value);
   formData.append("date", birthDate.value);
+  formData.append("supervisor_notes", supervisorNotes.value ?? "");
+  formData.append("teamleader_notes", teamleaderNotes.value ?? "");
 
   // Foto
   cleaningCriticalBeforeFiles.value.forEach((file) => {
@@ -413,99 +452,113 @@ const submitForm = async () => {
   // ==========BEFORE=========
   // Foto lama → kirim ID saja
   preventivePmBeforeFiles.value
-    .filter(f => !f.isNew)
+    .filter((f) => !f.isNew)
     .forEach((f, i) => {
       formData.append(`preventive_foto_before_old[${i}]`, f.id);
     });
 
   // Foto lama → kirim File
   preventivePmBeforeFiles.value
-    .filter(f => f.isNew)
+    .filter((f) => f.isNew)
     .forEach((f, i) => {
       formData.append(`preventive_foto_before_new[${i}]`, f.file);
     });
   // ==========AFTER=========
-  preventivePmAfterFiles.value.filter(f => !f.isNew).forEach((f, i) => {
-    formData.append(`preventive_foto_after_old[${i}]`, f.id);
-  });
+  preventivePmAfterFiles.value
+    .filter((f) => !f.isNew)
+    .forEach((f, i) => {
+      formData.append(`preventive_foto_after_old[${i}]`, f.id);
+    });
 
-  preventivePmAfterFiles.value.filter(f => f.isNew).forEach((f, i) => {
-    formData.append(`preventive_foto_after_new[${i}]`, f.file);
-  });
+  preventivePmAfterFiles.value
+    .filter((f) => f.isNew)
+    .forEach((f, i) => {
+      formData.append(`preventive_foto_after_new[${i}]`, f.file);
+    });
 
   // =========REPLACEMENT PART================
   // ==========BEFORE=========
-  // Foto lama → kirim ID saja  
+  // Foto lama → kirim ID saja
   replacementPartBeforeFiles.value
-    .filter(f => !f.isNew)
+    .filter((f) => !f.isNew)
     .forEach((f, i) => {
       formData.append(`replacement_part_foto_before_old[${i}]`, f.id);
     });
 
   // Foto lama → kirim File
   replacementPartBeforeFiles.value
-    .filter(f => f.isNew)
+    .filter((f) => f.isNew)
     .forEach((f, i) => {
       formData.append(`replacement_part_foto_before_new[${i}]`, f.file);
     });
   // ==========AFTER=========
-  replacementPartAfterFiles.value.filter(f => !f.isNew).forEach((f, i) => {
-    formData.append(`replacement_part_foto_after_old[${i}]`, f.id);
-  });
+  replacementPartAfterFiles.value
+    .filter((f) => !f.isNew)
+    .forEach((f, i) => {
+      formData.append(`replacement_part_foto_after_old[${i}]`, f.id);
+    });
 
-  replacementPartAfterFiles.value.filter(f => f.isNew).forEach((f, i) => {
-    formData.append(`replacement_part_foto_after_new[${i}]`, f.file);
-  });
+  replacementPartAfterFiles.value
+    .filter((f) => f.isNew)
+    .forEach((f, i) => {
+      formData.append(`replacement_part_foto_after_new[${i}]`, f.file);
+    });
 
   // =========JUST CLEANING================
   // ==========BEFORE=========
-  // Foto lama → kirim ID saja  
+  // Foto lama → kirim ID saja
   justCleaningBeforeFiles.value
-    .filter(f => !f.isNew)
+    .filter((f) => !f.isNew)
     .forEach((f, i) => {
       formData.append(`just_cleaning_foto_before_old[${i}]`, f.id);
     });
 
   // Foto lama → kirim File
   justCleaningBeforeFiles.value
-    .filter(f => f.isNew)
+    .filter((f) => f.isNew)
     .forEach((f, i) => {
       formData.append(`just_cleaning_foto_before_new[${i}]`, f.file);
     });
   // ==========AFTER=========
-  justCleaningAfterFiles.value.filter(f => !f.isNew).forEach((f, i) => {
-    formData.append(`just_cleaning_foto_after_old[${i}]`, f.id);
-  });
+  justCleaningAfterFiles.value
+    .filter((f) => !f.isNew)
+    .forEach((f, i) => {
+      formData.append(`just_cleaning_foto_after_old[${i}]`, f.id);
+    });
 
-  justCleaningAfterFiles.value.filter(f => f.isNew).forEach((f, i) => {
-    formData.append(`just_cleaning_foto_after_new[${i}]`, f.file);
-  });
+  justCleaningAfterFiles.value
+    .filter((f) => f.isNew)
+    .forEach((f, i) => {
+      formData.append(`just_cleaning_foto_after_new[${i}]`, f.file);
+    });
 
   // =========CLEANING CRITICAL================
   // ==========BEFORE=========
-  // Foto lama → kirim ID saja  
+  // Foto lama → kirim ID saja
   cleaningCriticalBeforeFiles.value
-    .filter(f => !f.isNew)
+    .filter((f) => !f.isNew)
     .forEach((f, i) => {
       formData.append(`cleaning_cricital_foto_before_old[${i}]`, f.id);
     });
 
   // Foto lama → kirim File
   cleaningCriticalBeforeFiles.value
-    .filter(f => f.isNew)
+    .filter((f) => f.isNew)
     .forEach((f, i) => {
       formData.append(`cleaning_cricital_foto_before_new[${i}]`, f.file);
     });
   // ==========AFTER=========
-  cleaningCriticalAfterFiles.value.filter(f => !f.isNew).forEach((f, i) => {
-    formData.append(`cleaning_cricital_foto_after_old[${i}]`, f.id);
-  });
+  cleaningCriticalAfterFiles.value
+    .filter((f) => !f.isNew)
+    .forEach((f, i) => {
+      formData.append(`cleaning_cricital_foto_after_old[${i}]`, f.id);
+    });
 
-  cleaningCriticalAfterFiles.value.filter(f => f.isNew).forEach((f, i) => {
-    formData.append(`cleaning_cricital_foto_after_new[${i}]`, f.file);
-  });
-
-
+  cleaningCriticalAfterFiles.value
+    .filter((f) => f.isNew)
+    .forEach((f, i) => {
+      formData.append(`cleaning_cricital_foto_after_new[${i}]`, f.file);
+    });
 
   // JSA
   if (replacementJsa.value) {
@@ -540,6 +593,46 @@ const submitForm = async () => {
   for (let [key, value] of formData.entries()) {
     console.log(key, value);
   }
+  if (isSupervisor(role.value)) {
+    // supervisor notes
+    formData.append(
+      "catatan_supervisor_cleaning_criticals",
+      cleaningCriticalSupervisorNote.value ?? ""
+    );
+    // backend inconsistent name for just cleaning supervisor — try to use the one you showed
+    formData.append(
+      "catatan_supervisor_justcleaning",
+      justCleaningSupervisorNote.value ?? ""
+    );
+    formData.append(
+      "catatan_supervisor_replacement_part",
+      replacementSupervisorNote.value ?? ""
+    );
+    formData.append(
+      "catatan_supervisor_preventive_pm",
+      preventiveSupervisorNote.value ?? ""
+    );
+  }
+
+  if (isTeamleader(role.value)) {
+    // teamleader notes
+    formData.append(
+      "catatan_teamleader_cleaning_criticals",
+      cleaningCriticalTeamleaderNote.value ?? ""
+    );
+    formData.append(
+      "catatan_teamleader_just_cleaning",
+      justCleaningTeamleaderNote.value ?? ""
+    );
+    formData.append(
+      "catatan_teamleader_replacement_part",
+      replacementTeamleaderNote.value ?? ""
+    );
+    formData.append(
+      "catatan_teamleader_preventive_pm",
+      preventiveTeamleaderNote.value ?? ""
+    );
+  }
 
   try {
     let res;
@@ -573,16 +666,15 @@ const submitForm = async () => {
 };
 
 const getFileUrl = (path) => {
-  return `https://backtmsadm.bimasaktiluhur.com/storage/${path}`; // sesuaikan URL file
+  return `http://127.0.0.1:8000/storage/${path}`; // sesuaikan URL file
 };
 
 const getFileName = (path) => {
   return path.split("/").pop();
 };
 
-
 function goBack() {
-  window.history.back()
+  window.history.back();
 }
 
 const fetchItemSparepart = async () => {
@@ -590,12 +682,10 @@ const fetchItemSparepart = async () => {
     const res = await axios.get(ENDPOINTS.spareparts);
     const result = res.data.data ?? res.data;
     itemSparepart.value = result;
-
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error fetching item sparepart", error);
   }
-}
+};
 onMounted(() => {
   fetchItemMachines();
   fetchItemSparepart();
@@ -611,7 +701,9 @@ onMounted(() => {
       </div>
 
       <div class="d-flex gap-4 align-center flex-wrap">
-        <VBtn variant="outlined" color="secondary" @click="goBack()"> Discard </VBtn>
+        <VBtn variant="outlined" color="secondary" @click="goBack()">
+          Discard
+        </VBtn>
         <VBtn variant="outlined" color="primary"> Save Draft </VBtn>
         <VBtn @click="submitForm">Publish Activity TMS</VBtn>
       </div>
@@ -624,22 +716,47 @@ onMounted(() => {
           <VCardText>
             <VRow>
               <VCol cols="12" md="4">
-                <VAutocomplete v-model="selectedItemMachine" :items="itemMachines" item-title="name" item-value="id"
-                  placeholder="Item Machine" label="Item Machine" />
+                <VAutocomplete
+                  v-model="selectedItemMachine"
+                  :items="itemMachines"
+                  item-title="name"
+                  item-value="id"
+                  placeholder="Item Machine"
+                  label="Item Machine"
+                />
               </VCol>
               <VCol cols="12" md="6">
-                <VTextField v-model="code" label="Code" readonly placeholder="FXSK123U" />
+                <VTextField
+                  v-model="code"
+                  label="Code"
+                  readonly
+                  placeholder="FXSK123U"
+                />
               </VCol>
               <VCol cols="12" md="6">
-                <VTextField v-model="location" label="Location" readonly placeholder="Tower 1" />
+                <VTextField
+                  v-model="location"
+                  label="Location"
+                  readonly
+                  placeholder="Tower 1"
+                />
               </VCol>
 
               <VCol cols="12" md="6">
-                <VTextField v-model="scopeOfWork" label="Scope_of_work" readonly placeholder="Safety" />
+                <VTextField
+                  v-model="scopeOfWork"
+                  label="Scope_of_work"
+                  readonly
+                  placeholder="Safety"
+                />
               </VCol>
 
               <VCol>
-                <AppDateTimePicker v-model="birthDate" label="Date" placeholder="Select Date" />
+                <AppDateTimePicker
+                  v-model="birthDate"
+                  label="Date"
+                  placeholder="Select Date"
+                />
               </VCol>
             </VRow>
           </VCardText>
@@ -658,26 +775,43 @@ onMounted(() => {
                 </a>
               </div>
 
-              <VFileInput v-model="safety_scan" label="Pilih file dokumen"
+              <VFileInput
+                v-model="safety_scan"
+                label="Pilih file dokumen"
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp"
-                prepend-icon="ri-upload-2-line" show-size />
-
+                prepend-icon="ri-upload-2-line"
+                show-size
+              />
             </div>
             <!-- Checkbox -->
-
           </VCardItem>
 
           <VCardItem>
             <VLabel class="mb-1">Incoming</VLabel>
             <VRow>
               <VCol cols="12" md="4">
-                <VTextField v-model="incomingRs" label="Incoming R-S" placeholder="Incoming R-S" type="number" />
+                <VTextField
+                  v-model="incomingRs"
+                  label="Incoming R-S"
+                  placeholder="Incoming R-S"
+                  type="number"
+                />
               </VCol>
               <VCol cols="12" md="4">
-                <VTextField v-model="incomingRt" label="Incoming R-T" placeholder="Incoming R-T" type="number" />
+                <VTextField
+                  v-model="incomingRt"
+                  label="Incoming R-T"
+                  placeholder="Incoming R-T"
+                  type="number"
+                />
               </VCol>
               <VCol cols="12" md="4">
-                <VTextField v-model="incomingSt" label="Incoming S-T" placeholder="Incoming S-T" type="number" />
+                <VTextField
+                  v-model="incomingSt"
+                  label="Incoming S-T"
+                  placeholder="Incoming S-T"
+                  type="number"
+                />
               </VCol>
             </VRow>
           </VCardItem>
@@ -686,13 +820,28 @@ onMounted(() => {
             <VLabel class="mb-1">Outgoing</VLabel>
             <VRow>
               <VCol cols="12" md="4">
-                <VTextField v-model="outgoingRs" label="Outgoing R-S" placeholder="Outgoing R-S" type="number" />
+                <VTextField
+                  v-model="outgoingRs"
+                  label="Outgoing R-S"
+                  placeholder="Outgoing R-S"
+                  type="number"
+                />
               </VCol>
               <VCol cols="12" md="4">
-                <VTextField v-model="outgoingRt" label="Outgoing R-T" placeholder="Outgoing R-T" type="number" />
+                <VTextField
+                  v-model="outgoingRt"
+                  label="Outgoing R-T"
+                  placeholder="Outgoing R-T"
+                  type="number"
+                />
               </VCol>
               <VCol cols="12" md="4">
-                <VTextField v-model="outgoingSt" label="Outgoing S-T" placeholder="Outgoing S-T" type="number" />
+                <VTextField
+                  v-model="outgoingSt"
+                  label="Outgoing S-T"
+                  placeholder="Outgoing S-T"
+                  type="number"
+                />
               </VCol>
             </VRow>
           </VCardItem>
@@ -700,10 +849,19 @@ onMounted(() => {
           <VCardItem>
             <VRow class="mt-1">
               <VCol cols="12" md="6">
-                <VTextField v-model="temp" label="Temp in der C" placeholder="Temp in der C" type="number" />
+                <VTextField
+                  v-model="temp"
+                  label="Temp in der C"
+                  placeholder="Temp in der C"
+                  type="number"
+                />
               </VCol>
               <VCol cols="12" md="6">
-                <VTextField v-model="deviation" label="Deviation Status" placeholder="Deviation Status" />
+                <VTextField
+                  v-model="deviation"
+                  label="Deviation Status"
+                  placeholder="Deviation Status"
+                />
               </VCol>
             </VRow>
           </VCardItem>
@@ -724,12 +882,15 @@ onMounted(() => {
               </div>
 
               <!-- File input baru -->
-              <VFileInput v-model="production_scan" label="Pilih file dokumen"
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png" prepend-icon="ri-upload-2-line"
-                show-size />
+              <VFileInput
+                v-model="production_scan"
+                label="Pilih file dokumen"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png"
+                prepend-icon="ri-upload-2-line"
+                show-size
+              />
             </div>
             <!-- Checkbox -->
-
           </VCardItem>
         </VCard>
         <!-- 👉 Product Image -->
@@ -740,43 +901,91 @@ onMounted(() => {
             <!-- Checkbox -->
             <div class="d-flex flex-column mt-2">
               <!-- Cleaning Critical -->
-              <VCheckbox label="Cleaning Critical" value="cleaning_critical"
-                v-model="selectedMaintenanceTypesCleaningCritical" />
+              <VCheckbox
+                label="Cleaning Critical"
+                value="cleaning_critical"
+                v-model="selectedMaintenanceTypesCleaningCritical"
+              />
               <template v-if="selectedMaintenanceTypesCleaningCritical.length">
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <UpdateDropZone label="BEFORE" v-model="cleaningCriticalBeforeFiles" />
+                    <UpdateDropZone
+                      label="BEFORE"
+                      v-model="cleaningCriticalBeforeFiles"
+                    />
                   </div>
                   <div style="flex: 1">
-                    <UpdateDropZone label="AFTER" v-model="cleaningCriticalAfterFiles" />
+                    <UpdateDropZone
+                      label="AFTER"
+                      v-model="cleaningCriticalAfterFiles"
+                    />
                   </div>
                 </VCardText>
                 <VCardText>
-                  <VLabel class="mt-2 mb-1">Upload JSA file (Cleaning Critical)</VLabel>
+                  <VLabel class="mt-2 mb-1"
+                    >Upload JSA file (Cleaning Critical)</VLabel
+                  >
 
                   <!-- Tampilkan file lama jika ada -->
                   <div v-if="cleaningCriticalJsa_filename" class="mb-2">
-                    <a :href="getFileUrl(cleaningCriticalJsa_old)" target="_blank">
+                    <a
+                      :href="getFileUrl(cleaningCriticalJsa_old)"
+                      target="_blank"
+                    >
                       {{ getFileName(cleaningCriticalJsa_filename) }}
                     </a>
                   </div>
 
                   <!-- File input baru -->
-                  <VFileInput v-model="cleaningCriticalJsa" label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png" prepend-icon="ri-upload-2-line"
-                    show-size />
+                  <VFileInput
+                    v-model="cleaningCriticalJsa"
+                    label="Pilih file dokumen"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png"
+                    prepend-icon="ri-upload-2-line"
+                    show-size
+                  />
+                </VCardText>
+                   <!-- CATATAN Cleaning Critical: Supervisor & Teamleader -->
+                <VCardText>
+                  <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
+                  <VTextarea
+                    v-model="cleaningCriticalSupervisorNote"
+                    placeholder="Catatan Supervisor"
+                    rows="3"
+                    auto-grow
+                    :readonly="!isupervisor(role.value)"
+                  />
+
+                  <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
+                  <VTextarea
+                    v-model="cleaningCriticalTeamleaderNote"
+                    placeholder="Catatan Team Leader"
+                    rows="3"
+                    auto-grow
+                    :readonly="!isTeamleader(role.value)"
+                  />
                 </VCardText>
               </template>
 
               <!-- Just Cleaning -->
-              <VCheckbox label="Just Cleaning" value="just_cleaning" v-model="selectedMaintenanceTypesJustCleaning" />
+              <VCheckbox
+                label="Just Cleaning"
+                value="just_cleaning"
+                v-model="selectedMaintenanceTypesJustCleaning"
+              />
               <template v-if="selectedMaintenanceTypesJustCleaning.length">
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <UpdateDropZone label="BEFORE" v-model="justCleaningBeforeFiles" />
+                    <UpdateDropZone
+                      label="BEFORE"
+                      v-model="justCleaningBeforeFiles"
+                    />
                   </div>
                   <div style="flex: 1">
-                    <UpdateDropZone label="AFTER" v-model="justCleaningAfterFiles" />
+                    <UpdateDropZone
+                      label="AFTER"
+                      v-model="justCleaningAfterFiles"
+                    />
                   </div>
                 </VCardText>
                 <VCardText>
@@ -789,41 +998,71 @@ onMounted(() => {
                     </a>
                   </div>
 
-
-                  <VFileInput v-model="justCleaningJsa" label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
+                  <VFileInput
+                    v-model="justCleaningJsa"
+                    label="Pilih file dokumen"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                    prepend-icon="ri-upload-2-line"
+                    show-size
+                  />
                 </VCardText>
               </template>
 
               <!-- Replacement Part -->
-              <VCheckbox label="Replacement Part" value="replacement_part"
-                v-model="selectedMaintenanceTypesReplacementPart" />
+              <VCheckbox
+                label="Replacement Part"
+                value="replacement_part"
+                v-model="selectedMaintenanceTypesReplacementPart"
+              />
 
               <template v-if="selectedMaintenanceTypesReplacementPart.length">
                 <VRow dense>
                   <!-- Pilih Sparepart -->
                   <VCol cols="12" md="6">
-                    <VAutocomplete v-model="selectedItemSparepart" :items="itemSparepart" item-title="nama_sparepart"
-                      item-value="id" label="Sparepart" placeholder="Cari / pilih sparepart" clearable
-                      density="comfortable" @change="onSparepartSelect" />
+                    <VAutocomplete
+                      v-model="selectedItemSparepart"
+                      :items="itemSparepart"
+                      item-title="nama_sparepart"
+                      item-value="id"
+                      label="Sparepart"
+                      placeholder="Cari / pilih sparepart"
+                      clearable
+                      density="comfortable"
+                      @change="onSparepartSelect"
+                    />
                   </VCol>
 
                   <!-- Jumlah yang dibutuhkan -->
                   <VCol cols="12" md="6" v-if="selectedItemSparepartObj">
-                    <VTextField v-model.number="requiredQty" type="number"
+                    <VTextField
+                      v-model.number="requiredQty"
+                      type="number"
                       :label="`Butuh berapa? (Stok tersedia: ${selectedItemSparepartObj.end_month_stock})`"
-                      :max="selectedItemSparepartObj.end_month_stock" min="1" />
-                    <VBtn color="primary" class="mt-2" @click="addSparepart(activityId)">Add</VBtn>
+                      :max="selectedItemSparepartObj.end_month_stock"
+                      min="1"
+                    />
+                    <VBtn
+                      color="primary"
+                      class="mt-2"
+                      @click="addSparepart(activityId)"
+                      >Add</VBtn
+                    >
                   </VCol>
                 </VRow>
 
                 <!-- Upload Foto BEFORE & AFTER -->
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <UpdateDropZone label="BEFORE" v-model="replacementPartBeforeFiles" />
+                    <UpdateDropZone
+                      label="BEFORE"
+                      v-model="replacementPartBeforeFiles"
+                    />
                   </div>
                   <div style="flex: 1">
-                    <UpdateDropZone label="AFTER" v-model="replacementPartAfterFiles" />
+                    <UpdateDropZone
+                      label="AFTER"
+                      v-model="replacementPartAfterFiles"
+                    />
                   </div>
                 </VCardText>
 
@@ -838,13 +1077,23 @@ onMounted(() => {
                     </a>
                   </div>
 
-                  <VFileInput v-model="replacementJsa" label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
+                  <VFileInput
+                    v-model="replacementJsa"
+                    label="Pilih file dokumen"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                    prepend-icon="ri-upload-2-line"
+                    show-size
+                  />
                 </VCardText>
 
                 <!-- Datatable Sparepart -->
-                <VDataTableServer v-if="spareparts.length" v-model:model-value="spareparts" :headers="sparepartHeaders"
-                  :items="spareparts" class="text-no-wrap rounded-0">
+                <VDataTableServer
+                  v-if="spareparts.length"
+                  v-model:model-value="spareparts"
+                  :headers="sparepartHeaders"
+                  :items="spareparts"
+                  class="text-no-wrap rounded-0"
+                >
                   <!-- Nama Sparepart -->
                   <template #item.nama_sparepart="{ item }">
                     <span>{{ item.nama_sparepart }}</span>
@@ -857,38 +1106,53 @@ onMounted(() => {
 
                   <!-- Spec -->
                   <template #item.spec="{ item }">
-                    <span>{{ item.spec || '-' }}</span>
+                    <span>{{ item.spec || "-" }}</span>
                   </template>
 
                   <!-- Loc -->
                   <template #item.loc="{ item }">
-                    <span>{{ item.loc || '-' }}</span>
+                    <span>{{ item.loc || "-" }}</span>
                   </template>
 
                   <!-- Type -->
                   <template #item.type="{ item }">
-                    <span>{{ item.type || '-' }}</span>
+                    <span>{{ item.type || "-" }}</span>
                   </template>
 
                   <!-- Aksi Hapus -->
                   <template #item.actions="{ item, index }">
-                    <VBtn icon color="red" @click="removeSparepart(item.pivot.id, index,item.pivot.qty)">
+                    <VBtn
+                      icon
+                      color="red"
+                      @click="
+                        removeSparepart(item.pivot.id, index, item.pivot.qty)
+                      "
+                    >
                       <VIcon icon="ri-delete-bin-7-line" />
                     </VBtn>
                   </template>
                 </VDataTableServer>
               </template>
 
-
               <!-- Preventive PM -->
-              <VCheckbox label="Preventive PM" value="preventive_pm" v-model="selectedMaintenanceTypesPreventivePM" />
+              <VCheckbox
+                label="Preventive PM"
+                value="preventive_pm"
+                v-model="selectedMaintenanceTypesPreventivePM"
+              />
               <template v-if="selectedMaintenanceTypesPreventivePM.length">
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <UpdateDropZone label="BEFORE" v-model="preventivePmBeforeFiles" />
+                    <UpdateDropZone
+                      label="BEFORE"
+                      v-model="preventivePmBeforeFiles"
+                    />
                   </div>
                   <div style="flex: 1">
-                    <UpdateDropZone label="AFTER" v-model="preventivePmAfterFiles" />
+                    <UpdateDropZone
+                      label="AFTER"
+                      v-model="preventivePmAfterFiles"
+                    />
                   </div>
                 </VCardText>
                 <VCardText>
@@ -899,9 +1163,33 @@ onMounted(() => {
                     </a>
                   </div>
 
-                  <VFileInput v-model="preventiveJsa" label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
+                  <VFileInput
+                    v-model="preventiveJsa"
+                    label="Pilih file dokumen"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                    prepend-icon="ri-upload-2-line"
+                    show-size
+                  />
                 </VCardText>
+                <VCard class="mb-6">
+                  <VCardItem>
+                    <template #title>Catatan</template>
+
+                    <!-- Catatan Supervisor -->
+                    <VTextarea
+                      v-model="supervisorNotes"
+                      label="Catatan Supervisor"
+                      :readonly="userRole === 'teamleader'"
+                    />
+
+                    <!-- Catatan Teamleader -->
+                    <VTextarea
+                      v-model="teamleaderNotes"
+                      label="Catatan Teamleader"
+                      :readonly="userRole === 'supervisor'"
+                    />
+                  </VCardItem>
+                </VCard>
               </template>
             </div>
           </VCardItem>
@@ -913,7 +1201,12 @@ onMounted(() => {
 
     <!-- Snackbar -->
     <!-- Snackbar -->
-    <VSnackbar v-model="isSnackbarTopEndVisible" :timeout="3000" location="top end" :color="snackbarColor">
+    <VSnackbar
+      v-model="isSnackbarTopEndVisible"
+      :timeout="3000"
+      location="top end"
+      :color="snackbarColor"
+    >
       {{ snackbarMessage }}
     </VSnackbar>
   </div>
@@ -928,7 +1221,6 @@ onMounted(() => {
 
 <style lang="scss">
 .inventory-card {
-
   .v-radio-group,
   .v-checkbox {
     .v-selection-control {

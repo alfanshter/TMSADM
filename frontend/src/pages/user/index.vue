@@ -33,6 +33,7 @@ const roles = [
   { title: "Admin", value: "admin" },
   { title: "TeamLeader", value: "team_leader" },
   { title: "Supervisor", value: "supervisor" },
+  { title: "Teknisi", value: "teknisi" },
 ];
 
 // Ambil data user

@@ -24,7 +24,7 @@ class UserController extends Controller
             'name' => 'required|string',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:6',
-            'role' => 'required|in:admin,supervisor,team_leader',
+            'role' => 'required|in:admin,supervisor,team_leader,teknisi',
             'phone' => 'nullable|string',
         ]);
 
@@ -58,7 +58,7 @@ class UserController extends Controller
             'name' => 'sometimes|string',
             'email' => 'sometimes|email|unique:users,email,' . $user->id,
             'password' => 'nullable|min:6',
-            'role' => 'sometimes|in:admin,supervisor,team_leader',
+            'role' => 'sometimes|in:admin,supervisor,team_leader,teknisi',
             'phone' => 'nullable|string',
             'status' => 'boolean',
         ]);

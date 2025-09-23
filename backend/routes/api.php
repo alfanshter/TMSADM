@@ -24,7 +24,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
 
     // CRUD user (khusus admin)
-    Route::middleware('role:admin')->apiResource('/users', UserController::class);
+    Route::middleware('role:admin,supervisor')->apiResource('/users', UserController::class);
 });
 
 // User API Routes
@@ -40,7 +40,7 @@ Route::middleware(['auth:sanctum', 'role:team_leader,admin,supervisor'])->group(
 });
 
 // Maintenance API Routes
-Route::middleware(['auth:sanctum', 'role:team_leader,admin,supervisor'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:team_leader,admin,supervisor,teknisi'])->group(function () {
     Route::get('/activity-tms-all', [ActivityTmsController::class, 'getAllActivityTms']);
     Route::get('/activity-tms/{id}', [ActivityTmsController::class, 'getActivityTmsById']);
     Route::post('/activity-tms', [ActivityTmsController::class, 'storeActivityTms']);

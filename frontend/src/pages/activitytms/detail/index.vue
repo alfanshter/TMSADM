@@ -40,7 +40,15 @@ const sparepartHeaders = [
   { title: "Type", key: "type" },
 ];
 
-
+// catatan
+const catatanTeamleaderCleaningCritical = ref("");
+const catatanSupervisorCleaningCritical = ref("");
+const catatanTeamleaderJustCleaning = ref("");
+const catatanSupervisorJustCleaning = ref("");
+const catatanTeamleaderReplacementPart = ref("");
+const catatanSupervisorReplacementPart = ref("");
+const catatanTeamleaderPreventivePm = ref("");
+const catatanSupervisorPreventivePm = ref("");
 // Dapatkan object spa
 
 // file foto
@@ -80,12 +88,10 @@ const production_scan = ref(null);
 const production_scan_filename = ref(null); // dari backend
 const production_scan_old = ref(null); // dari backend
 
-
 // Snackbar
 const isSnackbarTopEndVisible = ref(false);
 const snackbarMessage = ref("");
 const snackbarColor = ref("success"); // default
-
 
 const itemMachines = ref([]);
 const totalItemMachines = ref(0);
@@ -110,7 +116,6 @@ const sparepartList = ref([]);
 
 const activity_id = ref("");
 
-
 if (currentItem.value != null) {
   console.log("date:", currentItem.value);
   location.value = currentItem.value.item_machine.location;
@@ -119,7 +124,6 @@ if (currentItem.value != null) {
   birthDate.value = currentItem.value.date;
 }
 
-
 const fetchActivityDetail = async () => {
   if (!activityId) return;
   try {
@@ -127,7 +131,6 @@ const fetchActivityDetail = async () => {
     const data = res.data.data ?? res.data;
 
     console.log("dinda", data);
-
 
     selectedItemMachine.value = data.item_machine.name;
     code.value = data.item_machine.code ?? "";
@@ -152,8 +155,9 @@ const fetchActivityDetail = async () => {
     safety_filename.value = data.safety_scan_filename ?? "";
     safety_old.value = data.safety_scan ?? "";
 
-    //cleaning critical 
-    cleaningCriticalJsa_filename.value = data.jsa_filename_cleaning_criticals ?? "";
+    //cleaning critical
+    cleaningCriticalJsa_filename.value =
+      data.jsa_filename_cleaning_criticals ?? "";
     cleaningCriticalJsa_old.value = data.jsa_file_cleaning_criticals ?? "";
     //just cleaning
     justCleaningJsa_filename.value = data.jsa_filename_just_cleaning ?? "";
@@ -164,7 +168,6 @@ const fetchActivityDetail = async () => {
     //preventive
     preventiveJsa_filename.value = data.jsa_filename_preventive ?? "";
     preventiveJsa_old.value = data.jsa_file_preventive ?? "";
-
 
     if (data.cleaning_criticals && data.cleaning_criticals.length > 0) {
       cleaningCriticalBeforeFiles.value = data.cleaning_criticals.filter(
@@ -177,7 +180,6 @@ const fetchActivityDetail = async () => {
       selectedMaintenanceTypesCleaningCritical.value = ["cleaning_critical"];
     }
     if (data.just_cleaning && data.just_cleaning.length > 0) {
-
       justCleaningBeforeFiles.value = data.just_cleaning.filter(
         (item) => item.status === "before"
       );
@@ -188,7 +190,10 @@ const fetchActivityDetail = async () => {
       selectedMaintenanceTypesJustCleaning.value = ["just_cleaning"];
     }
 
-    if (data.replacement_part && data.replacement_part.length > 0 || data.spareparts && data.spareparts.length > 0) {
+    if (
+      (data.replacement_part && data.replacement_part.length > 0) ||
+      (data.spareparts && data.spareparts.length > 0)
+    ) {
       replacementPartBeforeFiles.value = data.replacement_part.filter(
         (item) => item.status === "before"
       );
@@ -213,12 +218,29 @@ const fetchActivityDetail = async () => {
       selectedMaintenanceTypesPreventivePM.value = ["preventive_pm"];
     }
 
+    // Catatan dari backend
+    catatanTeamleaderCleaningCritical.value =
+      data.catatan_teamleader_cleaning_criticals ?? "";
+    catatanSupervisorCleaningCritical.value =
+      data.catatan_supervisor_cleaning_criticals ?? "";
+    catatanTeamleaderJustCleaning.value =
+      data.catatan_teamleader_just_cleaning ?? "";
+    catatanSupervisorJustCleaning.value =
+      data.catatan_supervisor_justcleaning ?? "";
+    catatanTeamleaderReplacementPart.value =
+      data.catatan_teamleader_replacement_part ?? "";
+    catatanSupervisorReplacementPart.value =
+      data.catatan_supervisor_replacement_part ?? "";
+    catatanTeamleaderPreventivePm.value =
+      data.catatan_teamleader_preventive_pm ?? "";
+    catatanSupervisorPreventivePm.value =
+      data.catatan_supervisor_preventive_pm ?? "";
+
     activity_id.value = data.id;
   } catch (error) {
     console.error("Error fetching activity detail:", error);
   }
 };
-
 
 // Dapatkan object sparepart yang dipilih
 const selectedItemSparepartObj = computed(() =>
@@ -231,16 +253,15 @@ const onSparepartSelect = () => {
 };
 
 const getFileUrl = (path) => {
-  return `https://backtmsadm.bimasaktiluhur.com/storage/${path}`; // sesuaikan URL file
+  return `http://127.0.0.1:8000/storage/${path}`; // sesuaikan URL file
 };
 
 const getFileName = (path) => {
   return path.split("/").pop();
 };
 
-
 function goBack() {
-  window.history.back()
+  window.history.back();
 }
 
 const fetchItemSparepart = async () => {
@@ -248,14 +269,11 @@ const fetchItemSparepart = async () => {
     const res = await axios.get(ENDPOINTS.spareparts);
     const result = res.data.data ?? res.data;
     itemSparepart.value = result;
-
-  }
-  catch (error) {
+  } catch (error) {
     console.error("Error fetching item sparepart", error);
   }
-}
+};
 onMounted(() => {
-
   fetchItemSparepart();
   fetchActivityDetail();
 });
@@ -267,8 +285,6 @@ onMounted(() => {
       <div class="d-flex flex-column justify-center">
         <h4 class="text-h4 mb-1">Activity TMS</h4>
       </div>
-
-
     </div>
 
     <VRow>
@@ -280,12 +296,20 @@ onMounted(() => {
           <VCol cols="12" md="6">
             <VCard class="h-100">
               <VCardText>
-                <div class="mb-2"><strong>Item Machine:</strong> {{ selectedItemMachine }}</div>
+                <div class="mb-2">
+                  <strong>Item Machine:</strong> {{ selectedItemMachine }}
+                </div>
                 <div class="mb-2"><strong>Code:</strong> {{ code }}</div>
-                <div class="mb-2"><strong>Location:</strong> {{ location }}</div>
-                <div class="mb-2"><strong>Scope of Work:</strong> {{ scopeOfWork }}</div>
+                <div class="mb-2">
+                  <strong>Location:</strong> {{ location }}
+                </div>
+                <div class="mb-2">
+                  <strong>Scope of Work:</strong> {{ scopeOfWork }}
+                </div>
                 <div class="mb-2"><strong>Date:</strong> {{ birthDate }}</div>
-                <div class="mb-2"><strong>Downtime:</strong> {{ production_downtime }} minutes</div>
+                <div class="mb-2">
+                  <strong>Downtime:</strong> {{ production_downtime }} minutes
+                </div>
               </VCardText>
             </VCard>
           </VCol>
@@ -306,12 +330,18 @@ onMounted(() => {
 
                   <div class="mb-3">
                     <VLabel class="mb-1">Incoming</VLabel>
-                    <div>R-S: {{ incomingRs }} | R-T: {{ incomingRt }} | S-T: {{ incomingSt }}</div>
+                    <div>
+                      R-S: {{ incomingRs }} | R-T: {{ incomingRt }} | S-T:
+                      {{ incomingSt }}
+                    </div>
                   </div>
 
                   <div class="mb-3">
                     <VLabel class="mb-1">Outgoing</VLabel>
-                    <div>R-S: {{ outgoingRs }} | R-T: {{ outgoingRt }} | S-T: {{ outgoingSt }}</div>
+                    <div>
+                      R-S: {{ outgoingRs }} | R-T: {{ outgoingRt }} | S-T:
+                      {{ outgoingSt }}
+                    </div>
                   </div>
                 </div>
 
@@ -325,9 +355,6 @@ onMounted(() => {
           </VCol>
         </VRow>
 
-
-
-
         <!-- 👉 Product Image -->
         <VCard class="mb-6 mt-4">
           <VCardItem>
@@ -340,19 +367,55 @@ onMounted(() => {
 
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <PreviewDropZone label="BEFORE" v-model="cleaningCriticalBeforeFiles" />
+                    <PreviewDropZone
+                      label="BEFORE"
+                      v-model="cleaningCriticalBeforeFiles"
+                    />
                   </div>
                   <div style="flex: 1">
-                    <PreviewDropZone label="AFTER" v-model="cleaningCriticalAfterFiles" />
+                    <PreviewDropZone
+                      label="AFTER"
+                      v-model="cleaningCriticalAfterFiles"
+                    />
                   </div>
                 </VCardText>
 
                 <VCardText>
-                  <VLabel class="mt-2 mb-1">JSA File (Cleaning Critical)</VLabel>
+                  <VLabel class="mt-2 mb-1"
+                    >JSA File (Cleaning Critical)</VLabel
+                  >
                   <div v-if="cleaningCriticalJsa_filename">
-                    <a :href="getFileUrl(cleaningCriticalJsa_old)" target="_blank">
+                    <a
+                      :href="getFileUrl(cleaningCriticalJsa_old)"
+                      target="_blank"
+                    >
                       {{ getFileName(cleaningCriticalJsa_filename) }}
                     </a>
+                  </div>
+                </VCardText>
+                <VCardText>
+                  <!-- Catatan Team Leader -->
+                  <div>
+                    <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
+                    <VTextarea
+                      v-model="catatanTeamleaderCleaningCritical"
+                      placeholder="Tulis catatan dari Team Leader"
+                      rows="3"
+                      auto-grow
+                      :readonly="userRole !== 'team_leader'"
+                    />
+                  </div>
+
+                  <!-- Catatan Supervisor -->
+                  <div>
+                    <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
+                    <VTextarea
+                      v-model="catatanSupervisorCleaningCritical"
+                      placeholder="Tulis catatan dari Supervisor"
+                      rows="3"
+                      auto-grow
+                      :readonly="userRole !== 'supervisor'"
+                    />
                   </div>
                 </VCardText>
               </template>
@@ -363,10 +426,16 @@ onMounted(() => {
 
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <PreviewDropZone label="BEFORE" v-model="justCleaningBeforeFiles" />
+                    <PreviewDropZone
+                      label="BEFORE"
+                      v-model="justCleaningBeforeFiles"
+                    />
                   </div>
                   <div style="flex: 1">
-                    <PreviewDropZone label="AFTER" v-model="justCleaningAfterFiles" />
+                    <PreviewDropZone
+                      label="AFTER"
+                      v-model="justCleaningAfterFiles"
+                    />
                   </div>
                 </VCardText>
 
@@ -378,6 +447,31 @@ onMounted(() => {
                     </a>
                   </div>
                 </VCardText>
+                <VCardText>
+                  <!-- Catatan Team Leader -->
+                  <div>
+                    <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
+                    <VTextarea
+                      v-model="catatanTeamleaderJustCleaning"
+                      placeholder="Tulis catatan dari Team Leader"
+                      rows="3"
+                      auto-grow
+                      :readonly="userRole !== 'team_leader'"
+                    />
+                  </div>
+
+                  <!-- Catatan Supervisor -->
+                  <div>
+                    <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
+                    <VTextarea
+                      v-model="catatanSupervisorJustCleaning"
+                      placeholder="Tulis catatan dari Supervisor"
+                      rows="3"
+                      auto-grow
+                      :readonly="userRole !== 'supervisor'"
+                    />
+                  </div>
+                </VCardText>
               </template>
 
               <!-- Replacement Part -->
@@ -387,10 +481,16 @@ onMounted(() => {
                 <!-- Foto BEFORE & AFTER -->
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <PreviewDropZone label="BEFORE" v-model="replacementPartBeforeFiles" />
+                    <PreviewDropZone
+                      label="BEFORE"
+                      v-model="replacementPartBeforeFiles"
+                    />
                   </div>
                   <div style="flex: 1">
-                    <PreviewDropZone label="AFTER" v-model="replacementPartAfterFiles" />
+                    <PreviewDropZone
+                      label="AFTER"
+                      v-model="replacementPartAfterFiles"
+                    />
                   </div>
                 </VCardText>
 
@@ -405,8 +505,13 @@ onMounted(() => {
                 </VCardText>
 
                 <!-- Datatable Sparepart -->
-                <VDataTableServer v-if="spareparts.length" v-model:model-value="spareparts" :headers="sparepartHeaders"
-                  :items="spareparts" class="text-no-wrap rounded-0">
+                <VDataTableServer
+                  v-if="spareparts.length"
+                  v-model:model-value="spareparts"
+                  :headers="sparepartHeaders"
+                  :items="spareparts"
+                  class="text-no-wrap rounded-0"
+                >
                   <template #item.nama_sparepart="{ item }">
                     <span>{{ item.nama_sparepart }}</span>
                   </template>
@@ -416,17 +521,42 @@ onMounted(() => {
                   </template>
 
                   <template #item.spec="{ item }">
-                    <span>{{ item.spec || '-' }}</span>
+                    <span>{{ item.spec || "-" }}</span>
                   </template>
 
                   <template #item.loc="{ item }">
-                    <span>{{ item.loc || '-' }}</span>
+                    <span>{{ item.loc || "-" }}</span>
                   </template>
 
                   <template #item.type="{ item }">
-                    <span>{{ item.type || '-' }}</span>
+                    <span>{{ item.type || "-" }}</span>
                   </template>
                 </VDataTableServer>
+                <VCardText>
+                  <!-- Catatan Team Leader -->
+                  <div>
+                    <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
+                    <VTextarea
+                      v-model="catatanTeamleaderReplacementPart"
+                      placeholder="Tulis catatan dari Team Leader"
+                      rows="3"
+                      auto-grow
+                      :readonly="userRole !== 'team_leader'"
+                    />
+                  </div>
+
+                  <!-- Catatan Supervisor -->
+                  <div>
+                    <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
+                    <VTextarea
+                      v-model="catatanSupervisorReplacementPart"
+                      placeholder="Tulis catatan dari Supervisor"
+                      rows="3"
+                      auto-grow
+                      :readonly="userRole !== 'supervisor'"
+                    />
+                  </div>
+                </VCardText>
               </template>
 
               <!-- Preventive PM -->
@@ -435,10 +565,16 @@ onMounted(() => {
 
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <PreviewDropZone label="BEFORE" v-model="preventivePmBeforeFiles" />
+                    <PreviewDropZone
+                      label="BEFORE"
+                      v-model="preventivePmBeforeFiles"
+                    />
                   </div>
                   <div style="flex: 1">
-                    <PreviewDropZone label="AFTER" v-model="preventivePmAfterFiles" />
+                    <PreviewDropZone
+                      label="AFTER"
+                      v-model="preventivePmAfterFiles"
+                    />
                   </div>
                 </VCardText>
 
@@ -450,11 +586,35 @@ onMounted(() => {
                     </a>
                   </div>
                 </VCardText>
+                <VCardText>
+                  <!-- Catatan Team Leader -->
+                  <div>
+                    <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
+                    <VTextarea
+                      v-model="catatanTeamleaderPreventivePm"
+                      placeholder="Tulis catatan dari Team Leader"
+                      rows="3"
+                      auto-grow
+                      :readonly="userRole !== 'team_leader'"
+                    />
+                  </div>
+
+                  <!-- Catatan Supervisor -->
+                  <div>
+                    <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
+                    <VTextarea
+                      v-model="catatanSupervisorPreventivePm"
+                      placeholder="Tulis catatan dari Supervisor"
+                      rows="3"
+                      auto-grow
+                      :readonly="userRole !== 'supervisor'"
+                    />
+                  </div>
+                </VCardText>
               </template>
             </div>
           </VCardItem>
         </VCard>
-
       </VCol>
 
       <VCol md="4" cols="12"> </VCol>
@@ -462,7 +622,12 @@ onMounted(() => {
 
     <!-- Snackbar -->
     <!-- Snackbar -->
-    <VSnackbar v-model="isSnackbarTopEndVisible" :timeout="3000" location="top end" :color="snackbarColor">
+    <VSnackbar
+      v-model="isSnackbarTopEndVisible"
+      :timeout="3000"
+      location="top end"
+      :color="snackbarColor"
+    >
       {{ snackbarMessage }}
     </VSnackbar>
   </div>
@@ -477,7 +642,6 @@ onMounted(() => {
 
 <style lang="scss">
 .inventory-card {
-
   .v-radio-group,
   .v-checkbox {
     .v-selection-control {

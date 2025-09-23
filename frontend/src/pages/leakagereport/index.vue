@@ -38,7 +38,7 @@ const headers = computed(() => {
     { title: "Date", key: "date" },
     { title: "Files", key: "file_scan" },
   ];
-  if (role === "admin" || role === "team_leader") {
+  if (role === "admin" || role === "team_leader" || role === "supervisor") {
     baseHeaders.push({ title: "Actions", key: "actions", sortable: false });
   }
   return baseHeaders;
@@ -55,7 +55,7 @@ const fetchLeakageReports = async () => {
         ? [
             {
               name: r.file_scan.split("/").pop(),
-              url: `https://backtmsadm.bimasaktiluhur.com/storage/${r.file_scan}`,
+              url: `http://127.0.0.1:8000/storage/${r.file_scan}`,
             },
           ]
         : [],
@@ -135,7 +135,7 @@ onMounted(fetchLeakageReports);
       <VCardText class="d-flex flex-wrap gap-4 align-center">
         <VTextField v-model="searchQuery" placeholder="Search Report" density="compact" />
         <VSpacer />
-        <VBtn v-if="role === 'admin' || role === 'team_leader'" @click="openDrawer">
+        <VBtn v-if="role === 'admin' || role === 'team_leader' || role === 'supervisor'" @click="openDrawer">
           Add New Leakage Report
         </VBtn>
       </VCardText>
@@ -170,7 +170,7 @@ onMounted(fetchLeakageReports);
         </template>
 
         <!-- Actions (hanya admin/team_leader) -->
-        <template v-if="role === 'admin' || role === 'team_leader'" #item.actions="{ item }">
+        <template v-if="role === 'admin' || role === 'team_leader' || role === 'supervisor'" #item.actions="{ item }">
           <IconBtn size="small" @click="deleteLeakageReport(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>

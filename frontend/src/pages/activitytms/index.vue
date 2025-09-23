@@ -98,7 +98,7 @@ const headers = computed(() => {
     { title: "Scope of Work", key: "scope_of_work" },
     { title: "Date", key: "date" },
   ];
-  if (role === "admin" || role === "team_leader") {
+  if (role === "admin" || role === "team_leader" || role === "supervisor") {
     baseHeaders.push({ title: "Actions", key: "actions", sortable: false });
   }
   return baseHeaders;
@@ -267,7 +267,7 @@ watch(selectedScopeOfWork, () => {
 
         <!-- Actions -->
         <template
-          v-if="role === 'admin' || role === 'team_leader'"
+          v-if="role === 'admin' || role === 'team_leader' || role === 'supervisor'"
           #item.actions="{ item }"
         >
           <IconBtn size="small" @click="handleEdit(item)">

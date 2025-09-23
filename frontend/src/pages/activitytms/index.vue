@@ -27,6 +27,63 @@ const selectedData = ref([]);
 
 const jsaFile = ref(null);
 
+//catatan
+const isNotesDialogVisible = ref(false);
+const selectedActivity = ref(null);
+
+// field catatan
+const teamLeaderNote = ref("");
+const supervisorNote = ref("");
+
+// buka popup
+function openNotes(activity) {
+  selectedActivity.value = activity;
+
+  // default ambil salah satu field catatan supervisor
+  supervisorNote.value =
+    activity.catatan_supervisor_cleaning_criticals ||
+    activity.catatan_supervisor_just_cleaning ||
+    activity.catatan_supervisor_replacement_part ||
+    activity.catatan_supervisor_preventive_pm ||
+    "";
+  isNotesDialogVisible.value = true;
+}
+
+async function saveSupervisorNote() {
+  try {
+    globalLoading?.show();
+
+    // payload dinamis sesuai tipe activity
+    const payload = {};
+
+    if (selectedActivity.value.catatan_teamleader_cleaning_criticals !== null) {
+      payload.catatan_supervisor_cleaning_criticals = supervisorNote.value;
+    } else if (selectedActivity.value.catatan_teamleader_just_cleaning !== null) {
+      payload.catatan_supervisor_just_cleaning = supervisorNote.value;
+    } else if (selectedActivity.value.catatan_teamleader_replacement_part !== null) {
+      payload.catatan_supervisor_replacement_part = supervisorNote.value;
+    } else if (selectedActivity.value.catatan_teamleader_preventive_pm !== null) {
+      payload.catatan_supervisor_preventive_pm = supervisorNote.value;
+    }
+
+    // pakai PUT ke endpoint baru
+    await axios.put(
+      ENDPOINTS.updateSupervisorNote(selectedActivity.value.id),
+      payload
+    );
+
+    snackbarMessage.value = "Catatan Supervisor berhasil disimpan!";
+    isSnackbarTopEndVisible.value = true;
+    isNotesDialogVisible.value = false;
+    fetchActivityTms(); // refresh data
+  } catch (error) {
+    console.error("Error simpan catatan supervisor:", error);
+  } finally {
+    globalLoading?.hide();
+  }
+}
+
+
 //message snackbar
 const snackbarMessage = ref("Add New Item Machine Success!");
 
@@ -85,9 +142,10 @@ const page = ref(1);
 const isLoading = ref(false);
 
 // Ambil role dari cookie
-const userData = Cookies.get("userData") ? JSON.parse(Cookies.get("userData")) : null;
+const userData = Cookies.get("userData")
+  ? JSON.parse(Cookies.get("userData"))
+  : null;
 const role = userData?.user?.role;
-
 
 // Headers table (Actions hanya untuk admin/team_leader)
 const headers = computed(() => {
@@ -98,7 +156,12 @@ const headers = computed(() => {
     { title: "Scope of Work", key: "scope_of_work" },
     { title: "Date", key: "date" },
   ];
-  if (role === "admin" || role === "team_leader" || role === "supervisor") {
+  if (
+    role === "admin" ||
+    role === "team_leader" ||
+    role === "supervisor" ||
+    role === "teknisi"
+  ) {
     baseHeaders.push({ title: "Actions", key: "actions", sortable: false });
   }
   return baseHeaders;
@@ -148,9 +211,9 @@ const deleteActivityTms = async (id) => {
     globalLoading?.show();
     await axios.delete(`${ENDPOINTS.addactivityTms}/${id}`);
 
-      // langsung hapus dari list biar reactive
-    activityTms.value = activityTms.value.filter(item => item.id !== id);
-    
+    // langsung hapus dari list biar reactive
+    activityTms.value = activityTms.value.filter((item) => item.id !== id);
+
     // Tampilkan snackbar
     snackbarMessage.value = "Delete Activity TMS Completed!";
     isSnackbarTopEndVisible.value = true;
@@ -267,7 +330,12 @@ watch(selectedScopeOfWork, () => {
 
         <!-- Actions -->
         <template
-          v-if="role === 'admin' || role === 'team_leader' || role === 'supervisor'"
+          v-if="
+            role === 'admin' ||
+            role === 'team_leader' ||
+            role === 'supervisor' ||
+            role === 'teknisi'
+          "
           #item.actions="{ item }"
         >
           <IconBtn size="small" @click="handleEdit(item)">
@@ -280,6 +348,10 @@ watch(selectedScopeOfWork, () => {
 
           <IconBtn size="small" @click="deleteActivityTms(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
+          </IconBtn>
+          <!-- Tambahan Notes -->
+          <IconBtn size="small" @click="openNotes(item)">
+            <VIcon icon="ri-chat-4-line" />
           </IconBtn>
         </template>
       </VDataTable>
@@ -354,6 +426,90 @@ watch(selectedScopeOfWork, () => {
         <VCardActions>
           <VSpacer />
           <VBtn color="secondary" @click="isDialogVisible = false">Tutup</VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
+
+    <!-- Dialog Notes -->
+    <VDialog v-model="isNotesDialogVisible" max-width="600px">
+      <VCard>
+        <VCardTitle class="bg-primary text-white">
+          Catatan Activity
+        </VCardTitle>
+        <VCardText>
+          <div v-if="selectedActivity">
+            <p>
+              <strong>Mesin:</strong> {{ selectedActivity.item_machine?.name }}
+            </p>
+            <p>
+              <strong>Kode:</strong> {{ selectedActivity.item_machine?.code }}
+            </p>
+          </div>
+
+          <!-- Cleaning Critical -->
+          <template
+            v-if="selectedActivity.catatan_teamleader_cleaning_criticals"
+          >
+            <VLabel class="mb-1"
+              >Catatan Team Leader (Cleaning Critical)</VLabel
+            >
+            <VTextarea
+              v-model="selectedActivity.catatan_teamleader_cleaning_criticals"
+              rows="3"
+              auto-grow
+              readonly
+            />
+          </template>
+
+          <!-- Just Cleaning -->
+          <template v-if="selectedActivity.catatan_teamleader_just_cleaning">
+            <VLabel class="mb-1">Catatan Team Leader (Just Cleaning)</VLabel>
+            <VTextarea
+              v-model="selectedActivity.catatan_teamleader_just_cleaning"
+              rows="3"
+              auto-grow
+              readonly
+            />
+          </template>
+
+          <!-- Replacement Part -->
+          <template v-if="selectedActivity.catatan_teamleader_replacement_part">
+            <VLabel class="mb-1">Catatan Team Leader (Replacement Part)</VLabel>
+            <VTextarea
+              v-model="selectedActivity.catatan_teamleader_replacement_part"
+              rows="3"
+              auto-grow
+              readonly
+            />
+          </template>
+
+          <!-- Preventive PM -->
+          <template v-if="selectedActivity.catatan_teamleader_preventive_pm">
+            <VLabel class="mb-1">Catatan Team Leader (Preventive PM)</VLabel>
+            <VTextarea
+              v-model="selectedActivity.catatan_teamleader_preventive_pm"
+              rows="3"
+              auto-grow
+              readonly
+            />
+          </template>
+
+          <!-- Supervisor bisa nambah/ubah -->
+          <VLabel class="mt-4 mb-1">Catatan Supervisor</VLabel>
+          <VTextarea
+            v-model="supervisorNote"
+            placeholder="Tanggapan Supervisor"
+            rows="4"
+            auto-grow
+          />
+        </VCardText>
+
+        <VCardActions>
+          <VSpacer />
+          <VBtn color="secondary" @click="isNotesDialogVisible = false">
+            Tutup
+          </VBtn>
+          <VBtn color="primary" @click="saveSupervisorNote"> Simpan </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

@@ -22,13 +22,14 @@ const items = [
     title: "Item Machine",
     to: { name: "tms" },
     icon: { icon: "ri-settings-2-line" },
+    role: ["admin","team_leader","teknisi"],
   },
 
   {
     title: "Activity TMS",
     children: [
       { title: "List", to: "activitytms" },
-      { title: "Add", to: "activitytms-form",role: ["admin","team_leader",] },
+      { title: "Add", to: "activitytms-form",role: ["admin","team_leader","teknisi"] },
     ],
     icon: { icon: "ri-tools-line" },
   },
@@ -37,7 +38,7 @@ const items = [
     title: "FAW Report",
     children: [
       { title: "List", to: "fawreport" },
-      { title: "Add", to: "fawreport-form",role: ["admin","team_leader","supervisor"] },
+      { title: "Add", to: "fawreport-form",role: ["admin","team_leader"] },
     ],
     icon: { icon: "ri-customer-service-2-line" },
   },
@@ -46,7 +47,7 @@ const items = [
     title: "Leakage Report",
     children: [
       { title: "List", to: "leakagereport" },
-      { title: "Add", to: "leakagereport-form", role: ["admin","team_leader","supervisor"] },
+      { title: "Add", to: "leakagereport-form", role: ["admin","team_leader"] },
     ],
     icon: { icon: "ri-alarm-warning-fill" },
   },

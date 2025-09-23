@@ -60,10 +60,12 @@ const submitReport = async () => {
       res = await axios.post(ENDPOINTS.leakageReports, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+
+      emit("add-report", res.data.data);
     }
 
-    emit("saved");
-
+     
+    emit("report-data");
     console.log("Response:", res.data);
 
     // reset form

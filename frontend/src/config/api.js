@@ -14,6 +14,9 @@ export const ENDPOINTS = {
   updateActivityTms: `${API_BASE_URL}/activity-tms-update`,
   getActivityByScheduleList: `${API_BASE_URL}/getActivityByScheduleList`,
   
+  // endpoint baru supervisor catatan
+  updateSupervisorNote: (id) => `${API_BASE_URL}/activity-tms/${id}/catatan`,
+  
   // FAWReport endpoints
   fawreport: `${API_BASE_URL}/faw-reports`,
   fawReportDetail: (id) => `${API_BASE_URL}/faw-reports/${id}`,

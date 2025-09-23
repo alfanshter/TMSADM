@@ -13,6 +13,7 @@ use App\Http\Controllers\StockSparepartController;
 use App\Http\Controllers\TmsSparepartController;
 use App\Http\Controllers\PicaController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\CatatanController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -35,7 +36,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 // Item Machines hanya untuk team_leader
-Route::middleware(['auth:sanctum', 'role:team_leader,admin,supervisor'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:team_leader,admin,supervisor,teknisi'])->group(function () {
     Route::apiResource('item-machines', ItemMachineController::class);
 });
 
@@ -48,6 +49,9 @@ Route::middleware(['auth:sanctum', 'role:team_leader,admin,supervisor,teknisi'])
     Route::get('/maintenance-types', [ActivityTmsController::class, 'getMaintenanceTypes']);
     Route::post('/maintenance', [ActivityTmsController::class, 'storeMaintenance']);
     Route::post('/activity-tms-update/{id}', [ActivityTmsController::class, 'updateActivityTms']);
+    Route::put('/activity-tms/{id}/catatan', [CatatanController::class, 'update']);
+
+
 });
 
 //FAW REPORT

@@ -135,7 +135,7 @@ onMounted(fetchLeakageReports);
       <VCardText class="d-flex flex-wrap gap-4 align-center">
         <VTextField v-model="searchQuery" placeholder="Search Report" density="compact" />
         <VSpacer />
-        <VBtn v-if="role === 'admin' || role === 'team_leader' || role === 'supervisor'" @click="openDrawer">
+        <VBtn v-if="role === 'admin' || role === 'team_leader'" @click="openDrawer">
           Add New Leakage Report
         </VBtn>
       </VCardText>
@@ -170,7 +170,7 @@ onMounted(fetchLeakageReports);
         </template>
 
         <!-- Actions (hanya admin/team_leader) -->
-        <template v-if="role === 'admin' || role === 'team_leader' || role === 'supervisor'" #item.actions="{ item }">
+        <template v-if="role === 'admin' || role === 'team_leader'" #item.actions="{ item }">
           <IconBtn size="small" @click="deleteLeakageReport(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>

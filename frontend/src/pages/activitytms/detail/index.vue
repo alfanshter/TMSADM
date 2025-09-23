@@ -5,6 +5,8 @@ import { useActivityStore } from "@/stores/useActivityStore";
 import axios from "axios";
 import { onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import Cookies from "js-cookie";
+
 import { VCardItem, VRow } from "vuetify/components";
 
 //get pinia
@@ -13,6 +15,13 @@ const currentItem = computed(() => activityStore.currentItem);
 
 // Inject global loading
 const globalLoading = inject("globalLoading");
+
+const userData = Cookies.get("userData")
+  ? JSON.parse(Cookies.get("userData"))
+  : null;
+const role = userData?.user?.role;
+
+console.log("role:", role);
 
 const code = ref("");
 const location = ref("");
@@ -273,6 +282,51 @@ const fetchItemSparepart = async () => {
     console.error("Error fetching item sparepart", error);
   }
 };
+
+//simpan catatan
+// Simpan catatan Supervisor langsung dari detail
+const saveSupervisorNote = async (tipe) => {
+  try {
+    globalLoading?.show();
+
+    const payload = {};
+
+    switch (tipe) {
+      case "cleaning_critical":
+        payload.catatan_supervisor_cleaning_criticals =
+          catatanSupervisorCleaningCritical.value;
+        break;
+      case "just_cleaning":
+        payload.catatan_supervisor_just_cleaning =
+          catatanSupervisorJustCleaning.value;
+        break;
+      case "replacement_part":
+        payload.catatan_supervisor_replacement_part =
+          catatanSupervisorReplacementPart.value;
+        break;
+      case "preventive_pm":
+        payload.catatan_supervisor_preventive_pm =
+          catatanSupervisorPreventivePm.value;
+        break;
+    }
+
+    await axios.put(ENDPOINTS.updateSupervisorNote(activity_id.value), payload);
+
+    snackbarMessage.value = "Catatan Supervisor berhasil disimpan!";
+    snackbarColor.value = "success";
+    isSnackbarTopEndVisible.value = true;
+
+    fetchActivityDetail(); // refresh detail
+  } catch (error) {
+    console.error("Error simpan catatan supervisor:", error);
+    snackbarMessage.value = "Gagal simpan catatan Supervisor!";
+    snackbarColor.value = "error";
+    isSnackbarTopEndVisible.value = true;
+  } finally {
+    globalLoading?.hide();
+  }
+};
+
 onMounted(() => {
   fetchItemSparepart();
   fetchActivityDetail();
@@ -402,20 +456,28 @@ onMounted(() => {
                       placeholder="Tulis catatan dari Team Leader"
                       rows="3"
                       auto-grow
-                      :readonly="userRole !== 'team_leader'"
+                      :readonly="role !== 'team_leader'"
                     />
                   </div>
 
                   <!-- Catatan Supervisor -->
-                  <div>
+                  <div class="mt-3">
                     <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
                     <VTextarea
                       v-model="catatanSupervisorCleaningCritical"
                       placeholder="Tulis catatan dari Supervisor"
                       rows="3"
                       auto-grow
-                      :readonly="userRole !== 'supervisor'"
+                      :readonly="role !== 'supervisor'"
                     />
+                    <VBtn
+                      v-if="role === 'supervisor'"
+                      color="primary"
+                      class="mt-2"
+                      @click="saveSupervisorNote('cleaning_critical')"
+                    >
+                      Simpan Catatan
+                    </VBtn>
                   </div>
                 </VCardText>
               </template>
@@ -456,20 +518,28 @@ onMounted(() => {
                       placeholder="Tulis catatan dari Team Leader"
                       rows="3"
                       auto-grow
-                      :readonly="userRole !== 'team_leader'"
+                      :readonly="role !== 'team_leader'"
                     />
                   </div>
 
                   <!-- Catatan Supervisor -->
-                  <div>
+                  <div class="mt-3">
                     <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
                     <VTextarea
                       v-model="catatanSupervisorJustCleaning"
                       placeholder="Tulis catatan dari Supervisor"
                       rows="3"
                       auto-grow
-                      :readonly="userRole !== 'supervisor'"
+                      :readonly="role !== 'supervisor'"
                     />
+                    <VBtn
+                      v-if="role === 'supervisor'"
+                      color="primary"
+                      class="mt-2"
+                      @click="saveSupervisorNote('just_cleaning')"
+                    >
+                      Simpan Catatan
+                    </VBtn>
                   </div>
                 </VCardText>
               </template>
@@ -541,20 +611,28 @@ onMounted(() => {
                       placeholder="Tulis catatan dari Team Leader"
                       rows="3"
                       auto-grow
-                      :readonly="userRole !== 'team_leader'"
+                      :readonly="role !== 'team_leader'"
                     />
                   </div>
 
                   <!-- Catatan Supervisor -->
-                  <div>
+                  <div class="mt-3">
                     <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
                     <VTextarea
                       v-model="catatanSupervisorReplacementPart"
                       placeholder="Tulis catatan dari Supervisor"
                       rows="3"
                       auto-grow
-                      :readonly="userRole !== 'supervisor'"
+                      :readonly="role !== 'supervisor'"
                     />
+                    <VBtn
+                      v-if="role === 'supervisor'"
+                      color="primary"
+                      class="mt-2"
+                      @click="saveSupervisorNote('replacement_part')"
+                    >
+                      Simpan Catatan
+                    </VBtn>
                   </div>
                 </VCardText>
               </template>
@@ -595,20 +673,28 @@ onMounted(() => {
                       placeholder="Tulis catatan dari Team Leader"
                       rows="3"
                       auto-grow
-                      :readonly="userRole !== 'team_leader'"
+                      :readonly="role !== 'team_leader'"
                     />
                   </div>
 
                   <!-- Catatan Supervisor -->
-                  <div>
+                  <div class="mt-3">
                     <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
                     <VTextarea
                       v-model="catatanSupervisorPreventivePm"
                       placeholder="Tulis catatan dari Supervisor"
                       rows="3"
                       auto-grow
-                      :readonly="userRole !== 'supervisor'"
+                      :readonly="role !== 'supervisor'"
                     />
+                    <VBtn
+                      v-if="role === 'supervisor'"
+                      color="primary"
+                      class="mt-2"
+                      @click="saveSupervisorNote('preventive_pm')"
+                    >
+                      Simpan Catatan
+                    </VBtn>
                   </div>
                 </VCardText>
               </template>

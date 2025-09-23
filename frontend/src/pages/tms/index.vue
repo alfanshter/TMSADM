@@ -4,6 +4,7 @@ import AddNewItemMachinesDrawer from "@/views/apps/tms/list/AddNewItemMachinesDr
 import EditItemMachinesDrawer from "@/views/apps/tms/list/EditItemMachinesDrawer.vue";
 import axios from "axios";
 import { inject, onMounted, ref } from "vue";
+import Cookies from "js-cookie";
 
 // Inject global loading
 const globalLoading = inject("globalLoading");
@@ -16,6 +17,11 @@ const selected = ref();
 const itemsPerPage = ref(10);
 const page = ref(1);
 const isLoading = ref(false);
+
+//cek role
+// Ambil role dari cookie
+const userData = Cookies.get("userData") ? JSON.parse(Cookies.get("userData")) : null;
+const role = userData?.user?.role;
 
 // Filter scope of work
 const selectedScopeOfWork = ref(null);
@@ -223,14 +229,14 @@ watch(selectedScopeOfWork, () => {
           <div class="app-user-search-filter">
             <VTextField
               v-model="searchQuery"
-              placeholder="Search User"
+              placeholder="Search Item Machine"
               density="compact"
             />
           </div>
           <!-- 👉 Add user button -->
-          <VBtn @click="isAddNewItemMachinesDrawerVisible = true">
-            Add New Item Machines
-          </VBtn>
+          <VBtn v-if="role === 'admin' || role === 'team_leader'" @click="isAddNewItemMachinesDrawerVisible = true">
+          Add New Item Machine
+        </VBtn>
         </div>
       </VCardText>
 

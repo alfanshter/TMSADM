@@ -55,7 +55,7 @@ const fetchLeakageReports = async () => {
         ? [
             {
               name: r.file_scan.split("/").pop(),
-              url: `http://127.0.0.1:8000/storage/${r.file_scan}`,
+              url: `https://backtmsadm.bimasaktiluhur.com/storage/${r.file_scan}`,
             },
           ]
         : [],

@@ -12,7 +12,8 @@ import Cookies from "js-cookie";
 import "@core/scss/template/index.scss";
 import "@styles/styles.scss";
 
-axios.defaults.baseURL = "http://127.0.0.1:8000/api";
+// axios.defaults.baseURL = "http://127.0.0.1:8000/api";
+axios.defaults.baseURL = "https://backtmsadm.bimasaktiluhur.com/api";
 
 // Ambil token dari cookie, bukan localStorage
 const token = localStorage.getItem("token") || Cookies.get("accessToken");

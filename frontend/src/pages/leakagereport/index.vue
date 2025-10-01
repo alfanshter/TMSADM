@@ -48,6 +48,11 @@ const headers = computed(() => {
 const fetchLeakageReports = async () => {
   try {
     isLoading.value = true;
+
+       // Ambil base URL dari .env
+       const baseFileUrl = import.meta.env.VITE_FILE_BASE_URL 
+  
+
     const res = await axios.get(ENDPOINTS.leakageReports);
     leakageReports.value = res.data.data.map((r) => ({
       ...r,
@@ -55,7 +60,7 @@ const fetchLeakageReports = async () => {
         ? [
             {
               name: r.file_scan.split("/").pop(),
-              url: `https://backtmsadm.bimasaktiluhur.com/storage/${r.file_scan}`,
+              url: `${baseFileUrl}/${r.file_scan}`,
             },
           ]
         : [],

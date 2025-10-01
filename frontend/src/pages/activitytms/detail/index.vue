@@ -245,6 +245,12 @@ const fetchActivityDetail = async () => {
     catatanSupervisorPreventivePm.value =
       data.catatan_supervisor_preventive_pm ?? "";
 
+    console.log(
+      "Catatan supervisor just cleaning dari backend:",
+      data.catatan_supervisor_just_cleaning
+    );
+    console.log("Semua data:", data);
+
     activity_id.value = data.id;
   } catch (error) {
     console.error("Error fetching activity detail:", error);
@@ -262,8 +268,9 @@ const onSparepartSelect = () => {
 };
 
 const getFileUrl = (path) => {
-  return `https://backtmsadm.bimasaktiluhur.com/storage/${path}`; // sesuaikan URL file
+  return `${import.meta.env.VITE_FILE_BASE_URL}/${path}`; // sesuaikan URL file
 };
+
 
 const getFileName = (path) => {
   return path.split("/").pop();
@@ -297,7 +304,7 @@ const saveSupervisorNote = async (tipe) => {
           catatanSupervisorCleaningCritical.value;
         break;
       case "just_cleaning":
-        payload.catatan_supervisor_just_cleaning =
+        payload.catatan_supervisor_justcleaning =
           catatanSupervisorJustCleaning.value;
         break;
       case "replacement_part":

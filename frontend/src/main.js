@@ -13,7 +13,10 @@ import "@core/scss/template/index.scss";
 import "@styles/styles.scss";
 
 // axios.defaults.baseURL = "http://127.0.0.1:8000/api";
-axios.defaults.baseURL = "https://backtmsadm.bimasaktiluhur.com/api";
+// axios.defaults.baseURL = "https://backtmsadm.bimasaktiluhur.com/api";
+
+// Ambil URL API dari .env
+axios.defaults.baseURL = `${import.meta.env.VITE_API_URL}/api`;
 
 // Ambil token dari cookie, bukan localStorage
 const token = localStorage.getItem("token") || Cookies.get("accessToken");

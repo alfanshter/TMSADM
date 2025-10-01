@@ -17,8 +17,9 @@ const globalLoading = inject("globalLoading");
 // filter
 const selectedScopeOfWork = ref(null);
 
+
 // baseURL untuk gambar & file
-const baseURL = "http://localhost:8000/storage/";
+const baseURL = `${import.meta.env.VITE_FILE_BASE_URL}/`;
 
 // State untuk dialog foto/JSA
 const isDialogVisible = ref(false);
@@ -42,7 +43,7 @@ function openNotes(activity) {
   // default ambil salah satu field catatan supervisor
   supervisorNote.value =
     activity.catatan_supervisor_cleaning_criticals ||
-    activity.catatan_supervisor_just_cleaning ||
+    activity.catatan_supervisor_justcleaning ||
     activity.catatan_supervisor_replacement_part ||
     activity.catatan_supervisor_preventive_pm ||
     "";
@@ -59,7 +60,7 @@ async function saveSupervisorNote() {
     if (selectedActivity.value.catatan_teamleader_cleaning_criticals !== null) {
       payload.catatan_supervisor_cleaning_criticals = supervisorNote.value;
     } else if (selectedActivity.value.catatan_teamleader_just_cleaning !== null) {
-      payload.catatan_supervisor_just_cleaning = supervisorNote.value;
+      payload.catatan_supervisor_justcleaning = supervisorNote.value;
     } else if (selectedActivity.value.catatan_teamleader_replacement_part !== null) {
       payload.catatan_supervisor_replacement_part = supervisorNote.value;
     } else if (selectedActivity.value.catatan_teamleader_preventive_pm !== null) {

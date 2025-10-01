@@ -665,10 +665,15 @@ const submitForm = async () => {
   }
 };
 
-const getFileUrl = (path) => {
-  return `https://backtmsadm.bimasaktiluhur.com/storage/${path}`; // sesuaikan URL file
-};
 
+
+// const getFileUrl = (path) => {
+//   return `https://backtmsadm.bimasaktiluhur.com/storage/${path}`; // sesuaikan URL file
+// };
+
+const getFileUrl = (path) => {
+  return `${import.meta.env.VITE_FILE_BASE_URL}/${path}`;
+};
 const getFileName = (path) => {
   return path.split("/").pop();
 };

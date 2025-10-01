@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ActivityTMS extends Model
+class ActivityTms extends Model
 {
     use HasFactory;
 

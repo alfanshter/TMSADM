@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ActivityTMS;
+use App\Models\ActivityTms;
 use App\Models\CleaningCritical;
 use App\Models\ItemMachine;
 use App\Models\TmsSparepart;
@@ -14,7 +14,7 @@ class ActivityTmsController extends Controller
 {
     public function getAllActivityTms()
     {
-        $activities = ActivityTMS::with([
+        $activities = ActivityTms::with([
             'itemMachine',
             'cleaningCriticals',
             'justCleaning',
@@ -77,7 +77,7 @@ class ActivityTmsController extends Controller
     public function getActivityTmsById($id)
     {
 
-        $activity = ActivityTMS::with([
+        $activity = ActivityTms::with([
             'itemMachine',
             'cleaningCriticals',
             'justCleaning',
@@ -206,7 +206,7 @@ class ActivityTmsController extends Controller
 
 
         // Buat activity
-        $activity = ActivityTMS::create([
+        $activity = ActivityTms::create([
             'item_machine_id' => $request->item_machine_id,
             'date' => $request->date,
             'jsa_file_cleaning_criticals' => $jsa_cleaning,
@@ -285,7 +285,7 @@ class ActivityTmsController extends Controller
 
     public function updateActivityTms(Request $request, $id)
     {
-        $activity = ActivityTMS::with([
+        $activity = ActivityTms::with([
             'itemMachine',
             'cleaningCriticals',
             'justCleaning',
@@ -646,7 +646,7 @@ class ActivityTmsController extends Controller
 
     public function destroyActivityTms($id)
     {
-        $activity = ActivityTMS::find($id);
+        $activity = ActivityTms::find($id);
 
         if (!$activity) {
             return response()->json([

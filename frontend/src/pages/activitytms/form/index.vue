@@ -32,7 +32,7 @@ const selectedMaintenanceTypesJustCleaning = ref([]);
 const selectedMaintenanceTypesReplacementPart = ref([]);
 const selectedMaintenanceTypesPreventivePM = ref([]);
 const birthDate = ref("");
-const production_downtime = ref("");
+const production_downtime = ref(0);
 
 // Tambahan untuk downtime
 const startTime = ref("");
@@ -246,7 +246,13 @@ const submitForm = async () => {
   formData.append("location", location.value);
   formData.append("scope_of_work", scopeOfWork.value);
   formData.append("date", birthDate.value);
-  formData.append("production_downtime", production_downtime.value);
+
+  formData.append(
+    "production_downtime",
+    production_downtime.value === "" || production_downtime.value 
+      ? 0
+      : parseInt(production_downtime.value)
+  );
 
   // Foto
   cleaningCriticalBeforeFiles.value.forEach((file) => {
@@ -307,20 +313,20 @@ const submitForm = async () => {
   formData.append("deviation", deviation.value ?? "");
 
 
-// Catatan sesuai role
-if (role.value === "team_leader") {
-  formData.append("catatan_teamleader_cleaning_criticals", cleaningCriticalNote.value);
-  formData.append("catatan_teamleader_just_cleaning", justCleaningNote.value);
-  formData.append("catatan_teamleader_replacement_part", replacementPartNote.value);
-  formData.append("catatan_teamleader_preventive_pm", preventivePmNote.value);
-}
+  // Catatan sesuai role
+  if (role.value === "team_leader") {
+    formData.append("catatan_teamleader_cleaning_criticals", cleaningCriticalNote.value);
+    formData.append("catatan_teamleader_just_cleaning", justCleaningNote.value);
+    formData.append("catatan_teamleader_replacement_part", replacementPartNote.value);
+    formData.append("catatan_teamleader_preventive_pm", preventivePmNote.value);
+  }
 
-if (role.value === "supervisor") {
-  formData.append("catatan_supervisor_cleaning_criticals", cleaningCriticalNote.value);
-  formData.append("catatan_supervisor_justcleaning", justCleaningNote.value);
-  formData.append("catatan_supervisor_replacement_part", replacementPartNote.value);
-  formData.append("catatan_supervisor_preventive_pm", preventivePmNote.value);
-}
+  if (role.value === "supervisor") {
+    formData.append("catatan_supervisor_cleaning_criticals", cleaningCriticalNote.value);
+    formData.append("catatan_supervisor_justcleaning", justCleaningNote.value);
+    formData.append("catatan_supervisor_replacement_part", replacementPartNote.value);
+    formData.append("catatan_supervisor_preventive_pm", preventivePmNote.value);
+  }
 
 
   // Tambah Sparepart List
@@ -388,47 +394,22 @@ onMounted(() => {
           <VCardText>
             <VRow>
               <VCol cols="12" md="4">
-                <VAutocomplete
-                  v-model="selectedItemMachine"
-                  :items="itemMachines"
-                  item-title="name"
-                  item-value="id"
-                  placeholder="Item Machine"
-                  label="Item Machine"
-                />
+                <VAutocomplete v-model="selectedItemMachine" :items="itemMachines" item-title="name" item-value="id"
+                  placeholder="Item Machine" label="Item Machine" />
               </VCol>
               <VCol cols="12" md="6">
-                <VTextField
-                  v-model="code"
-                  label="Code"
-                  readonly
-                  placeholder="FXSK123U"
-                />
+                <VTextField v-model="code" label="Code" readonly placeholder="FXSK123U" />
               </VCol>
               <VCol cols="12" md="6">
-                <VTextField
-                  v-model="location"
-                  label="Location"
-                  readonly
-                  placeholder="Tower 1"
-                />
+                <VTextField v-model="location" label="Location" readonly placeholder="Tower 1" />
               </VCol>
 
               <VCol cols="12" md="6">
-                <VTextField
-                  v-model="scopeOfWork"
-                  label="Scope_of_work"
-                  readonly
-                  placeholder="Safety"
-                />
+                <VTextField v-model="scopeOfWork" label="Scope_of_work" readonly placeholder="Safety" />
               </VCol>
 
               <VCol>
-                <AppDateTimePicker
-                  v-model="birthDate"
-                  label="Date"
-                  placeholder="Select Date"
-                />
+                <AppDateTimePicker v-model="birthDate" label="Date" placeholder="Select Date" />
               </VCol>
             </VRow>
           </VCardText>
@@ -440,13 +421,9 @@ onMounted(() => {
             <template #title> Scope of Work </template>
             <div class="d-flex flex-column mt-2">
               <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
-              <VFileInput
-                v-model="safety_scan"
-                label="Pilih file dokumen"
+              <VFileInput v-model="safety_scan" label="Pilih file dokumen"
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp"
-                prepend-icon="ri-upload-2-line"
-                show-size
-              />
+                prepend-icon="ri-upload-2-line" show-size />
             </div>
             <!-- Checkbox -->
           </VCardItem>
@@ -455,28 +432,13 @@ onMounted(() => {
             <VLabel class="mb-1">Incoming</VLabel>
             <VRow>
               <VCol cols="12" md="4">
-                <VTextField
-                  v-model="incomingRs"
-                  label="Incoming R-S"
-                  placeholder="Incoming R-S"
-                  type="number"
-                />
+                <VTextField v-model="incomingRs" label="Incoming R-S" placeholder="Incoming R-S" type="number" />
               </VCol>
               <VCol cols="12" md="4">
-                <VTextField
-                  v-model="incomingRt"
-                  label="Incoming R-T"
-                  placeholder="Incoming R-T"
-                  type="number"
-                />
+                <VTextField v-model="incomingRt" label="Incoming R-T" placeholder="Incoming R-T" type="number" />
               </VCol>
               <VCol cols="12" md="4">
-                <VTextField
-                  v-model="incomingSt"
-                  label="Incoming S-T"
-                  placeholder="Incoming S-T"
-                  type="number"
-                />
+                <VTextField v-model="incomingSt" label="Incoming S-T" placeholder="Incoming S-T" type="number" />
               </VCol>
             </VRow>
           </VCardItem>
@@ -485,28 +447,13 @@ onMounted(() => {
             <VLabel class="mb-1">Outgoing</VLabel>
             <VRow>
               <VCol cols="12" md="4">
-                <VTextField
-                  v-model="outgoingRs"
-                  label="Outgoing R-S"
-                  placeholder="Outgoing R-S"
-                  type="number"
-                />
+                <VTextField v-model="outgoingRs" label="Outgoing R-S" placeholder="Outgoing R-S" type="number" />
               </VCol>
               <VCol cols="12" md="4">
-                <VTextField
-                  v-model="outgoingRt"
-                  label="Outgoing R-T"
-                  placeholder="Outgoing R-T"
-                  type="number"
-                />
+                <VTextField v-model="outgoingRt" label="Outgoing R-T" placeholder="Outgoing R-T" type="number" />
               </VCol>
               <VCol cols="12" md="4">
-                <VTextField
-                  v-model="outgoingSt"
-                  label="Outgoing S-T"
-                  placeholder="Outgoing S-T"
-                  type="number"
-                />
+                <VTextField v-model="outgoingSt" label="Outgoing S-T" placeholder="Outgoing S-T" type="number" />
               </VCol>
             </VRow>
           </VCardItem>
@@ -514,19 +461,10 @@ onMounted(() => {
           <VCardItem>
             <VRow class="mt-1">
               <VCol cols="12" md="6">
-                <VTextField
-                  v-model="temp"
-                  label="Temp in der C"
-                  placeholder="Temp in der C"
-                  type="number"
-                />
+                <VTextField v-model="temp" label="Temp in der C" placeholder="Temp in der C" type="number" />
               </VCol>
               <VCol cols="12" md="6">
-                <VTextField
-                  v-model="deviation"
-                  label="Deviation Status"
-                  placeholder="Deviation Status"
-                />
+                <VTextField v-model="deviation" label="Deviation Status" placeholder="Deviation Status" />
               </VCol>
             </VRow>
           </VCardItem>
@@ -538,13 +476,8 @@ onMounted(() => {
             <template #title> Scope of Work </template>
             <div class="d-flex flex-column mt-2">
               <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
-              <VFileInput
-                v-model="production_scan"
-                label="Pilih file dokumen"
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                prepend-icon="ri-upload-2-line"
-                show-size
-              />
+              <VFileInput v-model="production_scan" label="Pilih file dokumen"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
             </div>
             <!-- Checkbox -->
           </VCardItem>
@@ -556,43 +489,28 @@ onMounted(() => {
                 <!-- Waktu Start -->
 
                 <VCol cols="12" md="4">
-                  <AppDateTimePicker
-                    v-model="startTime"
-                    label="Start Time"
-                    placeholder="Select Time"
-                    :config="{
-                      enableTime: true,
-                      noCalendar: true,
-                      dateFormat: 'H:i', // format jam:menit (24 jam)
-                      time_24hr: true, // kalau mau pakai format 24 jam
-                    }"
-                  />
+                  <AppDateTimePicker v-model="startTime" label="Start Time" placeholder="Select Time" :config="{
+                    enableTime: true,
+                    noCalendar: true,
+                    dateFormat: 'H:i', // format jam:menit (24 jam)
+                    time_24hr: true, // kalau mau pakai format 24 jam
+                  }" />
                 </VCol>
 
                 <!-- Waktu End -->
                 <VCol cols="12" md="4">
-                  <AppDateTimePicker
-                    v-model="endTime"
-                    label="End Time"
-                    placeholder="Select Time"
-                    :config="{
-                      enableTime: true,
-                      noCalendar: true,
-                      dateFormat: 'H:i', // format jam:menit (24 jam)
-                      time_24hr: true, // kalau mau pakai format 24 jam
-                    }"
-                  />
+                  <AppDateTimePicker v-model="endTime" label="End Time" placeholder="Select Time" :config="{
+                    enableTime: true,
+                    noCalendar: true,
+                    dateFormat: 'H:i', // format jam:menit (24 jam)
+                    time_24hr: true, // kalau mau pakai format 24 jam
+                  }" />
                 </VCol>
 
                 <!-- Downtime (otomatis terhitung) -->
                 <VCol cols="12" md="4">
-                  <VTextField
-                    v-model="production_downtime"
-                    label="Downtime Production"
-                    placeholder="minute"
-                    type="number"
-                    readonly
-                  >
+                  <VTextField v-model="production_downtime" label="Downtime Production" placeholder="minute"
+                    type="number" readonly>
                     <template v-slot:append-inner>
                       <span class="text-caption">minute</span>
                     </template>
@@ -610,75 +528,46 @@ onMounted(() => {
             <!-- Checkbox -->
             <div class="d-flex flex-column mt-2">
               <!-- Cleaning Critical -->
-              <VCheckbox
-                label="Cleaning Critical"
-                value="cleaning_critical"
-                v-model="selectedMaintenanceTypesCleaningCritical"
-              />
+              <VCheckbox label="Cleaning Critical" value="cleaning_critical"
+                v-model="selectedMaintenanceTypesCleaningCritical" />
               <template v-if="selectedMaintenanceTypesCleaningCritical.length">
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <DropZone
-                      label="BEFORE"
-                      v-model="cleaningCriticalBeforeFiles"
-                    />
+                    <DropZone label="BEFORE" v-model="cleaningCriticalBeforeFiles" />
                   </div>
                   <div style="flex: 1">
-                    <DropZone
-                      label="AFTER"
-                      v-model="cleaningCriticalAfterFiles"
-                    />
+                    <DropZone label="AFTER" v-model="cleaningCriticalAfterFiles" />
                   </div>
                 </VCardText>
                 <VCardText>
                   <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
-                  <VFileInput
-                    v-model="cleaningCriticalJsa"
-                    label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                    prepend-icon="ri-upload-2-line"
-                    show-size
-                  />
+                  <VFileInput v-model="cleaningCriticalJsa" label="Pilih file dokumen"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
                 </VCardText>
 
                 <VCardText>
                   <!-- Catatan Team Leader -->
                   <template v-if="role === 'team_leader'">
                     <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
-                    <VTextarea
-                      v-model="cleaningCriticalNote"
-                      placeholder="Tulis catatan dari Team Leader"
-                      rows="3"
-                      auto-grow
-                    />
+                    <VTextarea v-model="cleaningCriticalNote" placeholder="Tulis catatan dari Team Leader" rows="3"
+                      auto-grow />
                   </template>
 
                   <!-- Catatan Supervisor -->
                   <template v-else-if="role === 'supervisor'">
                     <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
-                    <VTextarea
-                      v-model="cleaningCriticalNote"
-                      placeholder="Tulis catatan dari Supervisor"
-                      rows="3"
-                      auto-grow
-                    />
+                    <VTextarea v-model="cleaningCriticalNote" placeholder="Tulis catatan dari Supervisor" rows="3"
+                      auto-grow />
                   </template>
                 </VCardText>
               </template>
 
               <!-- Just Cleaning -->
-              <VCheckbox
-                label="Just Cleaning"
-                value="just_cleaning"
-                v-model="selectedMaintenanceTypesJustCleaning"
-              />
+              <VCheckbox label="Just Cleaning" value="just_cleaning" v-model="selectedMaintenanceTypesJustCleaning" />
               <template v-if="selectedMaintenanceTypesJustCleaning.length">
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <DropZone
-                      label="BEFORE"
-                      v-model="justCleaningBeforeFiles"
-                    />
+                    <DropZone label="BEFORE" v-model="justCleaningBeforeFiles" />
                   </div>
                   <div style="flex: 1">
                     <DropZone label="AFTER" v-model="justCleaningAfterFiles" />
@@ -686,45 +575,29 @@ onMounted(() => {
                 </VCardText>
                 <VCardText>
                   <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
-                  <VFileInput
-                    v-model="justCleaningJsa"
-                    label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                    prepend-icon="ri-upload-2-line"
-                    show-size
-                  />
+                  <VFileInput v-model="justCleaningJsa" label="Pilih file dokumen"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
                 </VCardText>
                 <VCardText>
                   <!-- Catatan Team Leader -->
                   <template v-if="role === 'team_leader'">
                     <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
-                    <VTextarea
-                      v-model="justCleaningNote"
-                      placeholder="Tulis catatan dari Team Leader"
-                      rows="3"
-                      auto-grow
-                    />
+                    <VTextarea v-model="justCleaningNote" placeholder="Tulis catatan dari Team Leader" rows="3"
+                      auto-grow />
                   </template>
 
                   <!-- Catatan Supervisor -->
                   <template v-else-if="role === 'supervisor'">
                     <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
-                    <VTextarea
-                      v-model="justCleaningNote"
-                      placeholder="Tulis catatan dari Supervisor"
-                      rows="3"
-                      auto-grow
-                    />
+                    <VTextarea v-model="justCleaningNote" placeholder="Tulis catatan dari Supervisor" rows="3"
+                      auto-grow />
                   </template>
                 </VCardText>
               </template>
 
               <!-- Replacement Part -->
-              <VCheckbox
-                label="Replacement Part"
-                value="replacement_part"
-                v-model="selectedMaintenanceTypesReplacementPart"
-              />
+              <VCheckbox label="Replacement Part" value="replacement_part"
+                v-model="selectedMaintenanceTypesReplacementPart" />
 
               <template v-if="selectedMaintenanceTypesReplacementPart.length">
                 <!-- Card utama Replacement Part -->
@@ -732,46 +605,26 @@ onMounted(() => {
                   <!-- Pilih Item Machine & Input Jumlah -->
                   <VRow dense>
                     <VCol cols="12" md="6">
-                      <VAutocomplete
-                        v-model="selectedItemSparepart"
-                        :items="itemSparepart"
-                        item-title="nama_sparepart"
-                        item-value="id"
-                        label="Sparepart"
-                        placeholder="Cari / pilih sparepart"
-                        clearable
-                        density="comfortable"
-                        @change="onSparepartSelect"
-                      />
+                      <VAutocomplete v-model="selectedItemSparepart" :items="itemSparepart" item-title="nama_sparepart"
+                        item-value="id" label="Sparepart" placeholder="Cari / pilih sparepart" clearable
+                        density="comfortable" @change="onSparepartSelect" />
                     </VCol>
 
                     <VCol cols="12" md="6" v-if="selectedItemSparepartObj">
-                      <VTextField
-                        v-model.number="requiredQty"
-                        type="number"
+                      <VTextField v-model.number="requiredQty" type="number"
                         :label="`Butuh berapa? (Stok tersedia: ${selectedItemSparepartObj.usages_sum_qty})`"
-                        :max="selectedItemSparepartObj.usages_sum_qty"
-                        min="1"
-                      />
-                      <VBtn color="primary" class="mt-2" @click="addSparepart"
-                        >Add</VBtn
-                      >
+                        :max="selectedItemSparepartObj.usages_sum_qty" min="1" />
+                      <VBtn color="primary" class="mt-2" @click="addSparepart">Add</VBtn>
                     </VCol>
                   </VRow>
 
                   <!-- Upload Foto Before & After -->
                   <VRow class="mt-4" dense>
                     <VCol cols="12" md="6">
-                      <DropZone
-                        label="BEFORE"
-                        v-model="replacementPartBeforeFiles"
-                      />
+                      <DropZone label="BEFORE" v-model="replacementPartBeforeFiles" />
                     </VCol>
                     <VCol cols="12" md="6">
-                      <DropZone
-                        label="AFTER"
-                        v-model="replacementPartAfterFiles"
-                      />
+                      <DropZone label="AFTER" v-model="replacementPartAfterFiles" />
                     </VCol>
                   </VRow>
 
@@ -779,27 +632,17 @@ onMounted(() => {
                   <VRow class="mt-4" dense>
                     <VCol cols="12">
                       <VLabel class="mb-2">Upload JSA File</VLabel>
-                      <VFileInput
-                        v-model="replacementJsa"
-                        label="Pilih file dokumen"
-                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                        prepend-icon="ri-upload-2-line"
-                        show-size
-                        clearable
-                      />
+                      <VFileInput v-model="replacementJsa" label="Pilih file dokumen"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size
+                        clearable />
                     </VCol>
                   </VRow>
                 </VCard>
 
                 <!-- 👉 Datatable  -->
                 <!-- Datatable Sparepart -->
-                <VDataTableServer
-                  v-if="sparepartList.length"
-                  v-model:model-value="sparepartList"
-                  :headers="sparepartHeaders"
-                  :items="sparepartList"
-                  class="text-no-wrap rounded-0"
-                >
+                <VDataTableServer v-if="sparepartList.length" v-model:model-value="sparepartList"
+                  :headers="sparepartHeaders" :items="sparepartList" class="text-no-wrap rounded-0">
                   <!-- Nama Sparepart -->
                   <!-- Nama Sparepart -->
                   <template #item.nama_sparepart="{ item }">
@@ -837,40 +680,25 @@ onMounted(() => {
                   <!-- Catatan Team Leader -->
                   <template v-if="role === 'team_leader'">
                     <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
-                    <VTextarea
-                      v-model="replacementPartNote"
-                      placeholder="Tulis catatan dari Team Leader"
-                      rows="3"
-                      auto-grow
-                    />
+                    <VTextarea v-model="replacementPartNote" placeholder="Tulis catatan dari Team Leader" rows="3"
+                      auto-grow />
                   </template>
 
                   <!-- Catatan Supervisor -->
                   <template v-else-if="role === 'supervisor'">
                     <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
-                    <VTextarea
-                      v-model="replacementPartNote"
-                      placeholder="Tulis catatan dari Supervisor"
-                      rows="3"
-                      auto-grow
-                    />
+                    <VTextarea v-model="replacementPartNote" placeholder="Tulis catatan dari Supervisor" rows="3"
+                      auto-grow />
                   </template>
                 </VCardText>
               </template>
 
               <!-- Preventive PM -->
-              <VCheckbox
-                label="Preventive PM"
-                value="preventive_pm"
-                v-model="selectedMaintenanceTypesPreventivePM"
-              />
+              <VCheckbox label="Preventive PM" value="preventive_pm" v-model="selectedMaintenanceTypesPreventivePM" />
               <template v-if="selectedMaintenanceTypesPreventivePM.length">
                 <VCardText class="d-flex gap-4">
                   <div style="flex: 1">
-                    <DropZone
-                      label="BEFORE"
-                      v-model="preventivePmBeforeFiles"
-                    />
+                    <DropZone label="BEFORE" v-model="preventivePmBeforeFiles" />
                   </div>
                   <div style="flex: 1">
                     <DropZone label="AFTER" v-model="preventivePmAfterFiles" />
@@ -878,39 +706,26 @@ onMounted(() => {
                 </VCardText>
                 <VCardText>
                   <VLabel class="mt-2 mb-1">Upload JSA file</VLabel>
-                  <VFileInput
-                    v-model="preventiveJsa"
-                    label="Pilih file dokumen"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                    prepend-icon="ri-upload-2-line"
-                    show-size
-                  />
+                  <VFileInput v-model="preventiveJsa" label="Pilih file dokumen"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" prepend-icon="ri-upload-2-line" show-size />
                 </VCardText>
 
                 <VCardText>
                   <!-- Catatan Team Leader -->
                   <template v-if="role === 'team_leader'">
                     <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
-                    <VTextarea
-                      v-model="preventivePmNote"
-                      placeholder="Tulis catatan dari Team Leader"
-                      rows="3"
-                      auto-grow
-                    />
+                    <VTextarea v-model="preventivePmNote" placeholder="Tulis catatan dari Team Leader" rows="3"
+                      auto-grow />
                   </template>
 
                   <!-- Catatan Supervisor -->
                   <template v-else-if="role === 'supervisor'">
                     <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
-                    <VTextarea
-                      v-model="preventivePmNote"
-                      placeholder="Tulis catatan dari Supervisor"
-                      rows="3"
-                      auto-grow
-                    />
+                    <VTextarea v-model="preventivePmNote" placeholder="Tulis catatan dari Supervisor" rows="3"
+                      auto-grow />
                   </template>
                 </VCardText>
-                
+
               </template>
             </div>
           </VCardItem>
@@ -921,12 +736,7 @@ onMounted(() => {
     </VRow>
 
     <!-- Snackbar -->
-    <VSnackbar
-      v-model="isSnackbarTopEndVisible"
-      :timeout="3000"
-      location="top end"
-      :color="snackbarColor"
-    >
+    <VSnackbar v-model="isSnackbarTopEndVisible" :timeout="3000" location="top end" :color="snackbarColor">
       {{ snackbarMessage }}
     </VSnackbar>
   </div>
@@ -941,6 +751,7 @@ onMounted(() => {
 
 <style lang="scss">
 .inventory-card {
+
   .v-radio-group,
   .v-checkbox {
     .v-selection-control {

@@ -1,1 +1,0 @@
-import{aP as e}from"./index-ClEEVO8h.js";const n=e("fawReport",{state:()=>({currentItem:null}),actions:{setCurrentItem(t){this.currentItem=t},clearCurrentItem(){this.currentItem=null}}});export{n as u};

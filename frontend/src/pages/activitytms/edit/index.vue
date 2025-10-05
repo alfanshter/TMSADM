@@ -18,7 +18,8 @@ const globalLoading = inject("globalLoading");
 
 const userStore = useUserStore();
 const role = computed(() => userStore.role);
-console.log("User Role:", role.value);
+const isReadonlyTeamleader = computed(() => role.value === 'team_leader');
+const isReadonlySupervisor = computed(() => role.value === 'supervisor');
 
 
 const code = ref("");
@@ -129,6 +130,9 @@ const replacementTeamleaderNote = ref("");
 
 const preventiveSupervisorNote = ref("");
 const preventiveTeamleaderNote = ref("");
+
+
+
 
 if (currentItem.value != null) {
   console.log("date:", currentItem.value);
@@ -425,8 +429,6 @@ const submitForm = async () => {
   formData.append("location", location.value);
   formData.append("scope_of_work", scopeOfWork.value);
   formData.append("date", birthDate.value);
-  formData.append("supervisor_notes", supervisorNotes.value ?? "");
-  formData.append("teamleader_notes", teamleaderNotes.value ?? "");
 
   // Foto
   cleaningCriticalBeforeFiles.value.forEach((file) => {
@@ -593,7 +595,7 @@ const submitForm = async () => {
   for (let [key, value] of formData.entries()) {
     console.log(key, value);
   }
-  if (isSupervisor(role.value)) {
+  if (role.value == "supervisor") {
     // supervisor notes
     formData.append(
       "catatan_supervisor_cleaning_criticals",
@@ -614,7 +616,7 @@ const submitForm = async () => {
     );
   }
 
-  if (isTeamleader(role.value)) {
+  if (role.value == "team_leader") {
     // teamleader notes
     formData.append(
       "catatan_teamleader_cleaning_criticals",
@@ -958,7 +960,7 @@ onMounted(() => {
                     placeholder="Catatan Supervisor"
                     rows="3"
                     auto-grow
-                    :readonly="!isupervisor(role.value)"
+                    :readonly="!isReadonlySupervisor"
                   />
 
                   <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
@@ -967,7 +969,7 @@ onMounted(() => {
                     placeholder="Catatan Team Leader"
                     rows="3"
                     auto-grow
-                    :readonly="!isTeamleader(role.value)"
+                    :readonly="!isReadonlyTeamleader"
                   />
                 </VCardText>
               </template>

@@ -589,7 +589,7 @@ class ComposerStaticInitc7846695e316e8adffb3e9eaf1b37dc4
         'App\\Http\\Controllers\\TmsSparepartController' => __DIR__ . '/../..' . '/app/Http/Controllers/TmsSparepartController.php',
         'App\\Http\\Middleware\\Authenticate' => __DIR__ . '/../..' . '/app/Http/Middleware/Authenticate.php',
         'App\\Http\\Middleware\\RoleMiddleware' => __DIR__ . '/../..' . '/app/Http/Middleware/RoleMiddleware.php',
-        'App\\Models\\ActivityTMS' => __DIR__ . '/../..' . '/app/Models/ActivityTMS.php',
+        'App\\Models\\ActivityTms' => __DIR__ . '/../..' . '/app/Models/ActivityTms.php',
         'App\\Models\\CleaningCritical' => __DIR__ . '/../..' . '/app/Models/CleaningCritical.php',
         'App\\Models\\FawReport' => __DIR__ . '/../..' . '/app/Models/FawReport.php',
         'App\\Models\\FawReportPhoto' => __DIR__ . '/../..' . '/app/Models/FawReportPhoto.php',

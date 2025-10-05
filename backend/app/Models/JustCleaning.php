@@ -12,7 +12,7 @@ class JustCleaning extends Model
 
     public function activity()
     {
-        return $this->belongsTo(ActivityTMS::class, 'activity_tms_id');
+        return $this->belongsTo(ActivityTms::class, 'activity_tms_id');
         
     }
 }

@@ -730,7 +730,7 @@ class ActivityTmsController extends Controller
         }
 
         // Ambil activity berdasarkan ID
-        $activities = ActivityTMS::with([
+        $activities = ActivityTms::with([
             'itemMachine',
             'cleaningCriticals',
             'justCleaning',

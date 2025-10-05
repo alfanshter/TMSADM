@@ -1,0 +1,1 @@
+import{aP as e}from"./index-OcH-Q5hK.js";const n=e("fawReport",{state:()=>({currentItem:null}),actions:{setCurrentItem(t){this.currentItem=t},clearCurrentItem(){this.currentItem=null}}});export{n as u};

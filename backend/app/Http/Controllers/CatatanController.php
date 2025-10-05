@@ -10,7 +10,7 @@ class CatatanController extends Controller
 {
      public function update(Request $request, $id)
     {
-        $activity = ActivityTMS::find($id);
+        $activity = ActivityTms::find($id);
 
         if (!$activity) {
             return response()->json([

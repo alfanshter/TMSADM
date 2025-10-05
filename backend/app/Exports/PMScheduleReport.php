@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\ActivityTMS;
+use App\Models\ActivityTms;
 use App\Models\ItemMachine;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromCollection;

@@ -14,9 +14,9 @@ class ItemMachine extends Model
         'scope_of_work',
     ];
 
-    // Relasi: ItemMachine -> hasMany ActivityTMS
+    // Relasi: ItemMachine -> hasMany ActivityTms
     public function activityTms()
     {
-        return $this->hasMany(ActivityTMS::class);
+        return $this->hasMany(ActivityTms::class);
     }
 }

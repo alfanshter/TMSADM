@@ -24,7 +24,7 @@ return array(
     'App\\Http\\Controllers\\TmsSparepartController' => $baseDir . '/app/Http/Controllers/TmsSparepartController.php',
     'App\\Http\\Middleware\\Authenticate' => $baseDir . '/app/Http/Middleware/Authenticate.php',
     'App\\Http\\Middleware\\RoleMiddleware' => $baseDir . '/app/Http/Middleware/RoleMiddleware.php',
-    'App\\Models\\ActivityTMS' => $baseDir . '/app/Models/ActivityTMS.php',
+    'App\\Models\\ActivityTms' => $baseDir . '/app/Models/ActivityTms.php',
     'App\\Models\\CleaningCritical' => $baseDir . '/app/Models/CleaningCritical.php',
     'App\\Models\\FawReport' => $baseDir . '/app/Models/FawReport.php',
     'App\\Models\\FawReportPhoto' => $baseDir . '/app/Models/FawReportPhoto.php',

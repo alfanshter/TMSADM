@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\PMScheduleReport;
-use App\Models\ActivityTMS;
+use App\Models\ActivityTms;
 use App\Models\ItemMachine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

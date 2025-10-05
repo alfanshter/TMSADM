@@ -47,7 +47,7 @@ class ActivityTms extends Model
         return $this->belongsToMany(
             StockSparepart::class,
             'tms_spareparts', // nama pivot table yang benar
-            'activity_tms_id',         // foreign key di pivot untuk ActivityTMS
+            'activity_tms_id',         // foreign key di pivot untuk ActivityTms
             'stock_sparepart_id'       // foreign key di pivot untuk StockSparepart
         )->withPivot('id','qty')
          ->withTimestamps();

@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ActivityTmsExport;
 use App\Models\ActivityTms;
 use App\Models\CleaningCritical;
 use App\Models\ItemMachine;
 use App\Models\TmsSparepart;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Excel;
+use Maatwebsite\Excel\Facades\Excel as FacadesExcel;
 
 class ActivityTmsController extends Controller
 {
@@ -746,5 +750,88 @@ class ActivityTmsController extends Controller
             'message' => 'Berhasil mengambil daftar aktivitas TMS.',
             'data' => $activities
         ], 200);
+    }
+
+    public function export(Request $request)
+    {
+        $month = $request->get('month'); // format YYYY-MM
+
+        $data = $this->getDataExcel($month); // <-- isi dengan query kamu tadi
+
+
+        $fileName = "activty-tms-{$month}.xlsx";
+        $path = "exports/{$fileName}";
+
+        FacadesExcel::store(new ActivityTmsExport($month, $data), $path, 'public');
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Export berhasil',
+            'data' => [
+                'download_link' => url("storage/{$path}")
+            ]
+        ]);
+    }
+
+    private function getDataExcel($month)
+    {
+        return ActivityTms::with([
+            'itemMachine:id,name,code,location',
+            'cleaningCriticals:id,activity_tms_id,foto,status',
+            'justCleaning:id,activity_tms_id,foto,status',
+            'replacementPart:id,activity_tms_id,foto,status',
+            'preventive:id,activity_tms_id,foto,status'
+        ])
+            ->select(
+                'id',
+                'item_machine_id',
+                'date',
+                'production_scan',
+                'safety_scan',
+                'jsa_file_cleaning_criticals',
+                'jsa_file_just_cleaning',
+                'jsa_file_replacement_part',
+                'jsa_file_preventive'
+            )
+            ->whereRaw("DATE_FORMAT(date, '%Y-%m') = ?", [$month])
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'date' => $item->date,
+                    'name' => $item->itemMachine->name ?? '-',
+                    'code' => $item->itemMachine->code ?? '-',
+                    'location' => $item->itemMachine->location ?? '-',
+                    'scope_of_work' => [
+                        'safety'     => !empty($item->safety_scan) ? '✔️' : '',
+                        'production' => !empty($item->production_scan) ? '✔️' : '',
+                    ],
+                    // 🛠️ Bagian Maintenance Type
+                    'maintenance_type' => [
+                        'cleaning_critical' => !empty($item->jsa_file_cleaning_criticals) ? '✔️' : '',
+                        'just_cleaning'     => !empty($item->jsa_file_just_cleaning) ? '✔️' : '',
+                        'replacement_part'  => !empty($item->jsa_file_replacement_part) ? '✔️' : '',
+                        'preventive_pm'     => !empty($item->jsa_file_preventive) ? '✔️' : '',
+                    ],
+                    // 📸 Documentation (foto before/after)
+                    'documentation' => [
+                        'cleaning_critical' => [
+                            'before' => $item->cleaningCriticals->where('status', 'before')->pluck('foto')->map(fn($f) => url('storage/' . $f))->values(),
+                            'after'  => $item->cleaningCriticals->where('status', 'after')->pluck('foto')->map(fn($f) => url('storage/' . $f))->values(),
+                        ],
+                        'just_cleaning' => [
+                            'before' => $item->justCleaning->where('status', 'before')->pluck('foto')->map(fn($f) => url('storage/' . $f))->values(),
+                            'after'  => $item->justCleaning->where('status', 'after')->pluck('foto')->map(fn($f) => url('storage/' . $f))->values(),
+                        ],
+                        'replacement_part' => [
+                            'before' => $item->replacementPart->where('status', 'before')->pluck('foto')->map(fn($f) => url('storage/' . $f))->values(),
+                            'after'  => $item->replacementPart->where('status', 'after')->pluck('foto')->map(fn($f) => url('storage/' . $f))->values(),
+                        ],
+                        'preventive' => [
+                            'before' => $item->preventive->where('status', 'before')->pluck('foto')->map(fn($f) => url('storage/' . $f))->values(),
+                            'after'  => $item->preventive->where('status', 'after')->pluck('foto')->map(fn($f) => url('storage/' . $f))->values(),
+                        ],
+                    ],
+                ];
+            });
     }
 }

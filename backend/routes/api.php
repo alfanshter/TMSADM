@@ -50,6 +50,7 @@ Route::middleware(['auth:sanctum', 'role:team_leader,admin,supervisor,teknisi'])
     Route::post('/maintenance', [ActivityTmsController::class, 'storeMaintenance']);
     Route::post('/activity-tms-update/{id}', [ActivityTmsController::class, 'updateActivityTms']);
     Route::put('/activity-tms/{id}/catatan', [CatatanController::class, 'update']);
+    Route::get('/export-activity-tms', [ActivityTmsController::class, 'export']);
 
 
 });

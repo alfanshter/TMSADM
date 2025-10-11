@@ -11,11 +11,14 @@ export const ENDPOINTS = {
   itemMachines: `${API_BASE_URL}/item-machines`,
   spareparts: `${API_BASE_URL}/spareparts`,
   activityTms: `${API_BASE_URL}/activity-tms-all`,
+  
   detailActivityTms: (id) => `${API_BASE_URL}/activity-tms/${id}`, // POST update
   addactivityTms: `${API_BASE_URL}/activity-tms`,
   activityTmsDetail: `${API_BASE_URL}/activity-tms`,
   updateActivityTms: `${API_BASE_URL}/activity-tms-update`,
   getActivityByScheduleList: `${API_BASE_URL}/getActivityByScheduleList`,
+  activityTmsExport: (year,month) => `${API_BASE_URL}/export-activity-tms?month=${year}-${month}`,
+
   
   // endpoint baru supervisor catatan
   updateSupervisorNote: (id) => `${API_BASE_URL}/activity-tms/${id}/catatan`,
@@ -24,6 +27,8 @@ export const ENDPOINTS = {
   fawreport: `${API_BASE_URL}/faw-reports`,
   fawReportDetail: (id) => `${API_BASE_URL}/faw-reports/${id}`,
   fawReportUpdate: `${API_BASE_URL}/faw-reports-update`,
+  fawReportExport: `${API_BASE_URL}/faw-reports/export`,
+
 
   // LeakageReport endpoints
   leakageReports: `${API_BASE_URL}/leakage-reports`, // GET list & POST create

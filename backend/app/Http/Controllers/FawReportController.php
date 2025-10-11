@@ -172,4 +172,37 @@ class FawReportController extends Controller
             'data' => null
         ]);
     }
+
+    public function export()
+    {
+        // Nama file unik berdasarkan tanggal
+        $fileName = 'faw_reports_' . \Carbon\Carbon::now()->format('Ymd_His') . '.xlsx';
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\FawReportExport, $fileName);
+
+        // Ambil data laporan + foto, dan mapping URL foto
+        $reports = \App\Models\FawReport::with('photos')->get()->map(function ($report) {
+            $report->photos->transform(function ($photo) {
+                $photo->photo_url = url('storage/' . $photo->photo_path);
+                return $photo;
+            });
+            return $report;
+        });
+
+        // Simpan ke storage/app/public/exports
+        \Maatwebsite\Excel\Facades\Excel::store(
+            new \App\Exports\FawReportExport,
+            'exports/' . $fileName,
+            'public'
+        );
+
+        // Buat URL public untuk file Excel
+        $fileUrl = \Illuminate\Support\Facades\Storage::url('exports/' . $fileName);
+
+        return response()->json([
+            'status'  => 1,
+            'message' => 'Export generated successfully',
+            'url'     => asset($fileUrl),
+            'data'    => $reports
+        ]);
+    }
 }

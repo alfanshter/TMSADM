@@ -30,7 +30,9 @@ const editedFawReport = ref(null);
 const baseUrl = import.meta.env.VITE_API_URL;
 
 // Ambil role dari cookie
-const userData = Cookies.get("userData") ? JSON.parse(Cookies.get("userData")) : null;
+const userData = Cookies.get("userData")
+  ? JSON.parse(Cookies.get("userData"))
+  : null;
 const role = userData?.user?.role;
 
 // Headers (Actions hanya untuk admin/team_leader)
@@ -119,6 +121,38 @@ const deleteFawReport = async (id) => {
   }
 };
 
+const exportFawReports = async () => {
+  try {
+    globalLoading?.show();
+    const response = await axios.get(ENDPOINTS.fawReportExport, {
+      responseType: "blob", // penting agar file terbaca sebagai file
+    });
+
+    // Buat URL blob & trigger download
+    const blob = new Blob([response.data], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `faw-reports-export-${
+      new Date().toISOString().split("T")[0]
+    }.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    snackbarMessage.value = "Export Excel berhasil!";
+    isSnackbarTopEndVisible.value = true;
+  } catch (error) {
+    console.error("Gagal export FAW reports:", error);
+    snackbarMessage.value = "Export Excel gagal!";
+    isSnackbarTopEndVisible.value = true;
+  } finally {
+    globalLoading?.hide();
+  }
+};
+
 // Filter data
 const filteredFawReports = computed(() => {
   return fawReports.value.filter((item) => {
@@ -136,9 +170,8 @@ const filteredFawReports = computed(() => {
 const router = useRouter();
 
 function handleEdit(item) {
- // Navigasi ke form edit dengan query id
- router.push(`/fawreport/update?id=${item.id}`);
-
+  // Navigasi ke form edit dengan query id
+  router.push(`/fawreport/update?id=${item.id}`);
 }
 
 // Tambahan: dengarkan event dari store setelah update
@@ -175,6 +208,15 @@ onMounted(() => {
           placeholder="Search Report"
           density="compact"
         />
+
+        <VBtn
+          variant="outlined"
+          color="secondary"
+          prepend-icon="ri-upload-2-line"
+          @click="exportFawReports"
+        >
+          Export
+        </VBtn>
         <VSpacer />
         <VBtn @click="$router.push('/fawreport/form')">
           Add New FAW Report
@@ -253,7 +295,7 @@ onMounted(() => {
           >
             <VIcon icon="ri-eye-line" />
           </IconBtn>
-          
+
           <IconBtn size="small" @click="handleEdit(item)">
             <VIcon icon="ri-edit-box-line" />
           </IconBtn>

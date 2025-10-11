@@ -59,10 +59,12 @@ Route::middleware(['auth:sanctum', 'role:team_leader,admin,supervisor,teknisi'])
 Route::middleware(['auth:sanctum', 'role:team_leader,admin,supervisor'])->group(function () {
     // Route::apiResource('faw-reports', FawReportController::class);
     Route::get('/faw-reports', [FawReportController::class, 'index']);
+    Route::get('/faw-reports/export', [FawReportController::class, 'export']);
     Route::get('/faw-reports/{id}', [FawReportController::class, 'show']);
     Route::post('/faw-reports', [FawReportController::class, 'store']);
     Route::post('/faw-reports-update/{id}', [FawReportController::class, 'update']);
     Route::delete('/faw-reports/{id}', [FawReportController::class, 'destroy']);
+ 
 
 });
 

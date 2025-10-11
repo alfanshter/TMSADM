@@ -16,8 +16,12 @@ use Maatwebsite\Excel\Facades\Excel as FacadesExcel;
 
 class ActivityTmsController extends Controller
 {
-    public function getAllActivityTms()
+    public function getAllActivityTms(Request $request)
     {
+
+        // ambil bulan dari request, kalau kosong pakai bulan sekarang
+        $yearOrMonth = $request->get('month') ?? date('Y-m'); // format: YYYY-MM
+
         $activities = ActivityTms::with([
             'itemMachine',
             'cleaningCriticals',
@@ -26,6 +30,12 @@ class ActivityTmsController extends Controller
             'replacementPart',
             'spareparts'
         ])
+            ->when($yearOrMonth, function ($query, $yearOrMonth) {
+                // Jika month dikirim, pecah jadi tahun & bulan
+                [$year, $month] = explode('-', $yearOrMonth);
+                $query->whereYear('date', $year)
+                    ->whereMonth('date', $month);
+            })
             ->latest()
             ->get();
 
@@ -796,7 +806,7 @@ class ActivityTmsController extends Controller
     private function getDataExcel($month)
     {
         return ActivityTms::with([
-            'itemMachine:id,name,code,location',
+            'itemMachine:id,name,code,location,scope_of_work',
             'cleaningCriticals:id,activity_tms_id,foto,status',
             'justCleaning:id,activity_tms_id,foto,status',
             'replacementPart:id,activity_tms_id,foto,status',
@@ -822,15 +832,15 @@ class ActivityTmsController extends Controller
                     'code' => $item->itemMachine->code ?? '-',
                     'location' => $item->itemMachine->location ?? '-',
                     'scope_of_work' => [
-                        'safety'     => !empty($item->safety_scan) ? '✔️' : '',
-                        'production' => !empty($item->production_scan) ? '✔️' : '',
+                        'safety'     => $item->itemMachine->scope_of_work === 'safety' ? '✔️' : '',
+                        'production' => $item->itemMachine->scope_of_work === 'production' ? '✔️' : '',
                     ],
                     // 🛠️ Bagian Maintenance Type
                     'maintenance_type' => [
-                        'cleaning_critical' => !empty($item->jsa_file_cleaning_criticals) ? '✔️' : '',
-                        'just_cleaning'     => !empty($item->jsa_file_just_cleaning) ? '✔️' : '',
-                        'replacement_part'  => !empty($item->jsa_file_replacement_part) ? '✔️' : '',
-                        'preventive_pm'     => !empty($item->jsa_file_preventive) ? '✔️' : '',
+                        'cleaning_critical' => $item->cleaningCriticals->isNotEmpty() ? '✔️' : '',
+                        'just_cleaning'     => $item->justCleaning->isNotEmpty() ? '✔️' : '',
+                        'replacement_part'  => $item->replacementPart->isNotEmpty() ? '✔️' : '',
+                        'preventive_pm'     => $item->preventive->isNotEmpty() ? '✔️' : '',
                     ],
                     // 📸 Documentation (foto before/after)
                     'documentation' => [

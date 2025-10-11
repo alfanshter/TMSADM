@@ -18,6 +18,33 @@ const globalLoading = inject("globalLoading");
 const selectedScopeOfWork = ref(null);
 
 
+// --- Filter Tahun & Bulan ---
+const currentYear = new Date().getFullYear();
+const currentMonth = String(new Date().getMonth() + 1).padStart(2, "0");
+
+const selectedYear = ref(currentYear);
+const selectedMonth = ref(currentMonth);
+
+// List tahun misalnya 5 tahun ke belakang & depan
+const years = ref(
+  Array.from({ length: 10 }, (_, i) => currentYear - 5 + i)
+);
+const months = ref([
+  { label: "January", value: "01" },
+  { label: "February", value: "02" },
+  { label: "March", value: "03" },
+  { label: "April", value: "04" },
+  { label: "May", value: "05" },
+  { label: "June", value: "06" },
+  { label: "July", value: "07" },
+  { label: "August", value: "08" },
+  { label: "September", value: "09" },
+  { label: "October", value: "10" },
+  { label: "November", value: "11" },
+  { label: "December", value: "12" },
+]);
+
+
 // baseURL untuk gambar & file
 const baseURL = `${import.meta.env.VITE_FILE_BASE_URL}/`;
 
@@ -177,7 +204,7 @@ const scope_of_work = [
 const fetchActivityTms = async () => {
   try {
     isLoading.value = true;
-    const res = await axios.get(ENDPOINTS.activityTms);
+    const res = await axios.get(`${ENDPOINTS.activityTms}?month=${selectedYear.value}-${selectedMonth.value}`);
     const result = res.data.data ?? res.data;
     activityTms.value = result;
     totalActivityTms.value = Array.isArray(result) ? result.length : 0;
@@ -201,6 +228,27 @@ function handleDetail(item) {
   activityStore.setCurrentItem(item); // simpan data di store
   router.push(`/activitytms/detail?id=${item.id}`);
 }
+
+const exportToExcel = async (year) => {
+  if (!year) {
+    console.error("Tahun belum dipilih");
+    return;
+  }
+  try {
+    const res = await axios.get(ENDPOINTS.activityTmsExport(selectedYear.value, selectedMonth.value));
+    window.open(res.data.data.download_link, "_blank");
+
+  } catch (err) {
+    console.error("Gagal export excel:", err);
+  }
+};
+
+// --- Re-fetch jika tahun / bulan berubah ---
+watch([selectedYear, selectedMonth], () => {
+  fetchActivityTms();
+});
+
+
 
 onMounted(() => {
   fetchActivityTms();
@@ -285,6 +333,37 @@ watch(selectedScopeOfWork, () => {
           </VCol>
         </VRow>
       </VCardText>
+
+      <VCardText>
+      <VRow>
+
+
+        <!-- Pilih Tahun -->
+        <VCol cols="12" sm="4">
+          <VSelect v-model="selectedYear" label="Select Year" :items="years" />
+        </VCol>
+
+        <!-- Pilih Bulan -->
+        <VCol cols="12" sm="4">
+          <VSelect v-model="selectedMonth" label="Select Month" :items="months" item-title="label" item-value="value" />
+        </VCol>
+      </VRow>
+    </VCardText>
+
+    <VDivider />
+
+    <VCardText class="d-flex flex-wrap gap-4 align-center">
+      <VBtn variant="outlined" color="secondary" prepend-icon="ri-upload-2-line" @click="exportToExcel">
+        Export
+      </VBtn>
+      <VSpacer />
+      <div class="d-flex align-center gap-4 flex-wrap">
+        <div class="app-user-search-filter" style="min-width: 250px; flex: 1">
+          <VTextField v-model="searchQuery" placeholder="Search Machine" density="compact" variant="outlined"
+            hide-details />
+        </div>
+      </div>
+    </VCardText>
 
       <VDataTable
         v-model:page="page"

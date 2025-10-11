@@ -25,7 +25,9 @@ class ActivityTmsController extends Controller
             'preventive',
             'replacementPart',
             'spareparts'
-        ])->get();
+        ])
+            ->latest()
+            ->get();
 
         // Transform data supaya spareparts hanya menampilkan field tertentu
         $activitiesFormatted = $activities->map(function ($activity) {
@@ -151,6 +153,10 @@ class ActivityTmsController extends Controller
             'catatan_teamleader_preventive_pm' => 'nullable|string|max:255',
             'catatan_supervisor_preventive_pm' => 'nullable|string|max:255',
 
+            // ⏱️ Downtime
+            'start_downtime' => 'nullable|date_format:H:i',
+            'end_downtime' => 'nullable|date_format:H:i|after_or_equal:start_downtime',
+
         ]);
 
         if ($validator->fails()) {
@@ -233,7 +239,6 @@ class ActivityTmsController extends Controller
             'production_scan' => $production_scan,
             'safety_scan_filename' => $safety_scan_filename,
             'production_scan_filename' => $production_scan_filename,
-            'production_downtime' => $production_downtime,
             // 👉 catatan
             'catatan_teamleader_cleaning_criticals' => $request->catatan_teamleader_cleaning_criticals,
             'catatan_supervisor_cleaning_criticals' => $request->catatan_supervisor_cleaning_criticals,
@@ -243,6 +248,11 @@ class ActivityTmsController extends Controller
             'catatan_supervisor_replacement_part' => $request->catatan_supervisor_replacement_part,
             'catatan_teamleader_preventive_pm' => $request->catatan_teamleader_preventive_pm,
             'catatan_supervisor_preventive_pm' => $request->catatan_supervisor_preventive_pm,
+            //downtime
+            'start_downtime' => $request->start_downtime,
+            'end_downtime' => $request->end_downtime,
+            'production_downtime' => $production_downtime,
+
 
         ]);
 
@@ -345,6 +355,10 @@ class ActivityTmsController extends Controller
             'catatan_supervisor_replacement_part' => 'nullable|string',
             'catatan_teamleader_preventive_pm' => 'nullable|string',
             'catatan_supervisor_preventive_pm' => 'nullable|string',
+
+            // ⏱️ Downtime
+            'start_downtime' => 'nullable|date_format:H:i',
+            'end_downtime' => 'nullable|date_format:H:i|after_or_equal:start_downtime',
 
 
         ]);
@@ -638,6 +652,12 @@ class ActivityTmsController extends Controller
         $activity->catatan_supervisor_replacement_part = $request->catatan_supervisor_replacement_part;
         $activity->catatan_teamleader_preventive_pm = $request->catatan_teamleader_preventive_pm;
         $activity->catatan_supervisor_preventive_pm = $request->catatan_supervisor_preventive_pm;
+
+        //update downtime
+        $activity->start_downtime = $request->start_downtime;
+        $activity->end_downtime = $request->end_downtime;
+        $activity->production_downtime = $request->production_downtime;
+
 
 
         $activity->save();

@@ -115,9 +115,7 @@ const outgoingRt = ref("");
 const outgoingSt = ref("");
 const temp = ref("");
 const deviation = ref("");
-const production_downtime = ref(0);
-const start_downtime = ref(null);
-const end_downtime = ref(null);
+const production_downtime = ref("");
 
 //sparepart
 const itemSparepart = ref([]);
@@ -156,20 +154,19 @@ const fetchActivityDetail = async () => {
     outgoingSt.value = data.outgoing_st ?? "";
     temp.value = data.temp ?? "";
     deviation.value = data.deviation ?? "";
-    production_downtime.value = data.production_downtime ?? 0;
-    start_downtime.value = data.start_downtime ?? null;
-    end_downtime.value = data.end_downtime ?? null;
-      
+    production_downtime.value = data.production_downtime ?? "";
+
     //Production file Scan
     production_scan_filename.value = data.production_scan_filename ?? "";
-    production_scan.value = data.production_scan ?? "";
+    production_scan_old.value = data.production_scan ?? "";
 
     //safety file scan
     safety_filename.value = data.safety_scan_filename ?? "";
     safety_old.value = data.safety_scan ?? "";
 
     //cleaning critical
-    cleaningCriticalJsa_filename.value = data.jsa_filename_cleaning_criticals ?? "";
+    cleaningCriticalJsa_filename.value =
+      data.jsa_filename_cleaning_criticals ?? "";
     cleaningCriticalJsa_old.value = data.jsa_file_cleaning_criticals ?? "";
     //just cleaning
     justCleaningJsa_filename.value = data.jsa_filename_just_cleaning ?? "";
@@ -274,6 +271,7 @@ const getFileUrl = (path) => {
   return `${import.meta.env.VITE_FILE_BASE_URL}/${path}`; // sesuaikan URL file
 };
 
+
 const getFileName = (path) => {
   return path.split("/").pop();
 };
@@ -369,34 +367,7 @@ onMounted(() => {
                 <div class="mb-2">
                   <strong>Scope of Work:</strong> {{ scopeOfWork }}
                 </div>
-                <!-- JSA ALL -->
-                <div class="mb-2">
-                  <strong>Job Safety Analysis :</strong> 
-                  <div v-if="production_scan_filename">
-                    <a
-                      :href="getFileUrl(production_scan)"
-                      target="_blank"
-                    >
-                      {{ getFileName(production_scan_filename) }}
-                    </a>
-                  </div>
-                </div>
-
-              
-                <!-- JSA END -->
-
                 <div class="mb-2"><strong>Date:</strong> {{ birthDate }}</div>
-
-                <div class="mb-2">
-                  <strong>Start Time Downtime:</strong> {{ start_downtime }} 
-                </div>
-
-
-                <div class="mb-2">
-                  <strong>End Time Downtime:</strong> {{ end_downtime }} 
-                </div>
-
-
                 <div class="mb-2">
                   <strong>Downtime:</strong> {{ production_downtime }} minutes
                 </div>

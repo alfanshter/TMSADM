@@ -287,10 +287,10 @@ const filteredActivityTms = computed(() => {
       : true;
     const matchesSearch = searchQuery.value
       ? machine.name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        machine.code?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        machine.location
-          ?.toLowerCase()
-          .includes(searchQuery.value.toLowerCase())
+      machine.code?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      machine.location
+        ?.toLowerCase()
+        .includes(searchQuery.value.toLowerCase())
       : true;
     return matchesScope && matchesSearch;
   });
@@ -303,12 +303,8 @@ watch(selectedScopeOfWork, () => {
 
 <template>
   <section>
-    <VSnackbar
-      v-model="isSnackbarTopEndVisible"
-      location="top end"
-      :color="snackbarMessage.includes('Delete') ? 'error' : 'success'"
-      timeout="3000"
-    >
+    <VSnackbar v-model="isSnackbarTopEndVisible" location="top end"
+      :color="snackbarMessage.includes('Delete') ? 'error' : 'success'" timeout="3000">
       {{ snackbarMessage }}
     </VSnackbar>
     <VCard>
@@ -316,63 +312,49 @@ watch(selectedScopeOfWork, () => {
       <VCardText>
         <VRow dense justify="space-between" align="center">
           <VCol cols="12" sm="4" md="3">
-            <VSelect
-              v-model="selectedScopeOfWork"
-              label="Select Scope of Work"
-              :items="scope_of_work"
-              clearable
-              density="compact"
-            />
+            <VSelect v-model="selectedScopeOfWork" label="Select Scope of Work" :items="scope_of_work" clearable
+              density="compact" />
           </VCol>
           <VCol cols="12" sm="4" md="3">
-            <VTextField
-              v-model="searchQuery"
-              placeholder="Search Item Machine"
-              density="compact"
-            />
+            <VTextField v-model="searchQuery" placeholder="Search Item Machine" density="compact" />
           </VCol>
         </VRow>
       </VCardText>
 
       <VCardText>
-      <VRow>
+        <VRow>
 
 
-        <!-- Pilih Tahun -->
-        <VCol cols="12" sm="4">
-          <VSelect v-model="selectedYear" label="Select Year" :items="years" />
-        </VCol>
+          <!-- Pilih Tahun -->
+          <VCol cols="12" sm="4">
+            <VSelect v-model="selectedYear" label="Select Year" :items="years" />
+          </VCol>
 
-        <!-- Pilih Bulan -->
-        <VCol cols="12" sm="4">
-          <VSelect v-model="selectedMonth" label="Select Month" :items="months" item-title="label" item-value="value" />
-        </VCol>
-      </VRow>
-    </VCardText>
+          <!-- Pilih Bulan -->
+          <VCol cols="12" sm="4">
+            <VSelect v-model="selectedMonth" label="Select Month" :items="months" item-title="label"
+              item-value="value" />
+          </VCol>
+        </VRow>
+      </VCardText>
 
-    <VDivider />
+      <VDivider />
 
-    <VCardText class="d-flex flex-wrap gap-4 align-center">
-      <VBtn variant="outlined" color="secondary" prepend-icon="ri-upload-2-line" @click="exportToExcel">
-        Export
-      </VBtn>
-      <VSpacer />
-      <div class="d-flex align-center gap-4 flex-wrap">
-        <div class="app-user-search-filter" style="min-width: 250px; flex: 1">
-          <VTextField v-model="searchQuery" placeholder="Search Machine" density="compact" variant="outlined"
-            hide-details />
+      <VCardText class="d-flex flex-wrap gap-4 align-center">
+        <VBtn variant="outlined" color="secondary" prepend-icon="ri-upload-2-line" @click="exportToExcel">
+          Export
+        </VBtn>
+        <VSpacer />
+        <div class="d-flex align-center gap-4 flex-wrap">
+          <div class="app-user-search-filter" style="min-width: 250px; flex: 1">
+            <VTextField v-model="searchQuery" placeholder="Search Machine" density="compact" variant="outlined"
+              hide-details />
+          </div>
         </div>
-      </div>
-    </VCardText>
+      </VCardText>
 
-      <VDataTable
-        v-model:page="page"
-        :headers="headers"
-        :items="filteredActivityTms"
-        :loading="isLoading"
-        :items-per-page="itemsPerPage"
-        class="text-no-wrap"
-      >
+      <VDataTable v-model:page="page" :headers="headers" :items="filteredActivityTms" :loading="isLoading"
+        :items-per-page="itemsPerPage" class="text-no-wrap">
         <!-- nama mesin -->
         <template #item.name="{ item }">
           {{ item.item_machine?.name }}
@@ -400,24 +382,17 @@ watch(selectedScopeOfWork, () => {
 
         <!-- Status -->
         <template #item.status="{ item }">
-          <VChip
-            :color="resolveUserStatusVariant(item.status === 1)"
-            size="small"
-          >
+          <VChip :color="resolveUserStatusVariant(item.status === 1)" size="small">
             {{ item.status === 1 ? "Aktif" : "Tidak Aktif" }}
           </VChip>
         </template>
 
         <!-- Actions -->
-        <template
-          v-if="
-            role === 'admin' ||
-            role === 'team_leader' ||
-            role === 'supervisor' ||
-            role === 'teknisi'
-          "
-          #item.actions="{ item }"
-        >
+        <template v-if="role === 'admin' ||
+          role === 'team_leader' ||
+          role === 'supervisor' ||
+          role === 'teknisi'
+          " #item.actions="{ item }">
           <IconBtn size="small" @click="handleEdit(item)">
             <VIcon icon="ri-edit-box-line" />
           </IconBtn>
@@ -451,41 +426,19 @@ watch(selectedScopeOfWork, () => {
             BEFORE
           </VChip>
           <VRow v-if="beforePhotos.length">
-            <VCol
-              v-for="(photo, i) in beforePhotos"
-              :key="'before-' + i"
-              cols="6"
-            >
-              <VImg
-                :src="baseURL + photo.foto"
-                aspect-ratio="1"
-                class="rounded border"
-                cover
-              />
+            <VCol v-for="(photo, i) in beforePhotos" :key="'before-' + i" cols="6">
+              <VImg :src="baseURL + photo.foto" aspect-ratio="1" class="rounded border" cover />
             </VCol>
           </VRow>
           <div v-else class="text-grey">Tidak ada foto sebelum</div>
 
           <!-- AFTER -->
-          <VChip
-            color="success"
-            text-color="white"
-            class="font-weight-bold mt-2 mb-2"
-          >
+          <VChip color="success" text-color="white" class="font-weight-bold mt-2 mb-2">
             AFTER
           </VChip>
           <VRow v-if="afterPhotos.length">
-            <VCol
-              v-for="(photo, i) in afterPhotos"
-              :key="'after-' + i"
-              cols="6"
-            >
-              <VImg
-                :src="baseURL + photo.foto"
-                aspect-ratio="1"
-                class="rounded border"
-                cover
-              />
+            <VCol v-for="(photo, i) in afterPhotos" :key="'after-' + i" cols="6">
+              <VImg :src="baseURL + photo.foto" aspect-ratio="1" class="rounded border" cover />
             </VCol>
           </VRow>
           <div v-else class="text-grey">Tidak ada foto sesudah</div>
@@ -527,61 +480,32 @@ watch(selectedScopeOfWork, () => {
           </div>
 
           <!-- Cleaning Critical -->
-          <template
-            v-if="selectedActivity.catatan_teamleader_cleaning_criticals"
-          >
-            <VLabel class="mb-1"
-              >Catatan Team Leader (Cleaning Critical)</VLabel
-            >
-            <VTextarea
-              v-model="selectedActivity.catatan_teamleader_cleaning_criticals"
-              rows="3"
-              auto-grow
-              readonly
-            />
+          <template v-if="selectedActivity.catatan_teamleader_cleaning_criticals">
+            <VLabel class="mb-1">Catatan Team Leader (Cleaning Critical)</VLabel>
+            <VTextarea v-model="selectedActivity.catatan_teamleader_cleaning_criticals" rows="3" auto-grow readonly />
           </template>
 
           <!-- Just Cleaning -->
           <template v-if="selectedActivity.catatan_teamleader_just_cleaning">
             <VLabel class="mb-1">Catatan Team Leader (Just Cleaning)</VLabel>
-            <VTextarea
-              v-model="selectedActivity.catatan_teamleader_just_cleaning"
-              rows="3"
-              auto-grow
-              readonly
-            />
+            <VTextarea v-model="selectedActivity.catatan_teamleader_just_cleaning" rows="3" auto-grow readonly />
           </template>
 
           <!-- Replacement Part -->
           <template v-if="selectedActivity.catatan_teamleader_replacement_part">
             <VLabel class="mb-1">Catatan Team Leader (Replacement Part)</VLabel>
-            <VTextarea
-              v-model="selectedActivity.catatan_teamleader_replacement_part"
-              rows="3"
-              auto-grow
-              readonly
-            />
+            <VTextarea v-model="selectedActivity.catatan_teamleader_replacement_part" rows="3" auto-grow readonly />
           </template>
 
           <!-- Preventive PM -->
           <template v-if="selectedActivity.catatan_teamleader_preventive_pm">
             <VLabel class="mb-1">Catatan Team Leader (Preventive PM)</VLabel>
-            <VTextarea
-              v-model="selectedActivity.catatan_teamleader_preventive_pm"
-              rows="3"
-              auto-grow
-              readonly
-            />
+            <VTextarea v-model="selectedActivity.catatan_teamleader_preventive_pm" rows="3" auto-grow readonly />
           </template>
 
           <!-- Supervisor bisa nambah/ubah -->
           <VLabel class="mt-4 mb-1">Catatan Supervisor</VLabel>
-          <VTextarea
-            v-model="supervisorNote"
-            placeholder="Tanggapan Supervisor"
-            rows="4"
-            auto-grow
-          />
+          <VTextarea v-model="supervisorNote" placeholder="Tanggapan Supervisor" rows="4" auto-grow />
         </VCardText>
 
         <VCardActions>

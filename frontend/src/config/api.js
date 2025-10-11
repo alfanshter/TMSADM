@@ -27,7 +27,7 @@ export const ENDPOINTS = {
   fawreport: `${API_BASE_URL}/faw-reports`,
   fawReportDetail: (id) => `${API_BASE_URL}/faw-reports/${id}`,
   fawReportUpdate: `${API_BASE_URL}/faw-reports-update`,
-  fawReportExport: `${API_BASE_URL}/faw-reports/export`,
+  fawReportExport:  (year,month) =>`${API_BASE_URL}/faw-reports/export?month=${year}-${month}`,
 
 
   // LeakageReport endpoints

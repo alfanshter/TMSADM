@@ -97,7 +97,7 @@ class FawReportExport implements FromCollection, WithHeadings, WithDrawings, Wit
         $logo = new Drawing();
         $logo->setName('ADM Logo');
         $logo->setDescription('Logo ADM');
-        $logo->setPath(public_path('images/logoadm.jpeg'));
+        $logo->setPath(public_path('images/logoadm.png'));
         $logo->setHeight(45);
         $logo->setCoordinates('E1');
         $logo->setOffsetX(80);

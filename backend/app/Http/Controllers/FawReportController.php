@@ -4,15 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Models\FawReport;
 use App\Models\FawReportPhoto;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class FawReportController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $reports = FawReport::with('photos')->latest()->get();
+
+        // ambil bulan dari request, kalau kosong pakai bulan sekarang
+        $yearOrMonth = $request->get('month'); // biarkan null kalau tidak dikirim
+
+
+        $reports = FawReport::with('photos')
+            ->when($yearOrMonth, function ($query, $yearOrMonth) {
+                // Jika month dikirim, pecah jadi tahun & bulan
+                [$year, $month] = explode('-', $yearOrMonth);
+                $query->whereYear('date', $year)
+                    ->whereMonth('date', $month);
+            })
+            ->latest()->get();
         return response()->json([
             'status' => 1,
             'message' => 'Data fetched successfully',
@@ -173,20 +186,32 @@ class FawReportController extends Controller
         ]);
     }
 
-    public function export()
+    public function export(Request $request)
     {
+
+
+        // Ambil bulan dari request (format: YYYY-MM)
+        $month = $request->get('month') ?? Carbon::now()->format('Y-m');
+
+        // ✅ Pecah jadi tahun dan bulan
+        [$year, $monthNumber] = explode('-', $month);
+
         // Nama file unik berdasarkan tanggal
         $fileName = 'faw_reports_' . \Carbon\Carbon::now()->format('Ymd_His') . '.xlsx';
         return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\FawReportExport, $fileName);
 
         // Ambil data laporan + foto, dan mapping URL foto
-        $reports = \App\Models\FawReport::with('photos')->get()->map(function ($report) {
-            $report->photos->transform(function ($photo) {
-                $photo->photo_url = url('storage/' . $photo->photo_path);
-                return $photo;
+        $reports = \App\Models\FawReport::with('photos')
+            ->whereYear('date', $year)
+            ->whereMonth('date', $monthNumber)
+
+            ->get()->map(function ($report) {
+                $report->photos->transform(function ($photo) {
+                    $photo->photo_url = url('storage/' . $photo->photo_path);
+                    return $photo;
+                });
+                return $report;
             });
-            return $report;
-        });
 
         // Simpan ke storage/app/public/exports
         \Maatwebsite\Excel\Facades\Excel::store(

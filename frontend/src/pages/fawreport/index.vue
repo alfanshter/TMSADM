@@ -29,6 +29,35 @@ const editedFawReport = ref(null);
 
 const baseUrl = import.meta.env.VITE_API_URL;
 
+
+
+// --- Filter Tahun & Bulan ---
+const currentYear = new Date().getFullYear();
+const currentMonth = String(new Date().getMonth() + 1).padStart(2, "0");
+
+const selectedYear = ref(currentYear);
+const selectedMonth = ref(currentMonth);
+
+// List tahun misalnya 5 tahun ke belakang & depan
+const years = ref(
+  Array.from({ length: 10 }, (_, i) => currentYear - 5 + i)
+);
+const months = ref([
+  { label: "January", value: "01" },
+  { label: "February", value: "02" },
+  { label: "March", value: "03" },
+  { label: "April", value: "04" },
+  { label: "May", value: "05" },
+  { label: "June", value: "06" },
+  { label: "July", value: "07" },
+  { label: "August", value: "08" },
+  { label: "September", value: "09" },
+  { label: "October", value: "10" },
+  { label: "November", value: "11" },
+  { label: "December", value: "12" },
+]);
+
+
 // Ambil role dari cookie
 const userData = Cookies.get("userData")
   ? JSON.parse(Cookies.get("userData"))
@@ -61,7 +90,8 @@ const stripHtml = (html) => {
 const fetchFawReports = async () => {
   isLoading.value = true;
   try {
-    const res = await axios.get(ENDPOINTS.fawreport);
+
+    const res = await axios.get(`${ENDPOINTS.fawreport}?month=${selectedYear.value}-${selectedMonth.value}`);
     console.log("Data dari backend:", res.data);
     fawReports.value = res.data.data.map((r) => {
       return {
@@ -123,8 +153,9 @@ const deleteFawReport = async (id) => {
 
 const exportFawReports = async () => {
   try {
+
     globalLoading?.show();
-    const response = await axios.get(ENDPOINTS.fawReportExport, {
+    const response = await axios.get(ENDPOINTS.fawReportExport(selectedYear.value, selectedMonth.value), {
       responseType: "blob", // penting agar file terbaca sebagai file
     });
 
@@ -181,6 +212,10 @@ FawReportStore.$subscribe((mutation, state) => {
   }
 });
 
+watch([selectedYear, selectedMonth], () => {
+  fetchFawReports();
+});
+
 onMounted(() => {
   fetchFawReports();
 });
@@ -202,6 +237,25 @@ onMounted(() => {
         <VCardTitle>FAW Reports</VCardTitle>
       </VCardItem>
 
+      <VCardText>
+        <VRow>
+
+
+          <!-- Pilih Tahun -->
+          <VCol cols="12" sm="4">
+            <VSelect v-model="selectedYear" label="Select Year" :items="years" />
+          </VCol>
+
+          <!-- Pilih Bulan -->
+          <VCol cols="12" sm="4">
+            <VSelect v-model="selectedMonth" label="Select Month" :items="months" item-title="label"
+              item-value="value" />
+          </VCol>
+        </VRow>
+      </VCardText>
+
+      <VDivider />
+
       <VCardText class="d-flex flex-wrap gap-4 align-center">
         <VTextField
           v-model="searchQuery"
@@ -222,6 +276,7 @@ onMounted(() => {
           Add New FAW Report
         </VBtn>
       </VCardText>
+      
 
       <VDataTable
         v-model:page="page"

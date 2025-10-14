@@ -4,10 +4,10 @@ import axios from "axios";
 import { ENDPOINTS } from "@/config/api";
 
 import EcommerceSalesOverview from "@/views/dashboards/ecommerce/EcommerceSalesOverview.vue";
-import illustration1 from "@images/cards/illustration-1.png";
-import illustration2 from "@images/cards/illustration-2.png";
-import illustration3 from "@images/cards/illustration-3.png";
-import illustration4 from "@images/cards/illustration-4.png";
+import illustration1 from "@images/cards/activitytms.png";
+import illustration2 from "@images/cards/fawreport.png";
+import illustration3 from "@images/cards/leakagereport.png";
+import illustration4 from "@images/cards/schedule.png";
 
 const statisticsWithImages = ref([]);
 const isLoading = ref(true); // loader lokal

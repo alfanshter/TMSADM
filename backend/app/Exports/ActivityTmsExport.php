@@ -23,7 +23,9 @@ class ActivityTmsExport implements FromCollection, WithHeadings, WithMapping, Wi
     {
         $this->month = $month;
         $this->data = $data;
+       
     }
+
 
     public function collection()
     {
@@ -33,7 +35,7 @@ class ActivityTmsExport implements FromCollection, WithHeadings, WithMapping, Wi
     public function headings(): array
     {
         return [
-            ['ACTIVITY TMS' . date('Y')],
+            ['ACTIVITY TMS ' . date('Y')],
             [],
             [],
             [
@@ -50,17 +52,22 @@ class ActivityTmsExport implements FromCollection, WithHeadings, WithMapping, Wi
                 'PREVENTIVE (PM)',
                 'FOTO BEFORE (CLEANING CRITICAL)',
                 'FOTO AFTER (CLEANING CRITICAL)',
+                'CATATAN TL (CLEANING CRITICAL)',     // 🆕
                 'FOTO BEFORE (JUST CLEANING)',
                 'FOTO AFTER (JUST CLEANING)',
+                'CATATAN TL (JUST CLEANING)',        // 🆕
                 'FOTO BEFORE (REPLACEMENT PART)',
                 'FOTO AFTER (REPLACEMENT PART)',
+                'CATATAN TL (REPLACEMENT PART)',     // 🆕
                 'FOTO BEFORE (PM)',
                 'FOTO AFTER (PM)',
-            ],[
-                '', '', '', '', '', // 5 kolom pertama kosong
+                'CATATAN TL (PM)',                   // 🆕
+            ],
+            [
+                '', '', '', '', '',
                 'SAFETY',
                 'PRODUCTION',
-                '', '', '', '', '', '', '', '', '', '', '',
+                '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', // total sesuai heading
             ]
         ];
     }
@@ -70,7 +77,6 @@ class ActivityTmsExport implements FromCollection, WithHeadings, WithMapping, Wi
         static $no = 0;
         $no++;
 
-        // Kosongkan kolom foto, nanti digantikan gambar
         return [
             $no,
             $row['name'] ?? '-',
@@ -82,98 +88,108 @@ class ActivityTmsExport implements FromCollection, WithHeadings, WithMapping, Wi
             $row['maintenance_type']['cleaning_critical'] ?? '',
             $row['maintenance_type']['just_cleaning'] ?? '',
             $row['maintenance_type']['replacement_part'] ?? '',
-            $row['maintenance_type']['preventive_pm'] ?? '',
-            '', '', '', '', '', '', '', '',
+             $row['maintenance_type']['preventive_pm'] ?? '',
+            '', '', $row['catatan_teamleader_cleaning_criticals'] ?? '', // catatan Cleaning Critical
+            '', '', $row['catatan_teamleader_just_cleaning'] ?? '-',     // catatan Just Cleaning
+            '', '', $row['catatan_teamleader_replacement_part'] ?? '',  // catatan Replacement Part
+            '', '', $row['catatan_teamleader_preventive_pm'] ?? '', 
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
-        // 🧭 Judul besar
-        $sheet->mergeCells('A1:S1');
+        // Judul besar
+        $sheet->mergeCells('A1:W1');
         $sheet->setCellValue('A1', 'ACTIVITY TMS - ' . date('F Y', strtotime($this->month . '-01')));
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
         $sheet->getStyle('A1')->getAlignment()
             ->setHorizontal(Alignment::HORIZONTAL_CENTER)
             ->setVertical(Alignment::VERTICAL_CENTER);
-    
-        // 🟦 Header tabel (dua baris: baris 4-5)
-        $sheet->getStyle('A4:S5')->getFill()->setFillType(Fill::FILL_SOLID)
+
+        // Header tabel
+        $sheet->getStyle('A4:W5')->getFill()->setFillType(Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FF305496');
-        $sheet->getStyle('A4:S5')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
-        $sheet->getStyle('A4:S5')->getAlignment()
+        $sheet->getStyle('A4:W5')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A4:W5')->getAlignment()
             ->setHorizontal(Alignment::HORIZONTAL_CENTER)
             ->setVertical(Alignment::VERTICAL_CENTER)
             ->setWrapText(true);
-    
-        // 🔲 Merge cell header
-        $sheet->mergeCells('A4:A5'); // NO
-        $sheet->mergeCells('B4:B5'); // ITEM MACHINE
-        $sheet->mergeCells('C4:C5'); // CODE
-        $sheet->mergeCells('D4:D5'); // LOCATION
-        $sheet->mergeCells('E4:E5'); // DATE
-    
-        // Scope of Work (gabung 2 kolom)
+
+        // Merge NO - DATE
+        $sheet->mergeCells('A4:A5');
+        $sheet->mergeCells('B4:B5');
+        $sheet->mergeCells('C4:C5');
+        $sheet->mergeCells('D4:D5');
+        $sheet->mergeCells('E4:E5');
+
+        // Scope of Work
         $sheet->mergeCells('F4:G4');
         $sheet->setCellValue('F4', 'SCOPE OF WORK');
         $sheet->setCellValue('F5', 'SAFETY');
         $sheet->setCellValue('G5', 'PRODUCTION');
-    
-        // Maintenance Type (optional: biar rapi juga)
+
+        // Maintenance Type
         $sheet->mergeCells('H4:K4');
         $sheet->setCellValue('H4', 'MAINTENANCE TYPE');
         $sheet->setCellValue('H5', 'CLEANING CRITICAL');
         $sheet->setCellValue('I5', 'JUST CLEANING');
         $sheet->setCellValue('J5', 'REPLACEMENT PART');
         $sheet->setCellValue('K5', 'PREVENTIVE (PM)');
-    
-        // Foto bagian (Before/After)
-        $sheet->mergeCells('L4:M4');
+
+        // Foto + Catatan Cleaning Critical
+        $sheet->mergeCells('L4:N4');
         $sheet->setCellValue('L4', 'CLEANING CRITICAL');
         $sheet->setCellValue('L5', 'FOTO BEFORE');
         $sheet->setCellValue('M5', 'FOTO AFTER');
-    
-        $sheet->mergeCells('N4:O4');
-        $sheet->setCellValue('N4', 'JUST CLEANING');
-        $sheet->setCellValue('N5', 'FOTO BEFORE');
-        $sheet->setCellValue('O5', 'FOTO AFTER');
-    
-        $sheet->mergeCells('P4:Q4');
-        $sheet->setCellValue('P4', 'REPLACEMENT PART');
-        $sheet->setCellValue('P5', 'FOTO BEFORE');
-        $sheet->setCellValue('Q5', 'FOTO AFTER');
-    
-        $sheet->mergeCells('R4:S4');
-        $sheet->setCellValue('R4', 'PM');
+        $sheet->setCellValue('N5', 'CATATAN TL');
+
+        // Just Cleaning
+        $sheet->mergeCells('O4:Q4');
+        $sheet->setCellValue('O4', 'JUST CLEANING');
+        $sheet->setCellValue('O5', 'FOTO BEFORE');
+        $sheet->setCellValue('P5', 'FOTO AFTER');
+        $sheet->setCellValue('Q5', 'CATATAN TL');
+
+        // Replacement Part
+        $sheet->mergeCells('R4:T4');
+        $sheet->setCellValue('R4', 'REPLACEMENT PART');
         $sheet->setCellValue('R5', 'FOTO BEFORE');
         $sheet->setCellValue('S5', 'FOTO AFTER');
-    
-        // 📏 Lebar kolom
-        foreach (range('A', 'S') as $col) {
-            if (in_array($col, ['L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'])) {
+        $sheet->setCellValue('T5', 'CATATAN TL');
+
+        // PM
+        $sheet->mergeCells('U4:W4');
+        $sheet->setCellValue('U4', 'PM');
+        $sheet->setCellValue('U5', 'FOTO BEFORE');
+        $sheet->setCellValue('V5', 'FOTO AFTER');
+        $sheet->setCellValue('W5', 'CATATAN TL');
+
+        // Lebar kolom
+        foreach (range('A', 'W') as $col) {
+            if (in_array($col, ['L','M','O','P','R','S','U','V'])) {
                 $sheet->getColumnDimension($col)->setWidth(30);
             } else {
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
         }
-    
-        // 📐 Tinggi baris dinamis untuk gambar
-        $startRow = 6; // karena header sampai baris 5
+
+        // Tinggi baris dinamis utk gambar
+        $startRow = 6;
         $maxPerRow = 2;
         $imgHeight = 130;
         $imgGap = 10;
-    
+
         foreach ($this->data as $index => $row) {
             $rowNumber = $startRow + $index;
             $maxPhotos = 0;
-    
+
             foreach (['cleaning_critical', 'just_cleaning', 'replacement_part', 'preventive'] as $type) {
                 foreach (['before', 'after'] as $when) {
                     $count = count($row['documentation'][$type][$when] ?? []);
                     $maxPhotos = max($maxPhotos, $count);
                 }
             }
-    
+
             if ($maxPhotos > 0) {
                 $rowsNeeded = ceil($maxPhotos / $maxPerRow);
                 $rowHeight = ($rowsNeeded * ($imgHeight + $imgGap)) * 0.75;
@@ -182,10 +198,10 @@ class ActivityTmsExport implements FromCollection, WithHeadings, WithMapping, Wi
                 $sheet->getRowDimension($rowNumber)->setRowHeight(25);
             }
         }
-    
-        // 🧱 Border semua tabel dari header sampai data terakhir
+
+        // Border tabel
         $highestRow = $sheet->getHighestRow();
-        $sheet->getStyle("A4:S{$highestRow}")->applyFromArray([
+        $sheet->getStyle("A4:W{$highestRow}")->applyFromArray([
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
@@ -193,15 +209,14 @@ class ActivityTmsExport implements FromCollection, WithHeadings, WithMapping, Wi
                 ],
             ],
         ]);
-    
-        // 🎯 Rata tengah semua sel
-        $sheet->getStyle("A1:S{$highestRow}")
+
+        // Rata tengah semua sel
+        $sheet->getStyle("A1:W{$highestRow}")
             ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)
             ->setVertical(Alignment::VERTICAL_CENTER);
-    
+
         return [];
     }
-    
 
     public function registerEvents(): array
     {
@@ -212,66 +227,58 @@ class ActivityTmsExport implements FromCollection, WithHeadings, WithMapping, Wi
     {
         $drawings = [];
         $startRow = 6;
-
-        $maxPerRow = 2;  // 2 gambar per baris
+        $maxPerRow = 2;
 
         foreach ($this->data as $index => $row) {
             $rowNumber = $startRow + $index;
             $docs = $row['documentation'] ?? [];
-            $addDrawing = function ($images, $col, $label, $rowNumber)
-            use (&$drawings, $maxPerRow) {
-            if (empty($images)) return;
-        
-            $images = array_values($images);
-        
-            // pengaturan layout gambar
-            $imgWidth = 80;   // kecilin biar muat 2 gambar dalam 1 cell
-            $imgHeight = 60;
-            $xSpacing = 90;   // jarak antar gambar horizontal
-            $ySpacing = 80;   // jarak antar gambar vertikal
-            $xStart = 5;      // jarak dari sisi kiri cell
-            $yStart = 5;
-        
-            foreach ($images as $i => $imgUrl) {
-                $path = public_path(parse_url($imgUrl, PHP_URL_PATH));
-                if (!file_exists($path)) continue;
-        
-                $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
-                $drawing->setName($label);
-                $drawing->setDescription($label);
-                $drawing->setPath($path);
-                $drawing->setResizeProportional(true);
-        
-                // kecilin gambar
-                $drawing->setWidth($imgWidth);
-                $drawing->setHeight($imgHeight);
-        
-                // posisi gambar supaya X X / X X rata tengah dan nggak keluar border
-                $colOffset = ($i % $maxPerRow) * $xSpacing + $xStart;
-                $rowOffset = floor($i / $maxPerRow) * $ySpacing + $yStart;
-        
-                $drawing->setCoordinates($col . $rowNumber);
-                $drawing->setOffsetX($colOffset);
-                $drawing->setOffsetY($rowOffset);
-        
-                $drawings[] = $drawing;
-            }
-        
-        };
-        
 
-            // Tambahkan semua kategori gambar
+            $addDrawing = function ($images, $col, $label, $rowNumber) use (&$drawings, $maxPerRow) {
+                if (empty($images)) return;
+                $images = array_values($images);
+
+                $imgWidth = 80;
+                $imgHeight = 60;
+                $xSpacing = 90;
+                $ySpacing = 80;
+                $xStart = 5;
+                $yStart = 5;
+
+                foreach ($images as $i => $imgUrl) {
+                    $path = public_path(parse_url($imgUrl, PHP_URL_PATH));
+                    if (!file_exists($path)) continue;
+
+                    $drawing = new Drawing();
+                    $drawing->setName($label);
+                    $drawing->setDescription($label);
+                    $drawing->setPath($path);
+                    $drawing->setResizeProportional(true);
+                    $drawing->setWidth($imgWidth);
+                    $drawing->setHeight($imgHeight);
+
+                    $colOffset = ($i % $maxPerRow) * $xSpacing + $xStart;
+                    $rowOffset = floor($i / $maxPerRow) * $ySpacing + $yStart;
+
+                    $drawing->setCoordinates($col . $rowNumber);
+                    $drawing->setOffsetX($colOffset);
+                    $drawing->setOffsetY($rowOffset);
+
+                    $drawings[] = $drawing;
+                }
+            };
+
+            // Gambar
             $addDrawing($docs['cleaning_critical']['before']->toArray() ?? [], 'L', 'Before Cleaning Critical', $rowNumber);
             $addDrawing($docs['cleaning_critical']['after']->toArray() ?? [], 'M', 'After Cleaning Critical', $rowNumber);
-            $addDrawing($docs['just_cleaning']['before']->toArray() ?? [], 'N', 'Before Just Cleaning', $rowNumber);
-            $addDrawing($docs['just_cleaning']['after']->toArray() ?? [], 'O', 'After Just Cleaning', $rowNumber);
-            $addDrawing($docs['replacement_part']['before']->toArray() ?? [], 'P', 'Before Replacement Part', $rowNumber);
-            $addDrawing($docs['replacement_part']['after']->toArray() ?? [], 'Q', 'After Replacement Part', $rowNumber);
-            $addDrawing($docs['preventive']['before']->toArray() ?? [], 'R', 'Before PM', $rowNumber);
-            $addDrawing($docs['preventive']['after']->toArray() ?? [], 'S', 'After PM', $rowNumber);
+            $addDrawing($docs['just_cleaning']['before']->toArray() ?? [], 'O', 'Before Just Cleaning', $rowNumber);
+            $addDrawing($docs['just_cleaning']['after']->toArray() ?? [], 'P', 'After Just Cleaning', $rowNumber);
+            $addDrawing($docs['replacement_part']['before']->toArray() ?? [], 'R', 'Before Replacement Part', $rowNumber);
+            $addDrawing($docs['replacement_part']['after']->toArray() ?? [], 'S', 'After Replacement Part', $rowNumber);
+            $addDrawing($docs['preventive']['before']->toArray() ?? [], 'U', 'Before PM', $rowNumber);
+            $addDrawing($docs['preventive']['after']->toArray() ?? [], 'V', 'After PM', $rowNumber);
         }
 
-        // 🖼 Logo ADM kanan atas
+        // Logo ADM kanan atas
         $logo = new Drawing();
         $logo->setName('ADM Logo');
         $logo->setDescription('Logo ADM');

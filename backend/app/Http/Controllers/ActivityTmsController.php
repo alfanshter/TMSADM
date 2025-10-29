@@ -798,8 +798,9 @@ class ActivityTmsController extends Controller
             'status' => true,
             'message' => 'Export berhasil',
             'data' => [
-                'download_link' => url("storage/{$path}")
+                'download_link' => url("storage/{$path}"),
             ]
+            
         ]);
     }
 
@@ -821,7 +822,11 @@ class ActivityTmsController extends Controller
                 'jsa_file_cleaning_criticals',
                 'jsa_file_just_cleaning',
                 'jsa_file_replacement_part',
-                'jsa_file_preventive'
+                'jsa_file_preventive',
+                'catatan_teamleader_cleaning_criticals',
+                'catatan_teamleader_just_cleaning',
+                'catatan_teamleader_replacement_part',
+                'catatan_teamleader_preventive_pm'
             )
             ->whereRaw("DATE_FORMAT(date, '%Y-%m') = ?", [$month])
             ->get()
@@ -842,6 +847,11 @@ class ActivityTmsController extends Controller
                         'replacement_part'  => $item->replacementPart->isNotEmpty() ? '✔️' : '',
                         'preventive_pm'     => $item->preventive->isNotEmpty() ? '✔️' : '',
                     ],
+                    //catatan
+                    'catatan_teamleader_cleaning_criticals' => $item->catatan_teamleader_cleaning_criticals,
+                    'catatan_teamleader_just_cleaning' => $item->catatan_teamleader_just_cleaning,
+                    'catatan_teamleader_replacement_part' => $item->catatan_teamleader_replacement_part,
+                    'catatan_teamleader_preventive_pm' => $item->catatan_teamleader_preventive_pm,
                     // 📸 Documentation (foto before/after)
                     'documentation' => [
                         'cleaning_critical' => [

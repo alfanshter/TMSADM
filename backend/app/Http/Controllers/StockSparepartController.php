@@ -86,7 +86,7 @@ class StockSparepartController extends Controller
 
     public function show($id)
     {
-        $sparepart = StockSparepart::find($id);
+        $sparepart = StockSparepart::withSum('usages', 'qty')->find($id);
 
         if (!$sparepart) {
             return response()->json([
@@ -96,7 +96,8 @@ class StockSparepartController extends Controller
             ], 404);
         }
 
-        $sparepart->end_month_stock = $sparepart->stok_awal + $sparepart->incoming - $sparepart->usage;
+        $sparepart['usage'] = $sparepart->usages_sum_qty ?? 0;
+        $sparepart['end_month_stock'] = $sparepart['stok'] + $sparepart['incoming'] - $sparepart['usage'];
 
         return response()->json([
             'status' => true,
@@ -128,7 +129,8 @@ class StockSparepartController extends Controller
                 'required',
                 Rule::in(['Belting & House', 'Safety', 'Tools', 'Spare part & Cons']),
             ],
-            'stok' => 'sometimes|required|integer|min:0',
+            'stok' => 'sometimes|integer|min:0',
+            'incoming' => 'sometimes|integer|min:0',
             'remark' => 'sometimes|required|string|max:50',
         ]);
 
@@ -145,7 +147,11 @@ class StockSparepartController extends Controller
         $validated = $validator->validated();
 
         $sparepart->update($validated);
-        $sparepart['end_month_stock'] = $sparepart['stok'] + $sparepart['incoming'];
+        
+        // Re-fetch dengan withSum untuk mendapatkan data terbaru termasuk usages_sum_qty
+        $sparepart = StockSparepart::withSum('usages', 'qty')->find($id);
+        $sparepart['usage'] = $sparepart->usages_sum_qty ?? 0;
+        $sparepart['end_month_stock'] = $sparepart['stok'] + $sparepart['incoming'] - $sparepart['usage'];
 
         return response()->json([
             'status' => true,

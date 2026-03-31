@@ -572,9 +572,13 @@ class ComposerStaticInitc7846695e316e8adffb3e9eaf1b37dc4
 
     public static $classMap = array (
         'App\\Console\\Commands\\ClearTmpPhotos' => __DIR__ . '/../..' . '/app/Console/Commands/ClearTmpPhotos.php',
+        'App\\Exports\\ActivityTmsExport' => __DIR__ . '/../..' . '/app/Exports/ActivityTmsExport.php',
+        'App\\Exports\\FawReportExport' => __DIR__ . '/../..' . '/app/Exports/FawReportExport.php',
+        'App\\Exports\\PMScheduleReport' => __DIR__ . '/../..' . '/app/Exports/PMScheduleReport.php',
         'App\\Exports\\StockSparepartsExport' => __DIR__ . '/../..' . '/app/Exports/StockSparepartsExport.php',
         'App\\Http\\Controllers\\ActivityTmsController' => __DIR__ . '/../..' . '/app/Http/Controllers/ActivityTmsController.php',
         'App\\Http\\Controllers\\AuthController' => __DIR__ . '/../..' . '/app/Http/Controllers/AuthController.php',
+        'App\\Http\\Controllers\\CatatanController' => __DIR__ . '/../..' . '/app/Http/Controllers/CatatanController.php',
         'App\\Http\\Controllers\\Controller' => __DIR__ . '/../..' . '/app/Http/Controllers/Controller.php',
         'App\\Http\\Controllers\\DashboardController' => __DIR__ . '/../..' . '/app/Http/Controllers/DashboardController.php',
         'App\\Http\\Controllers\\FawReportController' => __DIR__ . '/../..' . '/app/Http/Controllers/FawReportController.php',
@@ -589,7 +593,6 @@ class ComposerStaticInitc7846695e316e8adffb3e9eaf1b37dc4
         'App\\Http\\Controllers\\TmsSparepartController' => __DIR__ . '/../..' . '/app/Http/Controllers/TmsSparepartController.php',
         'App\\Http\\Middleware\\Authenticate' => __DIR__ . '/../..' . '/app/Http/Middleware/Authenticate.php',
         'App\\Http\\Middleware\\RoleMiddleware' => __DIR__ . '/../..' . '/app/Http/Middleware/RoleMiddleware.php',
-        'App\\Models\\ActivityTms' => __DIR__ . '/../..' . '/app/Models/ActivityTms.php',
         'App\\Models\\CleaningCritical' => __DIR__ . '/../..' . '/app/Models/CleaningCritical.php',
         'App\\Models\\FawReport' => __DIR__ . '/../..' . '/app/Models/FawReport.php',
         'App\\Models\\FawReportPhoto' => __DIR__ . '/../..' . '/app/Models/FawReportPhoto.php',

@@ -9,19 +9,21 @@ class StockSparepart extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'nama_sparepart',
-        'spec',
-        'loc',
-        'type',
-        'category',
-        'stok',
-        'remark',
-        'stok_awal',
-        'incoming',
-        'usage',
-        'end_month_stock'
-    ];
+    // protected $fillable = [
+    //     'nama_sparepart',
+    //     'spec',
+    //     'loc',
+    //     'type',
+    //     'category',
+    //     'stok',
+    //     'remark',
+    //     'stok_awal',
+    //     'incoming',
+    //     'usage',
+    //     'end_month_stock'
+    // ];
+
+    protected $guarded = ['id'];
 
     public function activities()
     {

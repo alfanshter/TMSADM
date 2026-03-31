@@ -7,9 +7,13 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'App\\Console\\Commands\\ClearTmpPhotos' => $baseDir . '/app/Console/Commands/ClearTmpPhotos.php',
+    'App\\Exports\\ActivityTmsExport' => $baseDir . '/app/Exports/ActivityTmsExport.php',
+    'App\\Exports\\FawReportExport' => $baseDir . '/app/Exports/FawReportExport.php',
+    'App\\Exports\\PMScheduleReport' => $baseDir . '/app/Exports/PMScheduleReport.php',
     'App\\Exports\\StockSparepartsExport' => $baseDir . '/app/Exports/StockSparepartsExport.php',
     'App\\Http\\Controllers\\ActivityTmsController' => $baseDir . '/app/Http/Controllers/ActivityTmsController.php',
     'App\\Http\\Controllers\\AuthController' => $baseDir . '/app/Http/Controllers/AuthController.php',
+    'App\\Http\\Controllers\\CatatanController' => $baseDir . '/app/Http/Controllers/CatatanController.php',
     'App\\Http\\Controllers\\Controller' => $baseDir . '/app/Http/Controllers/Controller.php',
     'App\\Http\\Controllers\\DashboardController' => $baseDir . '/app/Http/Controllers/DashboardController.php',
     'App\\Http\\Controllers\\FawReportController' => $baseDir . '/app/Http/Controllers/FawReportController.php',
@@ -24,7 +28,6 @@ return array(
     'App\\Http\\Controllers\\TmsSparepartController' => $baseDir . '/app/Http/Controllers/TmsSparepartController.php',
     'App\\Http\\Middleware\\Authenticate' => $baseDir . '/app/Http/Middleware/Authenticate.php',
     'App\\Http\\Middleware\\RoleMiddleware' => $baseDir . '/app/Http/Middleware/RoleMiddleware.php',
-    'App\\Models\\ActivityTms' => $baseDir . '/app/Models/ActivityTms.php',
     'App\\Models\\CleaningCritical' => $baseDir . '/app/Models/CleaningCritical.php',
     'App\\Models\\FawReport' => $baseDir . '/app/Models/FawReport.php',
     'App\\Models\\FawReportPhoto' => $baseDir . '/app/Models/FawReportPhoto.php',

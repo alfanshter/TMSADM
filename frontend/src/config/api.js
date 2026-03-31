@@ -60,5 +60,7 @@ export const ENDPOINTS = {
   //dashboard
   dashboardStatistics: `${API_BASE_URL}/dashboard-statistics`,
 
-
+  // Password reset
+  forgotPassword: `${API_BASE_URL}/forgot-password`,
+  resetPassword: `${API_BASE_URL}/reset-password`,
 };

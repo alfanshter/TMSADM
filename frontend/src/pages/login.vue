@@ -136,9 +136,9 @@ const authV2LoginIllustration = useGenerateImageVariant(
                 <div class="d-flex align-center justify-space-between flex-wrap my-6 gap-x-2">
                   <VCheckbox v-model="form.remember" label="Remember me" />
 
-                  <a class="text-primary" href="javascript:void(0)">
+                  <RouterLink to="/forgot-password" class="text-primary">
                     Forgot Password?
-                  </a>
+                  </RouterLink>
                 </div>
 
                 <!-- login button -->

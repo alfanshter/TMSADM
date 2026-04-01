@@ -7,7 +7,6 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    030828132: typeof import('./src/components/dialogs/schedule/ActivityTable.vue 03-08-28-132.vue')['default']
     ActivityTable: typeof import('./src/components/dialogs/schedule/ActivityTable.vue')['default']
     'ActivityTable.vue 030828132': typeof import('./src/components/dialogs/schedule/ActivityTable.vue 03-08-28-132.vue')['default']
     AddAuthenticatorAppDialog: typeof import('./src/components/dialogs/AddAuthenticatorAppDialog.vue')['default']

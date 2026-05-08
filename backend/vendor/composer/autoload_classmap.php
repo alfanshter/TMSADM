@@ -40,6 +40,7 @@ return array(
     'App\\Models\\TmpPhotos' => $baseDir . '/app/Models/TmpPhotos.php',
     'App\\Models\\TmsSparepart' => $baseDir . '/app/Models/TmsSparepart.php',
     'App\\Models\\User' => $baseDir . '/app/Models/User.php',
+    'App\\Notifications\\ResetPasswordNotification' => $baseDir . '/app/Notifications/ResetPasswordNotification.php',
     'App\\Providers\\AppServiceProvider' => $baseDir . '/app/Providers/AppServiceProvider.php',
     'Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
     'Brick\\Math\\BigDecimal' => $vendorDir . '/brick/math/src/BigDecimal.php',

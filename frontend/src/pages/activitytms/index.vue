@@ -17,7 +17,6 @@ const globalLoading = inject("globalLoading");
 // filter
 const selectedScopeOfWork = ref(null);
 
-
 // --- Filter Tahun & Bulan ---
 const currentYear = new Date().getFullYear();
 const currentMonth = String(new Date().getMonth() + 1).padStart(2, "0");
@@ -26,9 +25,7 @@ const selectedYear = ref(currentYear);
 const selectedMonth = ref(currentMonth);
 
 // List tahun misalnya 5 tahun ke belakang & depan
-const years = ref(
-  Array.from({ length: 10 }, (_, i) => currentYear - 5 + i)
-);
+const years = ref(Array.from({ length: 10 }, (_, i) => currentYear - 5 + i));
 const months = ref([
   { label: "January", value: "01" },
   { label: "February", value: "02" },
@@ -43,7 +40,6 @@ const months = ref([
   { label: "November", value: "11" },
   { label: "December", value: "12" },
 ]);
-
 
 // baseURL untuk gambar & file
 const baseURL = `${import.meta.env.VITE_FILE_BASE_URL}/`;
@@ -64,53 +60,105 @@ const teamLeaderNote = ref("");
 const supervisorNote = ref("");
 
 // buka popup
+// function openNotes(activity) {
+//   selectedActivity.value = activity;
+
+//   // default ambil salah satu field catatan supervisor
+//   supervisorNote.value =
+//     activity.catatan_supervisor_cleaning_criticals ||
+//     activity.catatan_supervisor_justcleaning ||
+//     activity.catatan_supervisor_replacement_part ||
+//     activity.catatan_supervisor_preventive_pm ||
+//     "";
+//   isNotesDialogVisible.value = true;
+// }
+
 function openNotes(activity) {
   selectedActivity.value = activity;
 
-  // default ambil salah satu field catatan supervisor
+  // ambil supervisor note
   supervisorNote.value =
     activity.catatan_supervisor_cleaning_criticals ||
     activity.catatan_supervisor_justcleaning ||
     activity.catatan_supervisor_replacement_part ||
     activity.catatan_supervisor_preventive_pm ||
     "";
+
+  // ambil team leader note
+  teamLeaderNote.value =
+    activity.catatan_teamleader_cleaning_criticals ||
+    activity.catatan_teamleader_just_cleaning ||
+    activity.catatan_teamleader_replacement_part ||
+    activity.catatan_teamleader_preventive_pm ||
+    "";
+
   isNotesDialogVisible.value = true;
 }
 
-async function saveSupervisorNote() {
+async function saveNote() {
   try {
     globalLoading?.show();
 
-    // payload dinamis sesuai tipe activity
     const payload = {};
 
-    if (selectedActivity.value.catatan_teamleader_cleaning_criticals !== null) {
-      payload.catatan_supervisor_cleaning_criticals = supervisorNote.value;
-    } else if (selectedActivity.value.catatan_teamleader_just_cleaning !== null) {
-      payload.catatan_supervisor_justcleaning = supervisorNote.value;
-    } else if (selectedActivity.value.catatan_teamleader_replacement_part !== null) {
-      payload.catatan_supervisor_replacement_part = supervisorNote.value;
-    } else if (selectedActivity.value.catatan_teamleader_preventive_pm !== null) {
-      payload.catatan_supervisor_preventive_pm = supervisorNote.value;
+    // === TEAM LEADER NOTE (hanya admin yang boleh edit) ===
+    if (role === "admin") {
+      if (
+        selectedActivity.value.catatan_teamleader_cleaning_criticals !== null
+      ) {
+        payload.catatan_teamleader_cleaning_criticals = teamLeaderNote.value;
+      } else if (
+        selectedActivity.value.catatan_teamleader_just_cleaning !== null
+      ) {
+        payload.catatan_teamleader_just_cleaning = teamLeaderNote.value;
+      } else if (
+        selectedActivity.value.catatan_teamleader_replacement_part !== null
+      ) {
+        payload.catatan_teamleader_replacement_part = teamLeaderNote.value;
+      } else if (
+        selectedActivity.value.catatan_teamleader_preventive_pm !== null
+      ) {
+        payload.catatan_teamleader_preventive_pm = teamLeaderNote.value;
+      }
     }
 
-    // pakai PUT ke endpoint baru
+    // === SUPERVISOR NOTE (admin & supervisor bisa edit) ===
+    if (role === "admin" || role === "supervisor") {
+      if (
+        selectedActivity.value.catatan_teamleader_cleaning_criticals !== null
+      ) {
+        payload.catatan_supervisor_cleaning_criticals = supervisorNote.value;
+      } else if (
+        selectedActivity.value.catatan_teamleader_just_cleaning !== null
+      ) {
+        payload.catatan_supervisor_justcleaning = supervisorNote.value;
+      } else if (
+        selectedActivity.value.catatan_teamleader_replacement_part !== null
+      ) {
+        payload.catatan_supervisor_replacement_part = supervisorNote.value;
+      } else if (
+        selectedActivity.value.catatan_teamleader_preventive_pm !== null
+      ) {
+        payload.catatan_supervisor_preventive_pm = supervisorNote.value;
+      }
+    }
+
     await axios.put(
       ENDPOINTS.updateSupervisorNote(selectedActivity.value.id),
-      payload
+      payload,
     );
 
-    snackbarMessage.value = "Catatan Supervisor berhasil disimpan!";
+    snackbarMessage.value = "Catatan berhasil disimpan!";
     isSnackbarTopEndVisible.value = true;
     isNotesDialogVisible.value = false;
-    fetchActivityTms(); // refresh data
+
+    fetchActivityTms();
   } catch (error) {
-    console.error("Error simpan catatan supervisor:", error);
+    console.error("Error save note:", error);
   } finally {
     globalLoading?.hide();
   }
 }
-
 
 //message snackbar
 const snackbarMessage = ref("Add New Item Machine Success!");
@@ -124,12 +172,12 @@ const typeLabels = {
 
 // Foto before
 const beforePhotos = computed(() =>
-  selectedData.value.filter((item) => item.status === "before")
+  selectedData.value.filter((item) => item.status === "before"),
 );
 
 // Foto after
 const afterPhotos = computed(() =>
-  selectedData.value.filter((item) => item.status === "after")
+  selectedData.value.filter((item) => item.status === "after"),
 );
 
 // Fungsi buka dialog
@@ -204,7 +252,9 @@ const scope_of_work = [
 const fetchActivityTms = async () => {
   try {
     isLoading.value = true;
-    const res = await axios.get(`${ENDPOINTS.activityTms}?month=${selectedYear.value}-${selectedMonth.value}`);
+    const res = await axios.get(
+      `${ENDPOINTS.activityTms}?month=${selectedYear.value}-${selectedMonth.value}`,
+    );
     const result = res.data.data ?? res.data;
     activityTms.value = result;
     totalActivityTms.value = Array.isArray(result) ? result.length : 0;
@@ -235,9 +285,10 @@ const exportToExcel = async (year) => {
     return;
   }
   try {
-    const res = await axios.get(ENDPOINTS.activityTmsExport(selectedYear.value, selectedMonth.value));
+    const res = await axios.get(
+      ENDPOINTS.activityTmsExport(selectedYear.value, selectedMonth.value),
+    );
     window.open(res.data.data.download_link, "_blank");
-
   } catch (err) {
     console.error("Gagal export excel:", err);
   }
@@ -247,8 +298,6 @@ const exportToExcel = async (year) => {
 watch([selectedYear, selectedMonth], () => {
   fetchActivityTms();
 });
-
-
 
 onMounted(() => {
   fetchActivityTms();
@@ -287,10 +336,10 @@ const filteredActivityTms = computed(() => {
       : true;
     const matchesSearch = searchQuery.value
       ? machine.name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      machine.code?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      machine.location
-        ?.toLowerCase()
-        .includes(searchQuery.value.toLowerCase())
+        machine.code?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        machine.location
+          ?.toLowerCase()
+          .includes(searchQuery.value.toLowerCase())
       : true;
     return matchesScope && matchesSearch;
   });
@@ -303,8 +352,12 @@ watch(selectedScopeOfWork, () => {
 
 <template>
   <section>
-    <VSnackbar v-model="isSnackbarTopEndVisible" location="top end"
-      :color="snackbarMessage.includes('Delete') ? 'error' : 'success'" timeout="3000">
+    <VSnackbar
+      v-model="isSnackbarTopEndVisible"
+      location="top end"
+      :color="snackbarMessage.includes('Delete') ? 'error' : 'success'"
+      timeout="3000"
+    >
       {{ snackbarMessage }}
     </VSnackbar>
     <VCard>
@@ -312,28 +365,44 @@ watch(selectedScopeOfWork, () => {
       <VCardText>
         <VRow dense justify="space-between" align="center">
           <VCol cols="12" sm="4" md="3">
-            <VSelect v-model="selectedScopeOfWork" label="Select Scope of Work" :items="scope_of_work" clearable
-              density="compact" />
+            <VSelect
+              v-model="selectedScopeOfWork"
+              label="Select Scope of Work"
+              :items="scope_of_work"
+              clearable
+              density="compact"
+            />
           </VCol>
           <VCol cols="12" sm="4" md="3">
-            <VTextField v-model="searchQuery" placeholder="Search Item Machine" density="compact" />
+            <VTextField
+              v-model="searchQuery"
+              placeholder="Search Item Machine"
+              density="compact"
+            />
           </VCol>
         </VRow>
       </VCardText>
 
       <VCardText>
         <VRow>
-
-
           <!-- Pilih Tahun -->
           <VCol cols="12" sm="4">
-            <VSelect v-model="selectedYear" label="Select Year" :items="years" />
+            <VSelect
+              v-model="selectedYear"
+              label="Select Year"
+              :items="years"
+            />
           </VCol>
 
           <!-- Pilih Bulan -->
           <VCol cols="12" sm="4">
-            <VSelect v-model="selectedMonth" label="Select Month" :items="months" item-title="label"
-              item-value="value" />
+            <VSelect
+              v-model="selectedMonth"
+              label="Select Month"
+              :items="months"
+              item-title="label"
+              item-value="value"
+            />
           </VCol>
         </VRow>
       </VCardText>
@@ -341,20 +410,36 @@ watch(selectedScopeOfWork, () => {
       <VDivider />
 
       <VCardText class="d-flex flex-wrap gap-4 align-center">
-        <VBtn variant="outlined" color="secondary" prepend-icon="ri-upload-2-line" @click="exportToExcel">
+        <VBtn
+          variant="outlined"
+          color="secondary"
+          prepend-icon="ri-upload-2-line"
+          @click="exportToExcel"
+        >
           Export
         </VBtn>
         <VSpacer />
         <div class="d-flex align-center gap-4 flex-wrap">
           <div class="app-user-search-filter" style="min-width: 250px; flex: 1">
-            <VTextField v-model="searchQuery" placeholder="Search Machine" density="compact" variant="outlined"
-              hide-details />
+            <VTextField
+              v-model="searchQuery"
+              placeholder="Search Machine"
+              density="compact"
+              variant="outlined"
+              hide-details
+            />
           </div>
         </div>
       </VCardText>
 
-      <VDataTable v-model:page="page" :headers="headers" :items="filteredActivityTms" :loading="isLoading"
-        :items-per-page="itemsPerPage" class="text-no-wrap">
+      <VDataTable
+        v-model:page="page"
+        :headers="headers"
+        :items="filteredActivityTms"
+        :loading="isLoading"
+        :items-per-page="itemsPerPage"
+        class="text-no-wrap"
+      >
         <!-- nama mesin -->
         <template #item.name="{ item }">
           {{ item.item_machine?.name }}
@@ -382,17 +467,24 @@ watch(selectedScopeOfWork, () => {
 
         <!-- Status -->
         <template #item.status="{ item }">
-          <VChip :color="resolveUserStatusVariant(item.status === 1)" size="small">
+          <VChip
+            :color="resolveUserStatusVariant(item.status === 1)"
+            size="small"
+          >
             {{ item.status === 1 ? "Aktif" : "Tidak Aktif" }}
           </VChip>
         </template>
 
         <!-- Actions -->
-        <template v-if="role === 'admin' ||
-          role === 'team_leader' ||
-          role === 'supervisor' ||
-          role === 'teknisi'
-          " #item.actions="{ item }">
+        <template
+          v-if="
+            role === 'admin' ||
+            role === 'team_leader' ||
+            role === 'supervisor' ||
+            role === 'teknisi'
+          "
+          #item.actions="{ item }"
+        >
           <IconBtn size="small" @click="handleEdit(item)">
             <VIcon icon="ri-edit-box-line" />
           </IconBtn>
@@ -426,19 +518,41 @@ watch(selectedScopeOfWork, () => {
             BEFORE
           </VChip>
           <VRow v-if="beforePhotos.length">
-            <VCol v-for="(photo, i) in beforePhotos" :key="'before-' + i" cols="6">
-              <VImg :src="baseURL + photo.foto" aspect-ratio="1" class="rounded border" cover />
+            <VCol
+              v-for="(photo, i) in beforePhotos"
+              :key="'before-' + i"
+              cols="6"
+            >
+              <VImg
+                :src="baseURL + photo.foto"
+                aspect-ratio="1"
+                class="rounded border"
+                cover
+              />
             </VCol>
           </VRow>
           <div v-else class="text-grey">Tidak ada foto sebelum</div>
 
           <!-- AFTER -->
-          <VChip color="success" text-color="white" class="font-weight-bold mt-2 mb-2">
+          <VChip
+            color="success"
+            text-color="white"
+            class="font-weight-bold mt-2 mb-2"
+          >
             AFTER
           </VChip>
           <VRow v-if="afterPhotos.length">
-            <VCol v-for="(photo, i) in afterPhotos" :key="'after-' + i" cols="6">
-              <VImg :src="baseURL + photo.foto" aspect-ratio="1" class="rounded border" cover />
+            <VCol
+              v-for="(photo, i) in afterPhotos"
+              :key="'after-' + i"
+              cols="6"
+            >
+              <VImg
+                :src="baseURL + photo.foto"
+                aspect-ratio="1"
+                class="rounded border"
+                cover
+              />
             </VCol>
           </VRow>
           <div v-else class="text-grey">Tidak ada foto sesudah</div>
@@ -480,32 +594,55 @@ watch(selectedScopeOfWork, () => {
           </div>
 
           <!-- Cleaning Critical -->
-          <template v-if="selectedActivity.catatan_teamleader_cleaning_criticals">
-            <VLabel class="mb-1">Catatan Team Leader (Cleaning Critical)</VLabel>
-            <VTextarea v-model="selectedActivity.catatan_teamleader_cleaning_criticals" rows="3" auto-grow readonly />
+          <template
+            v-if="selectedActivity.catatan_teamleader_cleaning_criticals"
+          >
+            <VLabel class="mb-1"
+              >Catatan Team Leader (Cleaning Critical)</VLabel
+            >
+            <!-- <VTextarea v-model="selectedActivity.catatan_teamleader_cleaning_criticals" rows="3" auto-grow readonly /> -->
+            <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin'" />
           </template>
 
           <!-- Just Cleaning -->
           <template v-if="selectedActivity.catatan_teamleader_just_cleaning">
             <VLabel class="mb-1">Catatan Team Leader (Just Cleaning)</VLabel>
-            <VTextarea v-model="selectedActivity.catatan_teamleader_just_cleaning" rows="3" auto-grow readonly />
+            <!-- <VTextarea v-model="selectedActivity.catatan_teamleader_just_cleaning" rows="3" auto-grow readonly /> -->
+            <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin'" />
           </template>
 
           <!-- Replacement Part -->
           <template v-if="selectedActivity.catatan_teamleader_replacement_part">
             <VLabel class="mb-1">Catatan Team Leader (Replacement Part)</VLabel>
-            <VTextarea v-model="selectedActivity.catatan_teamleader_replacement_part" rows="3" auto-grow readonly />
+            <!-- <VTextarea
+              v-model="selectedActivity.catatan_teamleader_replacement_part"
+              rows="3"
+              auto-grow
+              readonly
+            /> -->
+            <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin'" />
           </template>
 
           <!-- Preventive PM -->
           <template v-if="selectedActivity.catatan_teamleader_preventive_pm">
             <VLabel class="mb-1">Catatan Team Leader (Preventive PM)</VLabel>
-            <VTextarea v-model="selectedActivity.catatan_teamleader_preventive_pm" rows="3" auto-grow readonly />
+            <!-- <VTextarea
+              v-model="selectedActivity.catatan_teamleader_preventive_pm"
+              rows="3"
+              auto-grow
+              readonly
+            /> -->
+            <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin'" />
           </template>
 
           <!-- Supervisor bisa nambah/ubah -->
           <VLabel class="mt-4 mb-1">Catatan Supervisor</VLabel>
-          <VTextarea v-model="supervisorNote" placeholder="Tanggapan Supervisor" rows="4" auto-grow />
+          <VTextarea
+            v-model="supervisorNote"
+            placeholder="Tanggapan Supervisor"
+            rows="4"
+            auto-grow
+          />
         </VCardText>
 
         <VCardActions>
@@ -513,7 +650,10 @@ watch(selectedScopeOfWork, () => {
           <VBtn color="secondary" @click="isNotesDialogVisible = false">
             Tutup
           </VBtn>
-          <VBtn color="primary" @click="saveSupervisorNote"> Simpan </VBtn>
+          <!-- <VBtn color="primary" @click="saveSupervisorNote"> Simpan </VBtn> -->
+          <VBtn color="primary" variant="flat" rounded="lg" @click="saveNote">
+            Simpan
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

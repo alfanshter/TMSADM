@@ -605,6 +605,7 @@ class ComposerStaticInitc7846695e316e8adffb3e9eaf1b37dc4
         'App\\Models\\TmpPhotos' => __DIR__ . '/../..' . '/app/Models/TmpPhotos.php',
         'App\\Models\\TmsSparepart' => __DIR__ . '/../..' . '/app/Models/TmsSparepart.php',
         'App\\Models\\User' => __DIR__ . '/../..' . '/app/Models/User.php',
+        'App\\Notifications\\ResetPasswordNotification' => __DIR__ . '/../..' . '/app/Notifications/ResetPasswordNotification.php',
         'App\\Providers\\AppServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AppServiceProvider.php',
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'Brick\\Math\\BigDecimal' => __DIR__ . '/..' . '/brick/math/src/BigDecimal.php',

@@ -6,6 +6,9 @@ import { computed, inject, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import Cookies from "js-cookie";
 
+
+// anyaarrarararaa
+
 //Pinia send another activity
 const activityStore = useActivityStore();
 // message snackbar
@@ -125,36 +128,50 @@ async function saveNote() {
     // === SUPERVISOR NOTE (admin & supervisor bisa edit) ===
     if (role === "admin" || role === "supervisor") {
       if (
-        selectedActivity.value.catatan_teamleader_cleaning_criticals !== null
+        selectedActivity.value.catatan_supervisor_cleaning_criticals !== null
       ) {
         payload.catatan_supervisor_cleaning_criticals = supervisorNote.value;
       } else if (
-        selectedActivity.value.catatan_teamleader_just_cleaning !== null
+        selectedActivity.value.catatan_supervisor_justcleaning !== null
       ) {
         payload.catatan_supervisor_justcleaning = supervisorNote.value;
       } else if (
-        selectedActivity.value.catatan_teamleader_replacement_part !== null
+        selectedActivity.value.catatan_supervisor_replacement_part !== null
       ) {
         payload.catatan_supervisor_replacement_part = supervisorNote.value;
       } else if (
-        selectedActivity.value.catatan_teamleader_preventive_pm !== null
+        selectedActivity.value.catatan_supervisor_preventive_pm !== null
       ) {
         payload.catatan_supervisor_preventive_pm = supervisorNote.value;
       }
     }
 
-    await axios.put(
+    const response = await axios.put(
       ENDPOINTS.updateSupervisorNote(selectedActivity.value.id),
       payload,
     );
 
+    // Update selectedActivity dengan data terbaru dari API
+    if (response.data.data) {
+      selectedActivity.value = response.data.data;
+    }
+
+    // Update activity dalam list dengan data terbaru
+    const updatedActivityIndex = activityTms.value.findIndex(
+      (item) => item.id === selectedActivity.value.id
+    );
+    if (updatedActivityIndex !== -1) {
+      activityTms.value[updatedActivityIndex] = response.data.data;
+    }
+
     snackbarMessage.value = "Catatan berhasil disimpan!";
     isSnackbarTopEndVisible.value = true;
     isNotesDialogVisible.value = false;
-
-    fetchActivityTms();
   } catch (error) {
     console.error("Error save note:", error);
+    snackbarMessage.value = "Gagal menyimpan catatan!";
+    snackbarColor.value = "error";
+    isSnackbarTopEndVisible.value = true;
   } finally {
     globalLoading?.hide();
   }
@@ -162,6 +179,7 @@ async function saveNote() {
 
 //message snackbar
 const snackbarMessage = ref("Add New Item Machine Success!");
+const snackbarColor = ref("success"); // default success
 
 const typeLabels = {
   cleaning_criticals: "Cleaning Critical",
@@ -314,9 +332,13 @@ const deleteActivityTms = async (id) => {
 
     // Tampilkan snackbar
     snackbarMessage.value = "Delete Activity TMS Completed!";
+    snackbarColor.value = "success";
     isSnackbarTopEndVisible.value = true;
   } catch (error) {
     console.error("Error deleting activity TMS:", error);
+    snackbarMessage.value = "Gagal menghapus Activity TMS!";
+    snackbarColor.value = "error";
+    isSnackbarTopEndVisible.value = true;
   } finally {
     globalLoading?.hide();
   }
@@ -355,7 +377,7 @@ watch(selectedScopeOfWork, () => {
     <VSnackbar
       v-model="isSnackbarTopEndVisible"
       location="top end"
-      :color="snackbarMessage.includes('Delete') ? 'error' : 'success'"
+      :color="snackbarColor"
       timeout="3000"
     >
       {{ snackbarMessage }}

@@ -18,8 +18,12 @@ const globalLoading = inject("globalLoading");
 
 const userStore = useUserStore();
 const role = computed(() => userStore.role);
-const isReadonlyTeamleader = computed(() => role.value === "team_leader");
-const isReadonlySupervisor = computed(() => role.value === "supervisor");
+
+// Admin can edit both team leader and supervisor notes
+// Team leader can only edit team leader notes
+// Supervisor can only edit supervisor notes
+const canEditTeamleaderNote = computed(() => role.value === "admin" || role.value === "team_leader");
+const canEditSupervisorNote = computed(() => role.value === "admin" || role.value === "supervisor");
 
 const code = ref("");
 const location = ref("");
@@ -581,7 +585,7 @@ const submitForm = async () => {
   cleaningCriticalBeforeFiles.value
     .filter((f) => !f.isNew)
     .forEach((f, i) => {
-      formData.append(`cleaning_cricital_foto_before_old[${i}]`, f.id);
+      formData.append(`cleaning_critical_foto_before_old[${i}]`, f.id);
     });
 
   // Foto lama → kirim File
@@ -652,13 +656,52 @@ const submitForm = async () => {
   for (let [key, value] of formData.entries()) {
     console.log(key, value);
   }
+  // === ADMIN dapat edit KEDUA supervisor & teamleader notes ===
+  if (role.value == "admin") {
+    // supervisor notes
+    formData.append(
+      "catatan_supervisor_cleaning_criticals",
+      cleaningCriticalSupervisorNote.value ?? ""
+    );
+    formData.append(
+      "catatan_supervisor_justcleaning",
+      justCleaningSupervisorNote.value ?? ""
+    );
+    formData.append(
+      "catatan_supervisor_replacement_part",
+      replacementSupervisorNote.value ?? ""
+    );
+    formData.append(
+      "catatan_supervisor_preventive_pm",
+      preventiveSupervisorNote.value ?? ""
+    );
+
+    // teamleader notes
+    formData.append(
+      "catatan_teamleader_cleaning_criticals",
+      cleaningCriticalTeamleaderNote.value ?? ""
+    );
+    formData.append(
+      "catatan_teamleader_just_cleaning",
+      justCleaningTeamleaderNote.value ?? ""
+    );
+    formData.append(
+      "catatan_teamleader_replacement_part",
+      replacementTeamleaderNote.value ?? ""
+    );
+    formData.append(
+      "catatan_teamleader_preventive_pm",
+      preventiveTeamleaderNote.value ?? ""
+    );
+  }
+
+  // === SUPERVISOR hanya bisa edit supervisor notes ===
   if (role.value == "supervisor") {
     // supervisor notes
     formData.append(
       "catatan_supervisor_cleaning_criticals",
       cleaningCriticalSupervisorNote.value ?? ""
     );
-    // backend inconsistent name for just cleaning supervisor — try to use the one you showed
     formData.append(
       "catatan_supervisor_justcleaning",
       justCleaningSupervisorNote.value ?? ""
@@ -673,6 +716,7 @@ const submitForm = async () => {
     );
   }
 
+  // === TEAM LEADER hanya bisa edit teamleader notes ===
   if (role.value == "team_leader") {
     // teamleader notes
     formData.append(
@@ -983,11 +1027,11 @@ onMounted(() => {
                 <VCardText>
                   <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
                   <VTextarea v-model="cleaningCriticalSupervisorNote" placeholder="Catatan Supervisor" rows="3"
-                    auto-grow :readonly="!isReadonlySupervisor" />
+                    auto-grow :readonly="!canEditSupervisorNote" />
 
                   <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
                   <VTextarea v-model="cleaningCriticalTeamleaderNote" placeholder="Catatan Team Leader" rows="3"
-                    auto-grow :readonly="!isReadonlyTeamleader" />
+                    auto-grow :readonly="!canEditTeamleaderNote" />
                 </VCardText>
               </template>
 
@@ -1020,11 +1064,11 @@ onMounted(() => {
                 <VCardText>
                   <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
                   <VTextarea v-model="justCleaningSupervisorNote" placeholder="Catatan Supervisor" rows="3" auto-grow
-                    :readonly="!isReadonlySupervisor" />
+                    :readonly="!canEditSupervisorNote" />
 
                   <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
                   <VTextarea v-model="justCleaningTeamleaderNote" placeholder="Catatan Team Leader" rows="3" auto-grow
-                    :readonly="!isReadonlyTeamleader" />
+                    :readonly="!canEditTeamleaderNote" />
                 </VCardText>
               </template>
 
@@ -1079,11 +1123,11 @@ onMounted(() => {
                 <VCardText>
                   <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
                   <VTextarea v-model="replacementSupervisorNote" placeholder="Catatan Supervisor" rows="3" auto-grow
-                    :readonly="!isReadonlySupervisor" />
+                    :readonly="!canEditSupervisorNote" />
 
                   <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
                   <VTextarea v-model="replacementTeamleaderNote" placeholder="Catatan Team Leader" rows="3" auto-grow
-                    :readonly="!isReadonlyTeamleader" />
+                    :readonly="!canEditTeamleaderNote" />
                 </VCardText>
 
                 <!-- Datatable Sparepart -->
@@ -1153,11 +1197,11 @@ onMounted(() => {
 
                     <!-- Catatan Supervisor -->
                     <VTextarea v-model="preventiveSupervisorNote" label="Catatan Supervisor"
-                    :readonly="!isReadonlySupervisor" />
+                    :readonly="!canEditSupervisorNote" />
 
                     <!-- Catatan Teamleader -->
                     <VTextarea class="mt-4" v-model="preventiveTeamleaderNote" label="Catatan Teamleader"
-                    :readonly="!isReadonlyTeamleader" />
+                    :readonly="!canEditTeamleaderNote" />
                   </VCardItem>
                 </VCard>
               </template>

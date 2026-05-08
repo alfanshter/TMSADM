@@ -48,9 +48,21 @@ class CatatanController extends Controller
             'catatan_supervisor_preventive_pm',
         ]));
 
+        // Reload activity dengan relasi terbaru
+        $activity = $activity->fresh();
+        $activity->load([
+            'itemMachine',
+            'cleaningCriticals',
+            'justCleaning',
+            'preventive',
+            'replacementPart',
+            'spareparts'
+        ]);
+
         return response()->json([
             'status' => 1,
             'message' => 'Catatan berhasil diperbarui.',
+            'data' => $activity,
         ], 200);
     }
 }

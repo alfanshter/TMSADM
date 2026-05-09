@@ -104,22 +104,23 @@ async function saveNote() {
 
     const payload = {};
 
-    // === TEAM LEADER NOTE (hanya admin yang boleh edit) ===
-    if (role === "admin") {
+    // === TEAM LEADER NOTE (admin & team_leader bisa add/edit) ===
+    if (role === "admin" || role === "team_leader") {
+      // Update field yang ada untuk team leader notes
       if (
-        selectedActivity.value.catatan_teamleader_cleaning_criticals !== null
+        selectedActivity.value.hasOwnProperty("catatan_teamleader_cleaning_criticals")
       ) {
         payload.catatan_teamleader_cleaning_criticals = teamLeaderNote.value;
       } else if (
-        selectedActivity.value.catatan_teamleader_just_cleaning !== null
+        selectedActivity.value.hasOwnProperty("catatan_teamleader_just_cleaning")
       ) {
         payload.catatan_teamleader_just_cleaning = teamLeaderNote.value;
       } else if (
-        selectedActivity.value.catatan_teamleader_replacement_part !== null
+        selectedActivity.value.hasOwnProperty("catatan_teamleader_replacement_part")
       ) {
         payload.catatan_teamleader_replacement_part = teamLeaderNote.value;
       } else if (
-        selectedActivity.value.catatan_teamleader_preventive_pm !== null
+        selectedActivity.value.hasOwnProperty("catatan_teamleader_preventive_pm")
       ) {
         payload.catatan_teamleader_preventive_pm = teamLeaderNote.value;
       }
@@ -128,32 +129,43 @@ async function saveNote() {
     // === SUPERVISOR NOTE (admin & supervisor bisa edit) ===
     if (role === "admin" || role === "supervisor") {
       if (
-        selectedActivity.value.catatan_supervisor_cleaning_criticals !== null
+        selectedActivity.value.hasOwnProperty("catatan_supervisor_cleaning_criticals")
       ) {
         payload.catatan_supervisor_cleaning_criticals = supervisorNote.value;
       } else if (
-        selectedActivity.value.catatan_supervisor_justcleaning !== null
+        selectedActivity.value.hasOwnProperty("catatan_supervisor_justcleaning")
       ) {
         payload.catatan_supervisor_justcleaning = supervisorNote.value;
       } else if (
-        selectedActivity.value.catatan_supervisor_replacement_part !== null
+        selectedActivity.value.hasOwnProperty("catatan_supervisor_replacement_part")
       ) {
         payload.catatan_supervisor_replacement_part = supervisorNote.value;
       } else if (
-        selectedActivity.value.catatan_supervisor_preventive_pm !== null
+        selectedActivity.value.hasOwnProperty("catatan_supervisor_preventive_pm")
       ) {
         payload.catatan_supervisor_preventive_pm = supervisorNote.value;
       }
     }
 
+    console.log("Payload untuk disimpan:", payload);
     const response = await axios.put(
       ENDPOINTS.updateSupervisorNote(selectedActivity.value.id),
       payload,
     );
 
+    console.log("Response dari API:", response.data);
+
     // Update selectedActivity dengan data terbaru dari API
     if (response.data.data) {
       selectedActivity.value = response.data.data;
+      
+      // Re-load team leader note dari data terbaru
+      teamLeaderNote.value =
+        selectedActivity.value.catatan_teamleader_cleaning_criticals ||
+        selectedActivity.value.catatan_teamleader_just_cleaning ||
+        selectedActivity.value.catatan_teamleader_replacement_part ||
+        selectedActivity.value.catatan_teamleader_preventive_pm ||
+        "";
     }
 
     // Update activity dalam list dengan data terbaru
@@ -617,24 +629,24 @@ watch(selectedScopeOfWork, () => {
 
           <!-- Cleaning Critical -->
           <template
-            v-if="selectedActivity.catatan_teamleader_cleaning_criticals"
+            v-if="selectedActivity.catatan_teamleader_cleaning_criticals || role === 'admin' || role === 'team_leader'"
           >
             <VLabel class="mb-1"
               >Catatan Team Leader (Cleaning Critical)</VLabel
             >
             <!-- <VTextarea v-model="selectedActivity.catatan_teamleader_cleaning_criticals" rows="3" auto-grow readonly /> -->
-            <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin'" />
+            <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin' && role !== 'team_leader'" />
           </template>
 
           <!-- Just Cleaning -->
-          <template v-if="selectedActivity.catatan_teamleader_just_cleaning">
+          <template v-else-if="selectedActivity.catatan_teamleader_just_cleaning || role === 'admin' || role === 'team_leader'">
             <VLabel class="mb-1">Catatan Team Leader (Just Cleaning)</VLabel>
             <!-- <VTextarea v-model="selectedActivity.catatan_teamleader_just_cleaning" rows="3" auto-grow readonly /> -->
-            <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin'" />
+            <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin' && role !== 'team_leader'" />
           </template>
 
           <!-- Replacement Part -->
-          <template v-if="selectedActivity.catatan_teamleader_replacement_part">
+          <template v-else-if="selectedActivity.catatan_teamleader_replacement_part || role === 'admin' || role === 'team_leader'">
             <VLabel class="mb-1">Catatan Team Leader (Replacement Part)</VLabel>
             <!-- <VTextarea
               v-model="selectedActivity.catatan_teamleader_replacement_part"
@@ -642,11 +654,11 @@ watch(selectedScopeOfWork, () => {
               auto-grow
               readonly
             /> -->
-            <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin'" />
+            <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin' && role !== 'team_leader'" />
           </template>
 
           <!-- Preventive PM -->
-          <template v-if="selectedActivity.catatan_teamleader_preventive_pm">
+          <template v-else-if="selectedActivity.catatan_teamleader_preventive_pm || role === 'admin' || role === 'team_leader'">
             <VLabel class="mb-1">Catatan Team Leader (Preventive PM)</VLabel>
             <!-- <VTextarea
               v-model="selectedActivity.catatan_teamleader_preventive_pm"
@@ -654,7 +666,7 @@ watch(selectedScopeOfWork, () => {
               auto-grow
               readonly
             /> -->
-            <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin'" />
+            <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin' && role !== 'team_leader'" />
           </template>
 
           <!-- Supervisor bisa nambah/ubah -->
@@ -664,6 +676,7 @@ watch(selectedScopeOfWork, () => {
             placeholder="Tanggapan Supervisor"
             rows="4"
             auto-grow
+            :readonly="role !== 'admin' && role !== 'supervisor'"
           />
         </VCardText>
 

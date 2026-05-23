@@ -57,6 +57,7 @@ const jsaFile = ref(null);
 //catatan
 const isNotesDialogVisible = ref(false);
 const selectedActivity = ref(null);
+const activeMaintenanceType = ref(null); // track which maintenance type is active
 
 // field catatan
 const teamLeaderNote = ref("");
@@ -78,6 +79,19 @@ const supervisorNote = ref("");
 
 function openNotes(activity) {
   selectedActivity.value = activity;
+
+  // Determine which maintenance type is active
+  if (activity.catatan_teamleader_cleaning_criticals) {
+    activeMaintenanceType.value = 'cleaning_critical';
+  } else if (activity.catatan_teamleader_just_cleaning) {
+    activeMaintenanceType.value = 'just_cleaning';
+  } else if (activity.catatan_teamleader_replacement_part) {
+    activeMaintenanceType.value = 'replacement_part';
+  } else if (activity.catatan_teamleader_preventive_pm) {
+    activeMaintenanceType.value = 'preventive_pm';
+  } else {
+    activeMaintenanceType.value = null;
+  }
 
   // ambil supervisor note
   supervisorNote.value =
@@ -629,43 +643,29 @@ watch(selectedScopeOfWork, () => {
 
           <!-- Cleaning Critical -->
           <template
-            v-if="selectedActivity.catatan_teamleader_cleaning_criticals || role === 'admin' || role === 'team_leader'"
+            v-if="activeMaintenanceType === 'cleaning_critical' || (activeMaintenanceType === null && (role === 'admin' || role === 'team_leader'))"
           >
             <VLabel class="mb-1"
               >Catatan Team Leader (Cleaning Critical)</VLabel
             >
-            <!-- <VTextarea v-model="selectedActivity.catatan_teamleader_cleaning_criticals" rows="3" auto-grow readonly /> -->
             <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin' && role !== 'team_leader'" />
           </template>
 
           <!-- Just Cleaning -->
-          <template v-else-if="selectedActivity.catatan_teamleader_just_cleaning || role === 'admin' || role === 'team_leader'">
+          <template v-else-if="activeMaintenanceType === 'just_cleaning'">
             <VLabel class="mb-1">Catatan Team Leader (Just Cleaning)</VLabel>
-            <!-- <VTextarea v-model="selectedActivity.catatan_teamleader_just_cleaning" rows="3" auto-grow readonly /> -->
             <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin' && role !== 'team_leader'" />
           </template>
 
           <!-- Replacement Part -->
-          <template v-else-if="selectedActivity.catatan_teamleader_replacement_part || role === 'admin' || role === 'team_leader'">
+          <template v-else-if="activeMaintenanceType === 'replacement_part'">
             <VLabel class="mb-1">Catatan Team Leader (Replacement Part)</VLabel>
-            <!-- <VTextarea
-              v-model="selectedActivity.catatan_teamleader_replacement_part"
-              rows="3"
-              auto-grow
-              readonly
-            /> -->
             <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin' && role !== 'team_leader'" />
           </template>
 
           <!-- Preventive PM -->
-          <template v-else-if="selectedActivity.catatan_teamleader_preventive_pm || role === 'admin' || role === 'team_leader'">
+          <template v-else-if="activeMaintenanceType === 'preventive_pm'">
             <VLabel class="mb-1">Catatan Team Leader (Preventive PM)</VLabel>
-            <!-- <VTextarea
-              v-model="selectedActivity.catatan_teamleader_preventive_pm"
-              rows="3"
-              auto-grow
-              readonly
-            /> -->
             <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin' && role !== 'team_leader'" />
           </template>
 

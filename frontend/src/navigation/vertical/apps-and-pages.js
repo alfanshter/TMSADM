@@ -60,7 +60,10 @@ const items = [
 
   {
     title: "Sparepart",
-    to: { name: "sparepart" },
+    children: [
+      { title: "List", to: "sparepart" },
+      { title: "Riwayat", to: "sparepart-riwayat" },
+    ],
     icon: { icon: "ri-hammer-line" },
   },
   {

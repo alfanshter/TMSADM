@@ -268,10 +268,7 @@ watch(selectedCategory, () => {
               density="compact"
             />
           </div>
-          <VBtn   v-if="['admin', 'team_leader',].includes(role?.toLowerCase())"
-          @click="isAddNewSparepartDrawerVisible = true"
-            >Add New Sparepart</VBtn
-          >
+          <VBtn @click="isAddNewSparepartDrawerVisible = true">Add New Sparepart</VBtn>
         </div>
       </VCardText>
 
@@ -303,18 +300,15 @@ watch(selectedCategory, () => {
 
     <!-- DRAWERS -->
     <AddNewSparepartDrawer
-     v-if="['admin', 'team_leader'].includes(role?.toLowerCase())"
       v-model:isDrawerOpen="isAddNewSparepartDrawerVisible"
       @sparepart-added="addNewSparepart"
     />
     <AddNewStokDrawer
-     v-if="['admin', 'team_leader'].includes(role?.toLowerCase())"
       v-model:isDrawerOpen="isAddNewStokDrawerVisible"
       :sparepart="selectedSparepart"
       @submit="handleUpdateStok"
     />
     <EditSparepartDrawer
-     v-if="['admin', 'team_leader'].includes(role?.toLowerCase())"
       v-model:isDrawerOpen="isEditSparepartDrawerVisible"
       :sparepart="editedSparepart"
       @sparepart-updated="updateSparepart"

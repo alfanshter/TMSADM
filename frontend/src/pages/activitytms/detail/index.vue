@@ -3,7 +3,7 @@ import PreviewDropZone from "@/@core/components/PreviewDropZone.vue";
 import { ENDPOINTS } from "@/config/api";
 import { useActivityStore } from "@/stores/useActivityStore";
 import axios from "axios";
-import { onMounted, ref, watch } from "vue";
+import { computed, inject, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Cookies from "js-cookie";
 
@@ -20,8 +20,6 @@ const userData = Cookies.get("userData")
   ? JSON.parse(Cookies.get("userData"))
   : null;
 const role = userData?.user?.role;
-
-console.log("role:", role);
 
 const code = ref("");
 const location = ref("");
@@ -40,7 +38,6 @@ const birthDate = ref("");
 
 //sparepart
 const spareparts = ref([]);
-// Headers untuk datatable
 const sparepartHeaders = [
   { title: "Nama Sparepart", key: "nama_sparepart" },
   { title: "Jumlah", key: "qty" },
@@ -49,16 +46,19 @@ const sparepartHeaders = [
   { title: "Type", key: "type" },
 ];
 
-// catatan
+// catatan — semua role bisa edit semua
 const catatanTeamleaderCleaningCritical = ref("");
 const catatanSupervisorCleaningCritical = ref("");
+const catatanTeknisiCleaningCritical = ref("");
 const catatanTeamleaderJustCleaning = ref("");
 const catatanSupervisorJustCleaning = ref("");
+const catatanTeknisiJustCleaning = ref("");
 const catatanTeamleaderReplacementPart = ref("");
 const catatanSupervisorReplacementPart = ref("");
+const catatanTeknisiReplacementPart = ref("");
 const catatanTeamleaderPreventivePm = ref("");
 const catatanSupervisorPreventivePm = ref("");
-// Dapatkan object spa
+const catatanTeknisiPreventivePm = ref("");
 
 // file foto
 const cleaningCriticalBeforeFiles = ref([]);
@@ -69,20 +69,17 @@ const replacementPartBeforeFiles = ref([]);
 const replacementPartAfterFiles = ref([]);
 const preventivePmBeforeFiles = ref([]);
 const preventivePmAfterFiles = ref([]);
-//cleaning critical JSA
+
+//JSA files
 const cleaningCriticalJsa = ref(null);
 const cleaningCriticalJsa_old = ref(null);
 const cleaningCriticalJsa_filename = ref(null);
-//Just Cleaning
 const justCleaningJsa = ref(null);
 const justCleaningJsa_old = ref(null);
 const justCleaningJsa_filename = ref(null);
-//replacement
 const replacementJsa = ref(null);
 const replacementJsa_old = ref(null);
 const replacementJsa_filename = ref(null);
-
-//preventive
 const preventiveJsa = ref(null);
 const preventiveJsa_old = ref(null);
 const preventiveJsa_filename = ref(null);
@@ -94,13 +91,13 @@ const safety_filename = ref(null);
 
 //production scan
 const production_scan = ref(null);
-const production_scan_filename = ref(null); // dari backend
-const production_scan_old = ref(null); // dari backend
+const production_scan_filename = ref(null);
+const production_scan_old = ref(null);
 
 // Snackbar
 const isSnackbarTopEndVisible = ref(false);
 const snackbarMessage = ref("");
-const snackbarColor = ref("success"); // default
+const snackbarColor = ref("success");
 
 const itemMachines = ref([]);
 const totalItemMachines = ref(0);
@@ -128,7 +125,6 @@ const sparepartList = ref([]);
 const activity_id = ref("");
 
 if (currentItem.value != null) {
-  console.log("date:", currentItem.value);
   location.value = currentItem.value.item_machine.location;
   code.value = currentItem.value.item_machine.code;
   scopeOfWork.value = currentItem.value.item_machine.scope_of_work;
@@ -140,8 +136,6 @@ const fetchActivityDetail = async () => {
   try {
     const res = await axios.get(`${ENDPOINTS.activityTmsDetail}/${activityId}`);
     const data = res.data.data ?? res.data;
-
-    console.log("dinda", data);
 
     selectedItemMachine.value = data.item_machine.name;
     code.value = data.item_machine.code ?? "";
@@ -159,100 +153,56 @@ const fetchActivityDetail = async () => {
     production_downtime.value = data.production_downtime ?? 0;
     start_downtime.value = data.start_downtime ?? null;
     end_downtime.value = data.end_downtime ?? null;
-      
-    //Production file Scan
+
     production_scan_filename.value = data.production_scan_filename ?? "";
     production_scan.value = data.production_scan ?? "";
-
-    //safety file scan
     safety_filename.value = data.safety_scan_filename ?? "";
     safety_old.value = data.safety_scan ?? "";
 
-    //cleaning critical
     cleaningCriticalJsa_filename.value = data.jsa_filename_cleaning_criticals ?? "";
     cleaningCriticalJsa_old.value = data.jsa_file_cleaning_criticals ?? "";
-    //just cleaning
     justCleaningJsa_filename.value = data.jsa_filename_just_cleaning ?? "";
     justCleaningJsa_old.value = data.jsa_file_just_cleaning ?? "";
-    //replacement
     replacementJsa_filename.value = data.jsa_filename_replacement_part ?? "";
     replacementJsa_old.value = data.jsa_file_replacement_part ?? "";
-    //preventive
     preventiveJsa_filename.value = data.jsa_filename_preventive ?? "";
     preventiveJsa_old.value = data.jsa_file_preventive ?? "";
 
     if (data.cleaning_criticals && data.cleaning_criticals.length > 0) {
-      cleaningCriticalBeforeFiles.value = data.cleaning_criticals.filter(
-        (item) => item.status === "before"
-      );
-
-      cleaningCriticalAfterFiles.value = data.cleaning_criticals.filter(
-        (item) => item.status === "after"
-      );
+      cleaningCriticalBeforeFiles.value = data.cleaning_criticals.filter(i => i.status === "before");
+      cleaningCriticalAfterFiles.value = data.cleaning_criticals.filter(i => i.status === "after");
       selectedMaintenanceTypesCleaningCritical.value = ["cleaning_critical"];
     }
     if (data.just_cleaning && data.just_cleaning.length > 0) {
-      justCleaningBeforeFiles.value = data.just_cleaning.filter(
-        (item) => item.status === "before"
-      );
-
-      justCleaningAfterFiles.value = data.just_cleaning.filter(
-        (item) => item.status === "after"
-      );
+      justCleaningBeforeFiles.value = data.just_cleaning.filter(i => i.status === "before");
+      justCleaningAfterFiles.value = data.just_cleaning.filter(i => i.status === "after");
       selectedMaintenanceTypesJustCleaning.value = ["just_cleaning"];
     }
-
-    if (
-      (data.replacement_part && data.replacement_part.length > 0) ||
-      (data.spareparts && data.spareparts.length > 0)
-    ) {
-      replacementPartBeforeFiles.value = data.replacement_part.filter(
-        (item) => item.status === "before"
-      );
-
-      replacementPartAfterFiles.value = data.replacement_part.filter(
-        (item) => item.status === "after"
-      );
-
+    if ((data.replacement_part && data.replacement_part.length > 0) || (data.spareparts && data.spareparts.length > 0)) {
+      replacementPartBeforeFiles.value = data.replacement_part.filter(i => i.status === "before");
+      replacementPartAfterFiles.value = data.replacement_part.filter(i => i.status === "after");
       spareparts.value = data.spareparts;
       selectedMaintenanceTypesReplacementPart.value = ["replacement_part"];
     }
-    //=========Preventife BEFORE==========
     if (data.preventive && data.preventive.length > 0) {
-      preventivePmBeforeFiles.value = data.preventive.filter(
-        (item) => item.status === "before"
-      );
-
-      preventivePmAfterFiles.value = data.preventive.filter(
-        (item) => item.status === "after"
-      );
-
+      preventivePmBeforeFiles.value = data.preventive.filter(i => i.status === "before");
+      preventivePmAfterFiles.value = data.preventive.filter(i => i.status === "after");
       selectedMaintenanceTypesPreventivePM.value = ["preventive_pm"];
     }
 
     // Catatan dari backend
-    catatanTeamleaderCleaningCritical.value =
-      data.catatan_teamleader_cleaning_criticals ?? "";
-    catatanSupervisorCleaningCritical.value =
-      data.catatan_supervisor_cleaning_criticals ?? "";
-    catatanTeamleaderJustCleaning.value =
-      data.catatan_teamleader_just_cleaning ?? "";
-    catatanSupervisorJustCleaning.value =
-      data.catatan_supervisor_justcleaning ?? "";
-    catatanTeamleaderReplacementPart.value =
-      data.catatan_teamleader_replacement_part ?? "";
-    catatanSupervisorReplacementPart.value =
-      data.catatan_supervisor_replacement_part ?? "";
-    catatanTeamleaderPreventivePm.value =
-      data.catatan_teamleader_preventive_pm ?? "";
-    catatanSupervisorPreventivePm.value =
-      data.catatan_supervisor_preventive_pm ?? "";
-
-    console.log(
-      "Catatan supervisor just cleaning dari backend:",
-      data.catatan_supervisor_just_cleaning
-    );
-    console.log("Semua data:", data);
+    catatanTeamleaderCleaningCritical.value = data.catatan_teamleader_cleaning_criticals ?? "";
+    catatanSupervisorCleaningCritical.value  = data.catatan_supervisor_cleaning_criticals ?? "";
+    catatanTeknisiCleaningCritical.value     = data.catatan_teknisi_cleaning_criticals ?? "";
+    catatanTeamleaderJustCleaning.value      = data.catatan_teamleader_just_cleaning ?? "";
+    catatanSupervisorJustCleaning.value      = data.catatan_supervisor_justcleaning ?? "";
+    catatanTeknisiJustCleaning.value         = data.catatan_teknisi_just_cleaning ?? "";
+    catatanTeamleaderReplacementPart.value   = data.catatan_teamleader_replacement_part ?? "";
+    catatanSupervisorReplacementPart.value   = data.catatan_supervisor_replacement_part ?? "";
+    catatanTeknisiReplacementPart.value      = data.catatan_teknisi_replacement_part ?? "";
+    catatanTeamleaderPreventivePm.value      = data.catatan_teamleader_preventive_pm ?? "";
+    catatanSupervisorPreventivePm.value      = data.catatan_supervisor_preventive_pm ?? "";
+    catatanTeknisiPreventivePm.value         = data.catatan_teknisi_preventive_pm ?? "";
 
     activity_id.value = data.id;
   } catch (error) {
@@ -260,23 +210,16 @@ const fetchActivityDetail = async () => {
   }
 };
 
-// Dapatkan object sparepart yang dipilih
 const selectedItemSparepartObj = computed(() =>
   itemSparepart.value.find((item) => item.id === selectedItemSparepart.value)
 );
 
-// Event saat pilih sparepart
 const onSparepartSelect = () => {
-  requiredQty.value = 1; // reset qty saat ganti sparepart
+  requiredQty.value = 1;
 };
 
-const getFileUrl = (path) => {
-  return `${import.meta.env.VITE_FILE_BASE_URL}/${path}`; // sesuaikan URL file
-};
-
-const getFileName = (path) => {
-  return path.split("/").pop();
-};
+const getFileUrl = (path) => `${import.meta.env.VITE_FILE_BASE_URL}/${path}`;
+const getFileName = (path) => path.split("/").pop();
 
 function goBack() {
   window.history.back();
@@ -292,8 +235,7 @@ const fetchItemSparepart = async () => {
   }
 };
 
-//simpan catatan
-// Simpan catatan Supervisor langsung dari detail
+// Simpan catatan — semua role bisa simpan semua catatan
 const saveSupervisorNote = async (tipe) => {
   try {
     globalLoading?.show();
@@ -302,33 +244,36 @@ const saveSupervisorNote = async (tipe) => {
 
     switch (tipe) {
       case "cleaning_critical":
-        payload.catatan_supervisor_cleaning_criticals =
-          catatanSupervisorCleaningCritical.value;
+        payload.catatan_teamleader_cleaning_criticals = catatanTeamleaderCleaningCritical.value;
+        payload.catatan_supervisor_cleaning_criticals = catatanSupervisorCleaningCritical.value;
+        payload.catatan_teknisi_cleaning_criticals    = catatanTeknisiCleaningCritical.value;
         break;
       case "just_cleaning":
-        payload.catatan_supervisor_justcleaning =
-          catatanSupervisorJustCleaning.value;
+        payload.catatan_teamleader_just_cleaning = catatanTeamleaderJustCleaning.value;
+        payload.catatan_supervisor_justcleaning  = catatanSupervisorJustCleaning.value;
+        payload.catatan_teknisi_just_cleaning    = catatanTeknisiJustCleaning.value;
         break;
       case "replacement_part":
-        payload.catatan_supervisor_replacement_part =
-          catatanSupervisorReplacementPart.value;
+        payload.catatan_teamleader_replacement_part = catatanTeamleaderReplacementPart.value;
+        payload.catatan_supervisor_replacement_part = catatanSupervisorReplacementPart.value;
+        payload.catatan_teknisi_replacement_part    = catatanTeknisiReplacementPart.value;
         break;
       case "preventive_pm":
-        payload.catatan_supervisor_preventive_pm =
-          catatanSupervisorPreventivePm.value;
+        payload.catatan_teamleader_preventive_pm = catatanTeamleaderPreventivePm.value;
+        payload.catatan_supervisor_preventive_pm = catatanSupervisorPreventivePm.value;
+        payload.catatan_teknisi_preventive_pm    = catatanTeknisiPreventivePm.value;
         break;
     }
 
     await axios.put(ENDPOINTS.updateSupervisorNote(activity_id.value), payload);
 
-    snackbarMessage.value = "Catatan Supervisor berhasil disimpan!";
+    snackbarMessage.value = "Catatan berhasil disimpan!";
     snackbarColor.value = "success";
     isSnackbarTopEndVisible.value = true;
-
-    fetchActivityDetail(); // refresh detail
+    fetchActivityDetail();
   } catch (error) {
-    console.error("Error simpan catatan supervisor:", error);
-    snackbarMessage.value = "Gagal simpan catatan Supervisor!";
+    console.error("Error simpan catatan:", error);
+    snackbarMessage.value = "Gagal simpan catatan!";
     snackbarColor.value = "error";
     isSnackbarTopEndVisible.value = true;
   } finally {
@@ -352,54 +297,28 @@ onMounted(() => {
 
     <VRow>
       <VCol md="12">
-        <!-- item machine -->
         <!-- Item Machine & Scope -->
         <VRow align="stretch">
           <!-- Card Kiri: Info Mesin -->
           <VCol cols="12" md="6">
             <VCard class="h-100">
               <VCardText>
-                <div class="mb-2">
-                  <strong>Item Machine:</strong> {{ selectedItemMachine }}
-                </div>
+                <div class="mb-2"><strong>Item Machine:</strong> {{ selectedItemMachine }}</div>
                 <div class="mb-2"><strong>Code:</strong> {{ code }}</div>
+                <div class="mb-2"><strong>Location:</strong> {{ location }}</div>
+                <div class="mb-2"><strong>Scope of Work:</strong> {{ scopeOfWork }}</div>
                 <div class="mb-2">
-                  <strong>Location:</strong> {{ location }}
-                </div>
-                <div class="mb-2">
-                  <strong>Scope of Work:</strong> {{ scopeOfWork }}
-                </div>
-                <!-- JSA ALL -->
-                <div class="mb-2">
-                  <strong>Job Safety Analysis :</strong> 
+                  <strong>Job Safety Analysis:</strong>
                   <div v-if="production_scan_filename">
-                    <a
-                      :href="getFileUrl(production_scan)"
-                      target="_blank"
-                    >
+                    <a :href="getFileUrl(production_scan)" target="_blank">
                       {{ getFileName(production_scan_filename) }}
                     </a>
                   </div>
                 </div>
-
-              
-                <!-- JSA END -->
-
                 <div class="mb-2"><strong>Date:</strong> {{ birthDate }}</div>
-
-                <div class="mb-2">
-                  <strong>Start Time Downtime:</strong> {{ start_downtime }} 
-                </div>
-
-
-                <div class="mb-2">
-                  <strong>End Time Downtime:</strong> {{ end_downtime }} 
-                </div>
-
-
-                <div class="mb-2">
-                  <strong>Downtime:</strong> {{ production_downtime }} minutes
-                </div>
+                <div class="mb-2"><strong>Start Time Downtime:</strong> {{ start_downtime }}</div>
+                <div class="mb-2"><strong>End Time Downtime:</strong> {{ end_downtime }}</div>
+                <div class="mb-2"><strong>Downtime:</strong> {{ production_downtime }} minutes</div>
               </VCardText>
             </VCard>
           </VCol>
@@ -417,25 +336,15 @@ onMounted(() => {
                       </a>
                     </div>
                   </div>
-
                   <div class="mb-3">
                     <VLabel class="mb-1">Incoming</VLabel>
-                    <div>
-                      R-S: {{ incomingRs }} | R-T: {{ incomingRt }} | S-T:
-                      {{ incomingSt }}
-                    </div>
+                    <div>R-S: {{ incomingRs }} | R-T: {{ incomingRt }} | S-T: {{ incomingSt }}</div>
                   </div>
-
                   <div class="mb-3">
                     <VLabel class="mb-1">Outgoing</VLabel>
-                    <div>
-                      R-S: {{ outgoingRs }} | R-T: {{ outgoingRt }} | S-T:
-                      {{ outgoingSt }}
-                    </div>
+                    <div>R-S: {{ outgoingRs }} | R-T: {{ outgoingRt }} | S-T: {{ outgoingSt }}</div>
                   </div>
                 </div>
-
-                <!-- Condition taruh bawah -->
                 <div>
                   <VLabel class="mb-1">Condition</VLabel>
                   <div>Temp: {{ temp }} °C | Deviation: {{ deviation }}</div>
@@ -445,76 +354,50 @@ onMounted(() => {
           </VCol>
         </VRow>
 
-        <!-- 👉 Product Image -->
+        <!-- Maintenance Types -->
         <VCard class="mb-6 mt-4">
           <VCardItem>
-            <template #title> Maintenance Types</template>
+            <template #title>Maintenance Types</template>
 
             <div class="d-flex flex-column mt-2">
+
               <!-- Cleaning Critical -->
               <template v-if="selectedMaintenanceTypesCleaningCritical.length">
                 <h3 class="text-h6 mt-4">Cleaning Critical</h3>
 
-                <VCardText class="d-flex gap-4">
-                  <div style="flex: 1">
-                    <PreviewDropZone
-                      label="BEFORE"
-                      v-model="cleaningCriticalBeforeFiles"
-                    />
-                  </div>
-                  <div style="flex: 1">
-                    <PreviewDropZone
-                      label="AFTER"
-                      v-model="cleaningCriticalAfterFiles"
-                    />
-                  </div>
+                <VCardText>
+                  <VRow>
+                    <VCol cols="12" md="6">
+                      <PreviewDropZone label="BEFORE" v-model="cleaningCriticalBeforeFiles" />
+                    </VCol>
+                    <VCol cols="12" md="6">
+                      <PreviewDropZone label="AFTER" v-model="cleaningCriticalAfterFiles" />
+                    </VCol>
+                  </VRow>
                 </VCardText>
 
                 <VCardText>
-                  <VLabel class="mt-2 mb-1"
-                    >JSA File (Cleaning Critical)</VLabel
-                  >
+                  <VLabel class="mt-2 mb-1">JSA File (Cleaning Critical)</VLabel>
                   <div v-if="cleaningCriticalJsa_filename">
-                    <a
-                      :href="getFileUrl(cleaningCriticalJsa_old)"
-                      target="_blank"
-                    >
+                    <a :href="getFileUrl(cleaningCriticalJsa_old)" target="_blank">
                       {{ getFileName(cleaningCriticalJsa_filename) }}
                     </a>
                   </div>
                 </VCardText>
-                <VCardText>
-                  <!-- Catatan Team Leader -->
-                  <div>
-                    <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
-                    <VTextarea
-                      v-model="catatanTeamleaderCleaningCritical"
-                      placeholder="Tulis catatan dari Team Leader"
-                      rows="3"
-                      auto-grow
-                      :readonly="role !== 'team_leader'"
-                    />
-                  </div>
 
-                  <!-- Catatan Supervisor -->
-                  <div class="mt-3">
-                    <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
-                    <VTextarea
-                      v-model="catatanSupervisorCleaningCritical"
-                      placeholder="Tulis catatan dari Supervisor"
-                      rows="3"
-                      auto-grow
-                      :readonly="role !== 'supervisor'"
-                    />
-                    <VBtn
-                      v-if="role === 'supervisor'"
-                      color="primary"
-                      class="mt-2"
-                      @click="saveSupervisorNote('cleaning_critical')"
-                    >
-                      Simpan Catatan
-                    </VBtn>
-                  </div>
+                <VCardText>
+                  <VLabel class="mt-2 mb-1 font-weight-bold">Catatan Team Leader</VLabel>
+                  <VTextarea v-model="catatanTeamleaderCleaningCritical" rows="3" auto-grow />
+
+                  <VLabel class="mt-3 mb-1 font-weight-bold">Catatan Supervisor</VLabel>
+                  <VTextarea v-model="catatanSupervisorCleaningCritical" rows="3" auto-grow />
+
+                  <VLabel class="mt-3 mb-1 font-weight-bold">Catatan Teknisi</VLabel>
+                  <VTextarea v-model="catatanTeknisiCleaningCritical" rows="3" auto-grow />
+
+                  <VBtn color="primary" class="mt-3" @click="saveSupervisorNote('cleaning_critical')">
+                    Simpan Catatan
+                  </VBtn>
                 </VCardText>
               </template>
 
@@ -522,19 +405,15 @@ onMounted(() => {
               <template v-if="selectedMaintenanceTypesJustCleaning.length">
                 <h3 class="text-h6 mt-4">Just Cleaning</h3>
 
-                <VCardText class="d-flex gap-4">
-                  <div style="flex: 1">
-                    <PreviewDropZone
-                      label="BEFORE"
-                      v-model="justCleaningBeforeFiles"
-                    />
-                  </div>
-                  <div style="flex: 1">
-                    <PreviewDropZone
-                      label="AFTER"
-                      v-model="justCleaningAfterFiles"
-                    />
-                  </div>
+                <VCardText>
+                  <VRow>
+                    <VCol cols="12" md="6">
+                      <PreviewDropZone label="BEFORE" v-model="justCleaningBeforeFiles" />
+                    </VCol>
+                    <VCol cols="12" md="6">
+                      <PreviewDropZone label="AFTER" v-model="justCleaningAfterFiles" />
+                    </VCol>
+                  </VRow>
                 </VCardText>
 
                 <VCardText>
@@ -545,38 +424,20 @@ onMounted(() => {
                     </a>
                   </div>
                 </VCardText>
-                <VCardText>
-                  <!-- Catatan Team Leader -->
-                  <div>
-                    <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
-                    <VTextarea
-                      v-model="catatanTeamleaderJustCleaning"
-                      placeholder="Tulis catatan dari Team Leader"
-                      rows="3"
-                      auto-grow
-                      :readonly="role !== 'team_leader'"
-                    />
-                  </div>
 
-                  <!-- Catatan Supervisor -->
-                  <div class="mt-3">
-                    <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
-                    <VTextarea
-                      v-model="catatanSupervisorJustCleaning"
-                      placeholder="Tulis catatan dari Supervisor"
-                      rows="3"
-                      auto-grow
-                      :readonly="role !== 'supervisor'"
-                    />
-                    <VBtn
-                      v-if="role === 'supervisor'"
-                      color="primary"
-                      class="mt-2"
-                      @click="saveSupervisorNote('just_cleaning')"
-                    >
-                      Simpan Catatan
-                    </VBtn>
-                  </div>
+                <VCardText>
+                  <VLabel class="mt-2 mb-1 font-weight-bold">Catatan Team Leader</VLabel>
+                  <VTextarea v-model="catatanTeamleaderJustCleaning" rows="3" auto-grow />
+
+                  <VLabel class="mt-3 mb-1 font-weight-bold">Catatan Supervisor</VLabel>
+                  <VTextarea v-model="catatanSupervisorJustCleaning" rows="3" auto-grow />
+
+                  <VLabel class="mt-3 mb-1 font-weight-bold">Catatan Teknisi</VLabel>
+                  <VTextarea v-model="catatanTeknisiJustCleaning" rows="3" auto-grow />
+
+                  <VBtn color="primary" class="mt-3" @click="saveSupervisorNote('just_cleaning')">
+                    Simpan Catatan
+                  </VBtn>
                 </VCardText>
               </template>
 
@@ -584,23 +445,17 @@ onMounted(() => {
               <template v-if="selectedMaintenanceTypesReplacementPart.length">
                 <h3 class="text-h6 mt-4">Replacement Part</h3>
 
-                <!-- Foto BEFORE & AFTER -->
-                <VCardText class="d-flex gap-4">
-                  <div style="flex: 1">
-                    <PreviewDropZone
-                      label="BEFORE"
-                      v-model="replacementPartBeforeFiles"
-                    />
-                  </div>
-                  <div style="flex: 1">
-                    <PreviewDropZone
-                      label="AFTER"
-                      v-model="replacementPartAfterFiles"
-                    />
-                  </div>
+                <VCardText>
+                  <VRow>
+                    <VCol cols="12" md="6">
+                      <PreviewDropZone label="BEFORE" v-model="replacementPartBeforeFiles" />
+                    </VCol>
+                    <VCol cols="12" md="6">
+                      <PreviewDropZone label="AFTER" v-model="replacementPartAfterFiles" />
+                    </VCol>
+                  </VRow>
                 </VCardText>
 
-                <!-- JSA -->
                 <VCardText>
                   <VLabel class="mt-2 mb-1">JSA File</VLabel>
                   <div v-if="replacementJsa_filename">
@@ -610,7 +465,6 @@ onMounted(() => {
                   </div>
                 </VCardText>
 
-                <!-- Datatable Sparepart -->
                 <VDataTableServer
                   v-if="spareparts.length"
                   v-model:model-value="spareparts"
@@ -618,58 +472,26 @@ onMounted(() => {
                   :items="spareparts"
                   class="text-no-wrap rounded-0"
                 >
-                  <template #item.nama_sparepart="{ item }">
-                    <span>{{ item.nama_sparepart }}</span>
-                  </template>
-
-                  <template #item.qty="{ item }">
-                    <span>{{ item.pivot.qty }}</span>
-                  </template>
-
-                  <template #item.spec="{ item }">
-                    <span>{{ item.spec || "-" }}</span>
-                  </template>
-
-                  <template #item.loc="{ item }">
-                    <span>{{ item.loc || "-" }}</span>
-                  </template>
-
-                  <template #item.type="{ item }">
-                    <span>{{ item.type || "-" }}</span>
-                  </template>
+                  <template #item.nama_sparepart="{ item }"><span>{{ item.nama_sparepart }}</span></template>
+                  <template #item.qty="{ item }"><span>{{ item.pivot.qty }}</span></template>
+                  <template #item.spec="{ item }"><span>{{ item.spec || "-" }}</span></template>
+                  <template #item.loc="{ item }"><span>{{ item.loc || "-" }}</span></template>
+                  <template #item.type="{ item }"><span>{{ item.type || "-" }}</span></template>
                 </VDataTableServer>
-                <VCardText>
-                  <!-- Catatan Team Leader -->
-                  <div>
-                    <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
-                    <VTextarea
-                      v-model="catatanTeamleaderReplacementPart"
-                      placeholder="Tulis catatan dari Team Leader"
-                      rows="3"
-                      auto-grow
-                      :readonly="role !== 'team_leader'"
-                    />
-                  </div>
 
-                  <!-- Catatan Supervisor -->
-                  <div class="mt-3">
-                    <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
-                    <VTextarea
-                      v-model="catatanSupervisorReplacementPart"
-                      placeholder="Tulis catatan dari Supervisor"
-                      rows="3"
-                      auto-grow
-                      :readonly="role !== 'supervisor'"
-                    />
-                    <VBtn
-                      v-if="role === 'supervisor'"
-                      color="primary"
-                      class="mt-2"
-                      @click="saveSupervisorNote('replacement_part')"
-                    >
-                      Simpan Catatan
-                    </VBtn>
-                  </div>
+                <VCardText>
+                  <VLabel class="mt-2 mb-1 font-weight-bold">Catatan Team Leader</VLabel>
+                  <VTextarea v-model="catatanTeamleaderReplacementPart" rows="3" auto-grow />
+
+                  <VLabel class="mt-3 mb-1 font-weight-bold">Catatan Supervisor</VLabel>
+                  <VTextarea v-model="catatanSupervisorReplacementPart" rows="3" auto-grow />
+
+                  <VLabel class="mt-3 mb-1 font-weight-bold">Catatan Teknisi</VLabel>
+                  <VTextarea v-model="catatanTeknisiReplacementPart" rows="3" auto-grow />
+
+                  <VBtn color="primary" class="mt-3" @click="saveSupervisorNote('replacement_part')">
+                    Simpan Catatan
+                  </VBtn>
                 </VCardText>
               </template>
 
@@ -677,19 +499,15 @@ onMounted(() => {
               <template v-if="selectedMaintenanceTypesPreventivePM.length">
                 <h3 class="text-h6 mt-4">Preventive PM</h3>
 
-                <VCardText class="d-flex gap-4">
-                  <div style="flex: 1">
-                    <PreviewDropZone
-                      label="BEFORE"
-                      v-model="preventivePmBeforeFiles"
-                    />
-                  </div>
-                  <div style="flex: 1">
-                    <PreviewDropZone
-                      label="AFTER"
-                      v-model="preventivePmAfterFiles"
-                    />
-                  </div>
+                <VCardText>
+                  <VRow>
+                    <VCol cols="12" md="6">
+                      <PreviewDropZone label="BEFORE" v-model="preventivePmBeforeFiles" />
+                    </VCol>
+                    <VCol cols="12" md="6">
+                      <PreviewDropZone label="AFTER" v-model="preventivePmAfterFiles" />
+                    </VCol>
+                  </VRow>
                 </VCardText>
 
                 <VCardText>
@@ -700,56 +518,30 @@ onMounted(() => {
                     </a>
                   </div>
                 </VCardText>
-                <VCardText>
-                  <!-- Catatan Team Leader -->
-                  <div>
-                    <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
-                    <VTextarea
-                      v-model="catatanTeamleaderPreventivePm"
-                      placeholder="Tulis catatan dari Team Leader"
-                      rows="3"
-                      auto-grow
-                      :readonly="role !== 'team_leader'"
-                    />
-                  </div>
 
-                  <!-- Catatan Supervisor -->
-                  <div class="mt-3">
-                    <VLabel class="mt-2 mb-1">Catatan Supervisor</VLabel>
-                    <VTextarea
-                      v-model="catatanSupervisorPreventivePm"
-                      placeholder="Tulis catatan dari Supervisor"
-                      rows="3"
-                      auto-grow
-                      :readonly="role !== 'supervisor'"
-                    />
-                    <VBtn
-                      v-if="role === 'supervisor'"
-                      color="primary"
-                      class="mt-2"
-                      @click="saveSupervisorNote('preventive_pm')"
-                    >
-                      Simpan Catatan
-                    </VBtn>
-                  </div>
+                <VCardText>
+                  <VLabel class="mt-2 mb-1 font-weight-bold">Catatan Team Leader</VLabel>
+                  <VTextarea v-model="catatanTeamleaderPreventivePm" rows="3" auto-grow />
+
+                  <VLabel class="mt-3 mb-1 font-weight-bold">Catatan Supervisor</VLabel>
+                  <VTextarea v-model="catatanSupervisorPreventivePm" rows="3" auto-grow />
+
+                  <VLabel class="mt-3 mb-1 font-weight-bold">Catatan Teknisi</VLabel>
+                  <VTextarea v-model="catatanTeknisiPreventivePm" rows="3" auto-grow />
+
+                  <VBtn color="primary" class="mt-3" @click="saveSupervisorNote('preventive_pm')">
+                    Simpan Catatan
+                  </VBtn>
                 </VCardText>
               </template>
+
             </div>
           </VCardItem>
         </VCard>
       </VCol>
-
-      <VCol md="4" cols="12"> </VCol>
     </VRow>
 
-    <!-- Snackbar -->
-    <!-- Snackbar -->
-    <VSnackbar
-      v-model="isSnackbarTopEndVisible"
-      :timeout="3000"
-      location="top end"
-      :color="snackbarColor"
-    >
+    <VSnackbar v-model="isSnackbarTopEndVisible" :timeout="3000" location="top end" :color="snackbarColor">
       {{ snackbarMessage }}
     </VSnackbar>
   </div>
@@ -759,37 +551,5 @@ onMounted(() => {
 .drop-zone {
   border: 1px dashed rgba(var(--v-theme-on-surface), 0.12);
   border-radius: 8px;
-}
-</style>
-
-<style lang="scss">
-.inventory-card {
-  .v-radio-group,
-  .v-checkbox {
-    .v-selection-control {
-      align-items: start !important;
-    }
-
-    .v-label.custom-input {
-      border: none !important;
-    }
-  }
-}
-
-.ProseMirror {
-  p {
-    margin-block-end: 0;
-  }
-
-  padding: 0.5rem;
-  outline: none;
-
-  p.is-editor-empty:first-child::before {
-    block-size: 0;
-    color: #adb5bd;
-    content: attr(data-placeholder);
-    float: inline-start;
-    pointer-events: none;
-  }
 }
 </style>

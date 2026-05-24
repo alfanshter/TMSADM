@@ -116,7 +116,7 @@ const onSparepartSelect = () => {
 // Tambah ke list
 const addSparepart = () => {
   if (!selectedItemSparepartObj.value) return;
-  const availableStock = selectedItemSparepartObj.value.stok ?? 0;
+  const availableStock = selectedItemSparepartObj.value.end_month_stock ?? 0;
   if (
     requiredQty.value < 1 ||
     requiredQty.value > availableStock
@@ -152,28 +152,23 @@ const removeSparepart = (index) => {
 
 // ============================================================
 // NOTE / CATATAN
-// Catatan Team Leader (diisi oleh team_leader atau admin)
-// ============================================================
+// Catatan Team Leader
 const cleaningCriticalNoteTeamLeader = ref("");
 const justCleaningNoteTeamLeader = ref("");
 const replacementPartNoteTeamLeader = ref("");
 const preventivePmNoteTeamLeader = ref("");
 
-// Catatan Supervisor (diisi oleh supervisor atau admin)
+// Catatan Supervisor
 const cleaningCriticalNoteSupervisor = ref("");
 const justCleaningNoteSupervisor = ref("");
 const replacementPartNoteSupervisor = ref("");
 const preventivePmNoteSupervisor = ref("");
 
-// Helper computed: apakah role bisa isi catatan team leader
-const canFillTeamLeaderNote = computed(
-  () => role.value === "team_leader" || role.value === "admin"
-);
-
-// Helper computed: apakah role bisa isi catatan supervisor
-const canFillSupervisorNote = computed(
-  () => role.value === "supervisor" || role.value === "admin"
-);
+// Catatan Teknisi
+const cleaningCriticalNoteTeknisi = ref("");
+const justCleaningNoteTeknisi = ref("");
+const replacementPartNoteTeknisi = ref("");
+const preventivePmNoteTeknisi = ref("");
 
 // scope of work
 const incomingRs = ref("");
@@ -306,52 +301,21 @@ const submitForm = async () => {
   formData.append("start_downtime", startTime.value ?? null);
   formData.append("end_downtime", endTime.value ?? null);
 
-  // ============================================================
-  // CATATAN — logika per role
-  // team_leader : hanya isi catatan team leader
-  // supervisor  : hanya isi catatan supervisor
-  // admin       : isi keduanya
-  // ============================================================
+  // Catatan — semua role bisa isi semua catatan
+  formData.append("catatan_teamleader_cleaning_criticals", cleaningCriticalNoteTeamLeader.value);
+  formData.append("catatan_teamleader_just_cleaning", justCleaningNoteTeamLeader.value);
+  formData.append("catatan_teamleader_replacement_part", replacementPartNoteTeamLeader.value);
+  formData.append("catatan_teamleader_preventive_pm", preventivePmNoteTeamLeader.value);
 
-  // Catatan Team Leader (team_leader atau admin)
-  if (role.value === "team_leader" || role.value === "admin") {
-    formData.append(
-      "catatan_teamleader_cleaning_criticals",
-      cleaningCriticalNoteTeamLeader.value
-    );
-    formData.append(
-      "catatan_teamleader_just_cleaning",
-      justCleaningNoteTeamLeader.value
-    );
-    formData.append(
-      "catatan_teamleader_replacement_part",
-      replacementPartNoteTeamLeader.value
-    );
-    formData.append(
-      "catatan_teamleader_preventive_pm",
-      preventivePmNoteTeamLeader.value
-    );
-  }
+  formData.append("catatan_supervisor_cleaning_criticals", cleaningCriticalNoteSupervisor.value);
+  formData.append("catatan_supervisor_justcleaning", justCleaningNoteSupervisor.value);
+  formData.append("catatan_supervisor_replacement_part", replacementPartNoteSupervisor.value);
+  formData.append("catatan_supervisor_preventive_pm", preventivePmNoteSupervisor.value);
 
-  // Catatan Supervisor (supervisor atau admin)
-  if (role.value === "supervisor" || role.value === "admin") {
-    formData.append(
-      "catatan_supervisor_cleaning_criticals",
-      cleaningCriticalNoteSupervisor.value
-    );
-    formData.append(
-      "catatan_supervisor_justcleaning",
-      justCleaningNoteSupervisor.value
-    );
-    formData.append(
-      "catatan_supervisor_replacement_part",
-      replacementPartNoteSupervisor.value
-    );
-    formData.append(
-      "catatan_supervisor_preventive_pm",
-      preventivePmNoteSupervisor.value
-    );
-  }
+  formData.append("catatan_teknisi_cleaning_criticals", cleaningCriticalNoteTeknisi.value);
+  formData.append("catatan_teknisi_just_cleaning", justCleaningNoteTeknisi.value);
+  formData.append("catatan_teknisi_replacement_part", replacementPartNoteTeknisi.value);
+  formData.append("catatan_teknisi_preventive_pm", preventivePmNoteTeknisi.value);
 
   // Tambah Sparepart List
   sparepartList.value.forEach((item, index) => {
@@ -639,13 +603,15 @@ onMounted(() => {
                 v-model="selectedMaintenanceTypesCleaningCritical"
               />
               <template v-if="selectedMaintenanceTypesCleaningCritical.length">
-                <VCardText class="d-flex gap-4">
-                  <div style="flex: 1">
-                    <DropZone label="BEFORE" v-model="cleaningCriticalBeforeFiles" />
-                  </div>
-                  <div style="flex: 1">
-                    <DropZone label="AFTER" v-model="cleaningCriticalAfterFiles" />
-                  </div>
+                <VCardText>
+                  <VRow>
+                    <VCol cols="12" md="6">
+                      <DropZone label="BEFORE" v-model="cleaningCriticalBeforeFiles" />
+                    </VCol>
+                    <VCol cols="12" md="6">
+                      <DropZone label="AFTER" v-model="cleaningCriticalAfterFiles" />
+                    </VCol>
+                  </VRow>
                 </VCardText>
 
                 <VCardText>
@@ -660,27 +626,14 @@ onMounted(() => {
                 </VCardText>
 
                 <VCardText>
-                  <!-- Catatan Team Leader: tampil untuk team_leader dan admin -->
-                  <template v-if="canFillTeamLeaderNote">
-                    <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
-                    <VTextarea
-                      v-model="cleaningCriticalNoteTeamLeader"
-                      placeholder="Tulis catatan dari Team Leader"
-                      rows="3"
-                      auto-grow
-                    />
-                  </template>
+                  <VLabel class="mt-2 mb-1 font-weight-bold">Catatan Team Leader</VLabel>
+                  <VTextarea v-model="cleaningCriticalNoteTeamLeader" placeholder="Tulis catatan dari Team Leader" rows="3" auto-grow />
 
-                  <!-- Catatan Supervisor: tampil untuk supervisor dan admin -->
-                  <template v-if="canFillSupervisorNote">
-                    <VLabel class="mt-4 mb-1">Catatan Supervisor</VLabel>
-                    <VTextarea
-                      v-model="cleaningCriticalNoteSupervisor"
-                      placeholder="Tulis catatan dari Supervisor"
-                      rows="3"
-                      auto-grow
-                    />
-                  </template>
+                  <VLabel class="mt-4 mb-1 font-weight-bold">Catatan Supervisor</VLabel>
+                  <VTextarea v-model="cleaningCriticalNoteSupervisor" placeholder="Tulis catatan dari Supervisor" rows="3" auto-grow />
+
+                  <VLabel class="mt-4 mb-1 font-weight-bold">Catatan Teknisi</VLabel>
+                  <VTextarea v-model="cleaningCriticalNoteTeknisi" placeholder="Tulis catatan dari Teknisi" rows="3" auto-grow />
                 </VCardText>
               </template>
 
@@ -693,13 +646,15 @@ onMounted(() => {
                 v-model="selectedMaintenanceTypesJustCleaning"
               />
               <template v-if="selectedMaintenanceTypesJustCleaning.length">
-                <VCardText class="d-flex gap-4">
-                  <div style="flex: 1">
-                    <DropZone label="BEFORE" v-model="justCleaningBeforeFiles" />
-                  </div>
-                  <div style="flex: 1">
-                    <DropZone label="AFTER" v-model="justCleaningAfterFiles" />
-                  </div>
+                <VCardText>
+                  <VRow>
+                    <VCol cols="12" md="6">
+                      <DropZone label="BEFORE" v-model="justCleaningBeforeFiles" />
+                    </VCol>
+                    <VCol cols="12" md="6">
+                      <DropZone label="AFTER" v-model="justCleaningAfterFiles" />
+                    </VCol>
+                  </VRow>
                 </VCardText>
 
                 <VCardText>
@@ -714,27 +669,14 @@ onMounted(() => {
                 </VCardText>
 
                 <VCardText>
-                  <!-- Catatan Team Leader: tampil untuk team_leader dan admin -->
-                  <template v-if="canFillTeamLeaderNote">
-                    <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
-                    <VTextarea
-                      v-model="justCleaningNoteTeamLeader"
-                      placeholder="Tulis catatan dari Team Leader"
-                      rows="3"
-                      auto-grow
-                    />
-                  </template>
+                  <VLabel class="mt-2 mb-1 font-weight-bold">Catatan Team Leader</VLabel>
+                  <VTextarea v-model="justCleaningNoteTeamLeader" placeholder="Tulis catatan dari Team Leader" rows="3" auto-grow />
 
-                  <!-- Catatan Supervisor: tampil untuk supervisor dan admin -->
-                  <template v-if="canFillSupervisorNote">
-                    <VLabel class="mt-4 mb-1">Catatan Supervisor</VLabel>
-                    <VTextarea
-                      v-model="justCleaningNoteSupervisor"
-                      placeholder="Tulis catatan dari Supervisor"
-                      rows="3"
-                      auto-grow
-                    />
-                  </template>
+                  <VLabel class="mt-4 mb-1 font-weight-bold">Catatan Supervisor</VLabel>
+                  <VTextarea v-model="justCleaningNoteSupervisor" placeholder="Tulis catatan dari Supervisor" rows="3" auto-grow />
+
+                  <VLabel class="mt-4 mb-1 font-weight-bold">Catatan Teknisi</VLabel>
+                  <VTextarea v-model="justCleaningNoteTeknisi" placeholder="Tulis catatan dari Teknisi" rows="3" auto-grow />
                 </VCardText>
               </template>
 
@@ -767,8 +709,8 @@ onMounted(() => {
                       <VTextField
                         v-model.number="requiredQty"
                         type="number"
-                        :label="`Butuh berapa? (Stok tersedia: ${selectedItemSparepartObj.stok ?? 0})`"
-                        :max="selectedItemSparepartObj.stok ?? 0"
+                        :label="`Butuh berapa? (Stok tersedia: ${selectedItemSparepartObj.end_month_stock ?? 0})`"
+                        :max="selectedItemSparepartObj.end_month_stock ?? 0"
                         min="1"
                       />
                       <VBtn color="primary" class="mt-2" @click="addSparepart">Add</VBtn>
@@ -830,27 +772,14 @@ onMounted(() => {
                 </VDataTableServer>
 
                 <VCardText>
-                  <!-- Catatan Team Leader: tampil untuk team_leader dan admin -->
-                  <template v-if="canFillTeamLeaderNote">
-                    <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
-                    <VTextarea
-                      v-model="replacementPartNoteTeamLeader"
-                      placeholder="Tulis catatan dari Team Leader"
-                      rows="3"
-                      auto-grow
-                    />
-                  </template>
+                  <VLabel class="mt-2 mb-1 font-weight-bold">Catatan Team Leader</VLabel>
+                  <VTextarea v-model="replacementPartNoteTeamLeader" placeholder="Tulis catatan dari Team Leader" rows="3" auto-grow />
 
-                  <!-- Catatan Supervisor: tampil untuk supervisor dan admin -->
-                  <template v-if="canFillSupervisorNote">
-                    <VLabel class="mt-4 mb-1">Catatan Supervisor</VLabel>
-                    <VTextarea
-                      v-model="replacementPartNoteSupervisor"
-                      placeholder="Tulis catatan dari Supervisor"
-                      rows="3"
-                      auto-grow
-                    />
-                  </template>
+                  <VLabel class="mt-4 mb-1 font-weight-bold">Catatan Supervisor</VLabel>
+                  <VTextarea v-model="replacementPartNoteSupervisor" placeholder="Tulis catatan dari Supervisor" rows="3" auto-grow />
+
+                  <VLabel class="mt-4 mb-1 font-weight-bold">Catatan Teknisi</VLabel>
+                  <VTextarea v-model="replacementPartNoteTeknisi" placeholder="Tulis catatan dari Teknisi" rows="3" auto-grow />
                 </VCardText>
               </template>
 
@@ -863,13 +792,15 @@ onMounted(() => {
                 v-model="selectedMaintenanceTypesPreventivePM"
               />
               <template v-if="selectedMaintenanceTypesPreventivePM.length">
-                <VCardText class="d-flex gap-4">
-                  <div style="flex: 1">
-                    <DropZone label="BEFORE" v-model="preventivePmBeforeFiles" />
-                  </div>
-                  <div style="flex: 1">
-                    <DropZone label="AFTER" v-model="preventivePmAfterFiles" />
-                  </div>
+                <VCardText>
+                  <VRow>
+                    <VCol cols="12" md="6">
+                      <DropZone label="BEFORE" v-model="preventivePmBeforeFiles" />
+                    </VCol>
+                    <VCol cols="12" md="6">
+                      <DropZone label="AFTER" v-model="preventivePmAfterFiles" />
+                    </VCol>
+                  </VRow>
                 </VCardText>
 
                 <VCardText>
@@ -884,27 +815,14 @@ onMounted(() => {
                 </VCardText>
 
                 <VCardText>
-                  <!-- Catatan Team Leader: tampil untuk team_leader dan admin -->
-                  <template v-if="canFillTeamLeaderNote">
-                    <VLabel class="mt-2 mb-1">Catatan Team Leader</VLabel>
-                    <VTextarea
-                      v-model="preventivePmNoteTeamLeader"
-                      placeholder="Tulis catatan dari Team Leader"
-                      rows="3"
-                      auto-grow
-                    />
-                  </template>
+                  <VLabel class="mt-2 mb-1 font-weight-bold">Catatan Team Leader</VLabel>
+                  <VTextarea v-model="preventivePmNoteTeamLeader" placeholder="Tulis catatan dari Team Leader" rows="3" auto-grow />
 
-                  <!-- Catatan Supervisor: tampil untuk supervisor dan admin -->
-                  <template v-if="canFillSupervisorNote">
-                    <VLabel class="mt-4 mb-1">Catatan Supervisor</VLabel>
-                    <VTextarea
-                      v-model="preventivePmNoteSupervisor"
-                      placeholder="Tulis catatan dari Supervisor"
-                      rows="3"
-                      auto-grow
-                    />
-                  </template>
+                  <VLabel class="mt-4 mb-1 font-weight-bold">Catatan Supervisor</VLabel>
+                  <VTextarea v-model="preventivePmNoteSupervisor" placeholder="Tulis catatan dari Supervisor" rows="3" auto-grow />
+
+                  <VLabel class="mt-4 mb-1 font-weight-bold">Catatan Teknisi</VLabel>
+                  <VTextarea v-model="preventivePmNoteTeknisi" placeholder="Tulis catatan dari Teknisi" rows="3" auto-grow />
                 </VCardText>
               </template>
 

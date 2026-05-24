@@ -51,6 +51,10 @@ export const ENDPOINTS = {
   // export excel
   exportSpareparts: (year) => `${API_BASE_URL}/spareparts/export?year=${year}`,
 
+  // Sparepart logs / riwayat
+  getSparepartLogs: (id) => `${API_BASE_URL}/spareparts/${id}/logs`,
+  allSparepartLogs: `${API_BASE_URL}/sparepart-logs`,
+
   // PICA endpoints
   picas: `${API_BASE_URL}/picas`, // GET list & POST create
   getPica: (id) => `${API_BASE_URL}/picas/${id}`, // GET detail

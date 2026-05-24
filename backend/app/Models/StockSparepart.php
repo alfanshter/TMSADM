@@ -37,4 +37,9 @@ class StockSparepart extends Model
     {
         return $this->hasMany(TmsSparepart::class, 'stock_sparepart_id');
     }
+
+    public function logs()
+    {
+        return $this->hasMany(SparepartLog::class, 'stock_sparepart_id');
+    }
 }

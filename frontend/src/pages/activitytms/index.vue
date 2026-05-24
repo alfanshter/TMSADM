@@ -7,10 +7,9 @@ import { useRouter } from "vue-router";
 import Cookies from "js-cookie";
 
 
-// anyaarrarararaa
-
-//Pinia send another activity
+// Pinia store — filter + current item
 const activityStore = useActivityStore();
+
 // message snackbar
 const isSnackbarTopEndVisible = ref(false);
 
@@ -20,12 +19,12 @@ const globalLoading = inject("globalLoading");
 // filter
 const selectedScopeOfWork = ref(null);
 
-// --- Filter Tahun & Bulan ---
+// --- Filter Tahun & Bulan — baca dari store agar persisten ---
 const currentYear = new Date().getFullYear();
 const currentMonth = String(new Date().getMonth() + 1).padStart(2, "0");
 
-const selectedYear = ref(currentYear);
-const selectedMonth = ref(currentMonth);
+const selectedYear = ref(activityStore.selectedYear ?? currentYear);
+const selectedMonth = ref(activityStore.selectedMonth ?? currentMonth);
 
 // List tahun misalnya 5 tahun ke belakang & depan
 const years = ref(Array.from({ length: 10 }, (_, i) => currentYear - 5 + i));
@@ -54,43 +53,35 @@ const selectedData = ref([]);
 
 const jsaFile = ref(null);
 
-//catatan
+// catatan
 const isNotesDialogVisible = ref(false);
 const selectedActivity = ref(null);
-const activeMaintenanceType = ref(null); // track which maintenance type is active
+const activeMaintenanceType = ref(null);
 
 // field catatan
 const teamLeaderNote = ref("");
 const supervisorNote = ref("");
-
-// buka popup
-// function openNotes(activity) {
-//   selectedActivity.value = activity;
-
-//   // default ambil salah satu field catatan supervisor
-//   supervisorNote.value =
-//     activity.catatan_supervisor_cleaning_criticals ||
-//     activity.catatan_supervisor_justcleaning ||
-//     activity.catatan_supervisor_replacement_part ||
-//     activity.catatan_supervisor_preventive_pm ||
-//     "";
-//   isNotesDialogVisible.value = true;
-// }
+const teknisiNote = ref("");
 
 function openNotes(activity) {
   selectedActivity.value = activity;
 
   // Determine which maintenance type is active
-  if (activity.catatan_teamleader_cleaning_criticals) {
+  if (activity.catatan_teamleader_cleaning_criticals || activity.catatan_supervisor_cleaning_criticals || activity.catatan_teknisi_cleaning_criticals) {
     activeMaintenanceType.value = 'cleaning_critical';
-  } else if (activity.catatan_teamleader_just_cleaning) {
+  } else if (activity.catatan_teamleader_just_cleaning || activity.catatan_supervisor_justcleaning || activity.catatan_teknisi_just_cleaning) {
     activeMaintenanceType.value = 'just_cleaning';
-  } else if (activity.catatan_teamleader_replacement_part) {
+  } else if (activity.catatan_teamleader_replacement_part || activity.catatan_supervisor_replacement_part || activity.catatan_teknisi_replacement_part) {
     activeMaintenanceType.value = 'replacement_part';
-  } else if (activity.catatan_teamleader_preventive_pm) {
+  } else if (activity.catatan_teamleader_preventive_pm || activity.catatan_supervisor_preventive_pm || activity.catatan_teknisi_preventive_pm) {
     activeMaintenanceType.value = 'preventive_pm';
   } else {
-    activeMaintenanceType.value = null;
+    // Detect by photos
+    if (activity.cleaning_criticals?.length) activeMaintenanceType.value = 'cleaning_critical';
+    else if (activity.just_cleaning?.length) activeMaintenanceType.value = 'just_cleaning';
+    else if (activity.replacement_part?.length) activeMaintenanceType.value = 'replacement_part';
+    else if (activity.preventive?.length) activeMaintenanceType.value = 'preventive_pm';
+    else activeMaintenanceType.value = null;
   }
 
   // ambil supervisor note
@@ -109,6 +100,14 @@ function openNotes(activity) {
     activity.catatan_teamleader_preventive_pm ||
     "";
 
+  // ambil teknisi note
+  teknisiNote.value =
+    activity.catatan_teknisi_cleaning_criticals ||
+    activity.catatan_teknisi_just_cleaning ||
+    activity.catatan_teknisi_replacement_part ||
+    activity.catatan_teknisi_preventive_pm ||
+    "";
+
   isNotesDialogVisible.value = true;
 }
 
@@ -118,71 +117,58 @@ async function saveNote() {
 
     const payload = {};
 
-    // === TEAM LEADER NOTE (admin & team_leader bisa add/edit) ===
-    if (role === "admin" || role === "team_leader") {
-      // Update field yang ada untuk team leader notes
-      if (
-        selectedActivity.value.hasOwnProperty("catatan_teamleader_cleaning_criticals")
-      ) {
-        payload.catatan_teamleader_cleaning_criticals = teamLeaderNote.value;
-      } else if (
-        selectedActivity.value.hasOwnProperty("catatan_teamleader_just_cleaning")
-      ) {
-        payload.catatan_teamleader_just_cleaning = teamLeaderNote.value;
-      } else if (
-        selectedActivity.value.hasOwnProperty("catatan_teamleader_replacement_part")
-      ) {
-        payload.catatan_teamleader_replacement_part = teamLeaderNote.value;
-      } else if (
-        selectedActivity.value.hasOwnProperty("catatan_teamleader_preventive_pm")
-      ) {
-        payload.catatan_teamleader_preventive_pm = teamLeaderNote.value;
-      }
+    if (activeMaintenanceType.value === 'cleaning_critical') {
+      payload.catatan_teamleader_cleaning_criticals = teamLeaderNote.value;
+      payload.catatan_supervisor_cleaning_criticals = supervisorNote.value;
+      payload.catatan_teknisi_cleaning_criticals    = teknisiNote.value;
+    } else if (activeMaintenanceType.value === 'just_cleaning') {
+      payload.catatan_teamleader_just_cleaning = teamLeaderNote.value;
+      payload.catatan_supervisor_justcleaning  = supervisorNote.value;
+      payload.catatan_teknisi_just_cleaning    = teknisiNote.value;
+    } else if (activeMaintenanceType.value === 'replacement_part') {
+      payload.catatan_teamleader_replacement_part = teamLeaderNote.value;
+      payload.catatan_supervisor_replacement_part = supervisorNote.value;
+      payload.catatan_teknisi_replacement_part    = teknisiNote.value;
+    } else if (activeMaintenanceType.value === 'preventive_pm') {
+      payload.catatan_teamleader_preventive_pm = teamLeaderNote.value;
+      payload.catatan_supervisor_preventive_pm = supervisorNote.value;
+      payload.catatan_teknisi_preventive_pm    = teknisiNote.value;
+    } else {
+      // fallback — kirim semua field
+      payload.catatan_teamleader_cleaning_criticals = teamLeaderNote.value;
+      payload.catatan_supervisor_cleaning_criticals = supervisorNote.value;
+      payload.catatan_teknisi_cleaning_criticals    = teknisiNote.value;
     }
 
-    // === SUPERVISOR NOTE (admin & supervisor bisa edit) ===
-    if (role === "admin" || role === "supervisor") {
-      if (
-        selectedActivity.value.hasOwnProperty("catatan_supervisor_cleaning_criticals")
-      ) {
-        payload.catatan_supervisor_cleaning_criticals = supervisorNote.value;
-      } else if (
-        selectedActivity.value.hasOwnProperty("catatan_supervisor_justcleaning")
-      ) {
-        payload.catatan_supervisor_justcleaning = supervisorNote.value;
-      } else if (
-        selectedActivity.value.hasOwnProperty("catatan_supervisor_replacement_part")
-      ) {
-        payload.catatan_supervisor_replacement_part = supervisorNote.value;
-      } else if (
-        selectedActivity.value.hasOwnProperty("catatan_supervisor_preventive_pm")
-      ) {
-        payload.catatan_supervisor_preventive_pm = supervisorNote.value;
-      }
-    }
-
-    console.log("Payload untuk disimpan:", payload);
     const response = await axios.put(
       ENDPOINTS.updateSupervisorNote(selectedActivity.value.id),
       payload,
     );
 
-    console.log("Response dari API:", response.data);
-
     // Update selectedActivity dengan data terbaru dari API
     if (response.data.data) {
       selectedActivity.value = response.data.data;
-      
-      // Re-load team leader note dari data terbaru
       teamLeaderNote.value =
         selectedActivity.value.catatan_teamleader_cleaning_criticals ||
         selectedActivity.value.catatan_teamleader_just_cleaning ||
         selectedActivity.value.catatan_teamleader_replacement_part ||
         selectedActivity.value.catatan_teamleader_preventive_pm ||
         "";
+      supervisorNote.value =
+        selectedActivity.value.catatan_supervisor_cleaning_criticals ||
+        selectedActivity.value.catatan_supervisor_justcleaning ||
+        selectedActivity.value.catatan_supervisor_replacement_part ||
+        selectedActivity.value.catatan_supervisor_preventive_pm ||
+        "";
+      teknisiNote.value =
+        selectedActivity.value.catatan_teknisi_cleaning_criticals ||
+        selectedActivity.value.catatan_teknisi_just_cleaning ||
+        selectedActivity.value.catatan_teknisi_replacement_part ||
+        selectedActivity.value.catatan_teknisi_preventive_pm ||
+        "";
     }
 
-    // Update activity dalam list dengan data terbaru
+    // Update activity dalam list
     const updatedActivityIndex = activityTms.value.findIndex(
       (item) => item.id === selectedActivity.value.id
     );
@@ -205,7 +191,7 @@ async function saveNote() {
 
 //message snackbar
 const snackbarMessage = ref("Add New Item Machine Success!");
-const snackbarColor = ref("success"); // default success
+const snackbarColor = ref("success");
 
 const typeLabels = {
   cleaning_criticals: "Cleaning Critical",
@@ -226,12 +212,9 @@ const afterPhotos = computed(() =>
 
 // Fungsi buka dialog
 function openDialog(type, data, activity) {
-  console.log("DATA DARI BACKEND:", data);
-  console.log("ACTIVITY DATA:", activity);
   selectedType.value = type;
   selectedData.value = data;
 
-  // Ambil JSA file sesuai tipe
   if (type === "cleaning_criticals") {
     jsaFile.value = activity.jsa_file_cleaning_criticals
       ? baseURL + activity.jsa_file_cleaning_criticals
@@ -267,24 +250,16 @@ const userData = Cookies.get("userData")
   : null;
 const role = userData?.user?.role;
 
-// Headers table (Actions hanya untuk admin/team_leader)
+// Headers table (Actions untuk semua role)
 const headers = computed(() => {
-  const baseHeaders = [
+  return [
     { title: "Nama Mesin", key: "name" },
     { title: "Code", key: "code" },
     { title: "Lokasi", key: "location" },
     { title: "Scope of Work", key: "scope_of_work" },
     { title: "Date", key: "date" },
+    { title: "Actions", key: "actions", sortable: false },
   ];
-  if (
-    role === "admin" ||
-    role === "team_leader" ||
-    role === "supervisor" ||
-    role === "teknisi"
-  ) {
-    baseHeaders.push({ title: "Actions", key: "actions", sortable: false });
-  }
-  return baseHeaders;
 });
 
 const scope_of_work = [
@@ -304,6 +279,8 @@ const fetchActivityTms = async () => {
     totalActivityTms.value = Array.isArray(result) ? result.length : 0;
   } catch (error) {
     console.error("Error fetching activity TMS:", error);
+    activityTms.value = [];
+    totalActivityTms.value = 0;
   } finally {
     isLoading.value = false;
   }
@@ -312,22 +289,16 @@ const fetchActivityTms = async () => {
 const router = useRouter();
 
 function handleEdit(item) {
-  activityStore.setCurrentItem(item); // simpan data di store
-  console.log("Item yang dipilih:", item);
-  console.log("ID yang dipilih:", item.id);
+  activityStore.setCurrentItem(item);
   router.push(`/activitytms/edit?id=${item.id}`);
 }
 
 function handleDetail(item) {
-  activityStore.setCurrentItem(item); // simpan data di store
+  activityStore.setCurrentItem(item);
   router.push(`/activitytms/detail?id=${item.id}`);
 }
 
-const exportToExcel = async (year) => {
-  if (!year) {
-    console.error("Tahun belum dipilih");
-    return;
-  }
+const exportToExcel = async () => {
   try {
     const res = await axios.get(
       ENDPOINTS.activityTmsExport(selectedYear.value, selectedMonth.value),
@@ -338,8 +309,9 @@ const exportToExcel = async (year) => {
   }
 };
 
-// --- Re-fetch jika tahun / bulan berubah ---
-watch([selectedYear, selectedMonth], () => {
+// --- Simpan filter ke store saat berubah agar persisten ---
+watch([selectedYear, selectedMonth], ([year, month]) => {
+  activityStore.setFilter(year, month);
   fetchActivityTms();
 });
 
@@ -352,11 +324,7 @@ const deleteActivityTms = async (id) => {
   try {
     globalLoading?.show();
     await axios.delete(`${ENDPOINTS.addactivityTms}/${id}`);
-
-    // langsung hapus dari list biar reactive
     activityTms.value = activityTms.value.filter((item) => item.id !== id);
-
-    // Tampilkan snackbar
     snackbarMessage.value = "Delete Activity TMS Completed!";
     snackbarColor.value = "success";
     isSnackbarTopEndVisible.value = true;
@@ -370,7 +338,6 @@ const deleteActivityTms = async (id) => {
   }
 };
 
-// Dummy resolve status
 const resolveUserStatusVariant = (status) => {
   return status ? "success" : "error";
 };
@@ -418,13 +385,6 @@ watch(selectedScopeOfWork, () => {
               label="Select Scope of Work"
               :items="scope_of_work"
               clearable
-              density="compact"
-            />
-          </VCol>
-          <VCol cols="12" sm="4" md="3">
-            <VTextField
-              v-model="searchQuery"
-              placeholder="Search Item Machine"
               density="compact"
             />
           </VCol>
@@ -513,26 +473,8 @@ watch(selectedScopeOfWork, () => {
           {{ item.date }}
         </template>
 
-        <!-- Status -->
-        <template #item.status="{ item }">
-          <VChip
-            :color="resolveUserStatusVariant(item.status === 1)"
-            size="small"
-          >
-            {{ item.status === 1 ? "Aktif" : "Tidak Aktif" }}
-          </VChip>
-        </template>
-
-        <!-- Actions -->
-        <template
-          v-if="
-            role === 'admin' ||
-            role === 'team_leader' ||
-            role === 'supervisor' ||
-            role === 'teknisi'
-          "
-          #item.actions="{ item }"
-        >
+        <!-- Actions — semua role -->
+        <template #item.actions="{ item }">
           <IconBtn size="small" @click="handleEdit(item)">
             <VIcon icon="ri-edit-box-line" />
           </IconBtn>
@@ -544,7 +486,8 @@ watch(selectedScopeOfWork, () => {
           <IconBtn size="small" @click="deleteActivityTms(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>
-          <!-- Tambahan Notes -->
+
+          <!-- Catatan -->
           <IconBtn size="small" @click="openNotes(item)">
             <VIcon icon="ri-chat-4-line" />
           </IconBtn>
@@ -555,7 +498,6 @@ watch(selectedScopeOfWork, () => {
     <!-- Dialog Foto Before/After & JSA -->
     <VDialog v-model="isDialogVisible" max-width="800px">
       <VCard>
-        <!-- Judul Dialog -->
         <VCardTitle class="bg-primary text-white">
           {{ typeLabels[selectedType] }}
         </VCardTitle>
@@ -617,7 +559,6 @@ watch(selectedScopeOfWork, () => {
           </div>
         </VCardText>
 
-        <!-- Tombol Close -->
         <VCardActions>
           <VSpacer />
           <VBtn color="secondary" @click="isDialogVisible = false">Tutup</VBtn>
@@ -625,67 +566,64 @@ watch(selectedScopeOfWork, () => {
       </VCard>
     </VDialog>
 
-    <!-- Dialog Notes -->
-    <VDialog v-model="isNotesDialogVisible" max-width="600px">
+    <!-- Dialog Notes — semua role bisa edit semua catatan -->
+    <VDialog v-model="isNotesDialogVisible" max-width="650px">
       <VCard>
         <VCardTitle class="bg-primary text-white">
           Catatan Activity
         </VCardTitle>
         <VCardText>
-          <div v-if="selectedActivity">
-            <p>
-              <strong>Mesin:</strong> {{ selectedActivity.item_machine?.name }}
-            </p>
-            <p>
-              <strong>Kode:</strong> {{ selectedActivity.item_machine?.code }}
+          <div v-if="selectedActivity" class="mb-3">
+            <p><strong>Mesin:</strong> {{ selectedActivity.item_machine?.name }}</p>
+            <p><strong>Kode:</strong> {{ selectedActivity.item_machine?.code }}</p>
+            <p class="text-caption text-medium-emphasis">
+              Tipe:
+              <VChip size="x-small" color="primary">
+                {{ activeMaintenanceType ?? 'Umum' }}
+              </VChip>
             </p>
           </div>
 
-          <!-- Cleaning Critical -->
-          <template
-            v-if="activeMaintenanceType === 'cleaning_critical' || (activeMaintenanceType === null && (role === 'admin' || role === 'team_leader'))"
-          >
-            <VLabel class="mb-1"
-              >Catatan Team Leader (Cleaning Critical)</VLabel
-            >
-            <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin' && role !== 'team_leader'" />
-          </template>
+          <VDivider class="mb-4" />
 
-          <!-- Just Cleaning -->
-          <template v-else-if="activeMaintenanceType === 'just_cleaning'">
-            <VLabel class="mb-1">Catatan Team Leader (Just Cleaning)</VLabel>
-            <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin' && role !== 'team_leader'" />
-          </template>
+          <!-- Catatan Team Leader -->
+          <VLabel class="mb-1 font-weight-bold">Catatan Team Leader</VLabel>
+          <VTextarea
+            v-model="teamLeaderNote"
+            placeholder="Tulis catatan Team Leader..."
+            rows="3"
+            auto-grow
+            variant="outlined"
+            class="mb-4"
+          />
 
-          <!-- Replacement Part -->
-          <template v-else-if="activeMaintenanceType === 'replacement_part'">
-            <VLabel class="mb-1">Catatan Team Leader (Replacement Part)</VLabel>
-            <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin' && role !== 'team_leader'" />
-          </template>
-
-          <!-- Preventive PM -->
-          <template v-else-if="activeMaintenanceType === 'preventive_pm'">
-            <VLabel class="mb-1">Catatan Team Leader (Preventive PM)</VLabel>
-            <VTextarea v-model="teamLeaderNote" :readonly="role !== 'admin' && role !== 'team_leader'" />
-          </template>
-
-          <!-- Supervisor bisa nambah/ubah -->
-          <VLabel class="mt-4 mb-1">Catatan Supervisor</VLabel>
+          <!-- Catatan Supervisor -->
+          <VLabel class="mb-1 font-weight-bold">Catatan Supervisor</VLabel>
           <VTextarea
             v-model="supervisorNote"
-            placeholder="Tanggapan Supervisor"
-            rows="4"
+            placeholder="Tulis catatan Supervisor..."
+            rows="3"
             auto-grow
-            :readonly="role !== 'admin' && role !== 'supervisor'"
+            variant="outlined"
+            class="mb-4"
+          />
+
+          <!-- Catatan Teknisi -->
+          <VLabel class="mb-1 font-weight-bold">Catatan Teknisi</VLabel>
+          <VTextarea
+            v-model="teknisiNote"
+            placeholder="Tulis catatan Teknisi..."
+            rows="3"
+            auto-grow
+            variant="outlined"
           />
         </VCardText>
 
         <VCardActions>
           <VSpacer />
-          <VBtn color="secondary" @click="isNotesDialogVisible = false">
+          <VBtn color="secondary" variant="outlined" @click="isNotesDialogVisible = false">
             Tutup
           </VBtn>
-          <!-- <VBtn color="primary" @click="saveSupervisorNote"> Simpan </VBtn> -->
           <VBtn color="primary" variant="flat" rounded="lg" @click="saveNote">
             Simpan
           </VBtn>

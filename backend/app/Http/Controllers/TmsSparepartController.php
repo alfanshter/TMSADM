@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SparepartLog;
 use App\Models\TmsSparepart;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class TmsSparepartController extends Controller
@@ -29,7 +31,6 @@ class TmsSparepartController extends Controller
                 'qty'                => 'required|integer|min:1',
             ]);
 
-            // Jika validasi gagal
             if ($validator->fails()) {
                 return response()->json([
                     'status'  => 0,
@@ -41,29 +42,40 @@ class TmsSparepartController extends Controller
             $validated = $validator->validated();
 
             // Cek apakah item sudah ada
-            $sparepart = TmsSparepart::where('activity_tms_id', $validated['activity_tms_id'])
+            $existing = TmsSparepart::where('activity_tms_id', $validated['activity_tms_id'])
                 ->where('stock_sparepart_id', $validated['stock_sparepart_id'])
                 ->first();
 
-            if ($sparepart) {
-                // Update stok (tambah qty)
-                $sparepart->qty += $validated['qty'];
-                $sparepart->save();
-
+            if ($existing) {
+                // Update qty (tambah)
+                $addedQty = $validated['qty'];
+                $existing->qty += $addedQty;
+                $existing->save();
+                $sparepart = $existing;
                 $message = 'Stok sparepart berhasil diperbarui.';
             } else {
                 // Insert baru
+                $addedQty = $validated['qty'];
                 $sparepart = TmsSparepart::create($validated);
                 $message = 'Sparepart berhasil ditambahkan.';
             }
 
+            // ✅ Catat log pemakaian (usage)
+            SparepartLog::create([
+                'stock_sparepart_id' => $validated['stock_sparepart_id'],
+                'user_id'            => Auth::id(),
+                'action'             => 'usage',
+                'qty'                => $addedQty,
+                'keterangan'         => 'Digunakan pada Activity TMS #' . $validated['activity_tms_id'],
+            ]);
+
             return response()->json([
                 'status'  => 1,
-                'message' => 'Sparepart berhasil ditambahkan.',
+                'message' => $message,
                 'data'    => $sparepart
             ], 201);
+
         } catch (\Exception $e) {
-            // Jika ada error tak terduga
             return response()->json([
                 'status'  => 0,
                 'message' => 'Terjadi kesalahan pada server.',
@@ -72,27 +84,33 @@ class TmsSparepartController extends Controller
         }
     }
 
-
-    function destroy($id)
+    public function destroy($id)
     {
+        $tmsSparepart = TmsSparepart::find($id);
 
-        // Hapus data
-        $deleted = TmsSparepart::where('id', $id)->delete();
-
-
-        // Cek apakah berhasil dihapus
-        if ($deleted) {
+        if (!$tmsSparepart) {
             return response()->json([
-                'status' => true,
+                'status' => false,
                 'data' => null,
-                'message' => 'Sparepart berhasil dihapus.'
-            ]);
+                'message' => 'Sparepart tidak ditemukan.'
+            ], 404);
         }
 
+        // ✅ Catat log pembatalan pemakaian
+        SparepartLog::create([
+            'stock_sparepart_id' => $tmsSparepart->stock_sparepart_id,
+            'user_id'            => Auth::id(),
+            'action'             => 'usage_cancelled',
+            'qty'                => $tmsSparepart->qty,
+            'keterangan'         => 'Pemakaian dibatalkan dari Activity TMS #' . $tmsSparepart->activity_tms_id,
+        ]);
+
+        $tmsSparepart->delete();
+
         return response()->json([
-            'status' => false,
+            'status' => true,
             'data' => null,
-            'message' => 'Gagal menghapus spareparts.'
-        ], 500);
+            'message' => 'Sparepart berhasil dihapus.'
+        ]);
     }
 }

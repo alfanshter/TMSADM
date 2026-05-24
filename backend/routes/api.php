@@ -78,25 +78,28 @@ Route::get('/activity-summary', [ScheduleController::class, 'index']);
 Route::get('/export-pm-schedule', [ScheduleController::class, 'export']);
 Route::post('/getActivityByScheduleList', [ActivityTMSController::class, 'getActivityByScheduleList']);
 
-// Sparepart
-Route::prefix('spareparts')->group(function () {
-    Route::get('/', [StockSparepartController::class, 'index']);
-    Route::post('/', [StockSparepartController::class, 'store']);
-    Route::get('/export', [StockSparepartController::class, 'export']);
-    Route::get('/{id}', [StockSparepartController::class, 'show']);
-    Route::put('/{id}', [StockSparepartController::class, 'update']);
-    Route::delete('/{id}', [StockSparepartController::class, 'destroy']);
-    Route::get('/{id}/logs', [StockSparepartController::class, 'getLogs']);
-});
+// Sparepart & logs endpoints requiring authentication
+Route::middleware(['auth:sanctum'])->group(function () {
+    // Sparepart
+    Route::prefix('spareparts')->group(function () {
+        Route::get('/', [StockSparepartController::class, 'index']);
+        Route::post('/', [StockSparepartController::class, 'store']);
+        Route::get('/export', [StockSparepartController::class, 'export']);
+        Route::get('/{id}', [StockSparepartController::class, 'show']);
+        Route::put('/{id}', [StockSparepartController::class, 'update']);
+        Route::delete('/{id}', [StockSparepartController::class, 'destroy']);
+        Route::get('/{id}/logs', [StockSparepartController::class, 'getLogs']);
+    });
 
-// Semua riwayat sparepart
-Route::get('/sparepart-logs', [StockSparepartController::class, 'getAllLogs']);
+    // Semua riwayat sparepart
+    Route::get('/sparepart-logs', [StockSparepartController::class, 'getAllLogs']);
 
-// TMS Sparepart
-Route::prefix('tmssparepart')->group(function () {
-    Route::get('/', [TmsSparepartController::class, 'index']);
-    Route::post('/', [TmsSparepartController::class, 'store']);
-    Route::delete('/{id}', [TmsSparepartController::class, 'destroy']);
+    // TMS Sparepart
+    Route::prefix('tmssparepart')->group(function () {
+        Route::get('/', [TmsSparepartController::class, 'index']);
+        Route::post('/', [TmsSparepartController::class, 'store']);
+        Route::delete('/{id}', [TmsSparepartController::class, 'destroy']);
+    });
 });
 
 // Pica

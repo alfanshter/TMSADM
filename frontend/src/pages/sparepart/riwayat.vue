@@ -13,6 +13,27 @@ const selectedAction = ref(null);
 const itemsPerPage = ref(15);
 const page = ref(1);
 
+// FILTER BULAN & TAHUN
+const currentYear = new Date().getFullYear();
+const currentMonth = String(new Date().getMonth() + 1).padStart(2, "0");
+const selectedYear = ref(currentYear);
+const selectedMonth = ref(currentMonth);
+const years = ref(Array.from({ length: 5 }, (_, i) => currentYear - i));
+const months = ref([
+  { label: "January", value: "01" },
+  { label: "February", value: "02" },
+  { label: "March", value: "03" },
+  { label: "April", value: "04" },
+  { label: "May", value: "05" },
+  { label: "June", value: "06" },
+  { label: "July", value: "07" },
+  { label: "August", value: "08" },
+  { label: "September", value: "09" },
+  { label: "October", value: "10" },
+  { label: "November", value: "11" },
+  { label: "December", value: "12" },
+]);
+
 // SNACKBAR
 const isSnackbarTopEndVisible = ref(false);
 const snackbarMessage = ref("");
@@ -63,10 +84,14 @@ const fetchSpareparts = async () => {
 // FETCH LOGS
 const fetchLogs = async () => {
   isLoading.value = true;
+  logs.value = []; // Clear logs sebelum fetch data baru
   try {
     const params = {};
     if (selectedSparepartId.value) params.sparepart_id = selectedSparepartId.value;
     if (selectedAction.value) params.action = selectedAction.value;
+    params.month = `${selectedYear.value}-${selectedMonth.value}`;
+
+    console.log("Fetching logs with params:", params); // Debug
 
     const res = await axios.get(ENDPOINTS.allSparepartLogs, { params });
     logs.value = res.data.data ?? [];
@@ -104,7 +129,7 @@ const totalDeleted = computed(() =>
   logs.value.filter(l => l.action === "delete").length
 );
 
-watch([selectedSparepartId, selectedAction], () => {
+watch([selectedSparepartId, selectedAction, selectedYear, selectedMonth], () => {
   page.value = 1;
   fetchLogs();
 });
@@ -176,7 +201,7 @@ onMounted(() => {
       </VCardItem>
       <VCardText>
         <VRow>
-          <VCol cols="12" sm="4">
+          <VCol cols="12" sm="6" md="3">
             <VAutocomplete
               v-model="selectedSparepartId"
               :items="spareparts"
@@ -188,7 +213,7 @@ onMounted(() => {
               density="compact"
             />
           </VCol>
-          <VCol cols="12" sm="4">
+          <VCol cols="12" sm="6" md="3">
             <VSelect
               v-model="selectedAction"
               :items="actionOptions"
@@ -199,7 +224,27 @@ onMounted(() => {
               clearable
             />
           </VCol>
-          <VCol cols="12" sm="4">
+          <VCol cols="12" sm="6" md="3">
+            <VSelect
+              v-model="selectedYear"
+              :items="years"
+              label="Tahun"
+              density="compact"
+            />
+          </VCol>
+          <VCol cols="12" sm="6" md="3">
+            <VSelect
+              v-model="selectedMonth"
+              :items="months"
+              item-title="label"
+              item-value="value"
+              label="Bulan"
+              density="compact"
+            />
+          </VCol>
+        </VRow>
+        <VRow>
+          <VCol cols="12">
             <VTextField
               v-model="searchQuery"
               placeholder="Cari sparepart, keterangan, user..."

@@ -314,6 +314,12 @@ class StockSparepartController extends Controller
             $query->where('action', $request->action);
         }
 
+        // Filter by month (format: YYYY-MM)
+        if ($request->has('month') && $request->month) {
+            $query->whereYear('created_at', substr($request->month, 0, 4))
+                  ->whereMonth('created_at', substr($request->month, 5, 2));
+        }
+
         $logs = $query->get()->map(function ($log) {
             return [
                 'id'             => $log->id,

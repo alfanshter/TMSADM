@@ -50,7 +50,8 @@ class ActivityTms extends Model
             'activity_tms_id',         // foreign key di pivot untuk ActivityTms
             'stock_sparepart_id'       // foreign key di pivot untuk StockSparepart
         )->withPivot('id','qty')
-         ->withTimestamps();
+         ->withTimestamps()
+         ->withTrashed();
     }
     
     // public function maintenanceType()

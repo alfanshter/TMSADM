@@ -15,7 +15,7 @@ class SparepartLog extends Model
 
     public function sparepart()
     {
-        return $this->belongsTo(StockSparepart::class, 'stock_sparepart_id');
+        return $this->belongsTo(StockSparepart::class, 'stock_sparepart_id')->withTrashed();
     }
 
     public function user()

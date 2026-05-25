@@ -249,7 +249,7 @@ const openEditDrawer = (item) => {
             />
           </div>
           <!-- 👉 Add pica button -->
-          <VBtn v-if="['admin', 'team_leader'].includes(role?.toLowerCase())" @click="isAddNewpicaDrawerVisible = true"> Add PICA </VBtn>
+          <VBtn v-if="['admin', 'team_leader', 'teknisi', 'supervisor'].includes(role?.toLowerCase())" @click="isAddNewpicaDrawerVisible = true"> Add PICA </VBtn>
         </div>
       </VCardText>
 
@@ -295,7 +295,7 @@ const openEditDrawer = (item) => {
 
         <!-- Actions -->
         <template #item.actions="{ item }">
-          <IconBtn v-if="['admin', 'team_leader'].includes(role?.toLowerCase())" size="small" @click="deleteData(item.id)">
+          <IconBtn v-if="['admin', 'team_leader','teknisi','supervisor'].includes(role?.toLowerCase())" size="small" @click="deleteData(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>
 
@@ -303,7 +303,7 @@ const openEditDrawer = (item) => {
             <VIcon icon="ri-eye-line" />
           </IconBtn>
 
-           <IconBtn v-if="['admin', 'team_leader'].includes(role?.toLowerCase())" size="small" @click="openEditDrawer(item)">
+           <IconBtn v-if="['admin', 'team_leader','teknisi','supervisor'].includes(role?.toLowerCase())" size="small" @click="openEditDrawer(item)">
             <VIcon icon="ri-edit-box-line" />
           </IconBtn>
         </template>

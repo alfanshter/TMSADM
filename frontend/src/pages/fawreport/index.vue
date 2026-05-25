@@ -72,7 +72,7 @@ const headers = computed(() => {
     { title: "Date", key: "date" },
     { title: "Report Image", key: "image" },
   ];
-  if (role === "admin" || role === "team_leader") {
+  if (role === "admin" || role === "team_leader" || role === "teknisi" || role === "supervisor") {
     baseHeaders.push({ title: "Actions", key: "actions", sortable: false });
   }
   return baseHeaders;

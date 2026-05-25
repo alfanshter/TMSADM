@@ -38,7 +38,7 @@ const headers = computed(() => {
     { title: "Date", key: "date" },
     { title: "Files", key: "file_scan" },
   ];
-  if (role === "admin" || role === "team_leader" || role === "supervisor") {
+  if (role === "admin" || role === "team_leader" || role === "supervisor" || role === "teknisi") {
     baseHeaders.push({ title: "Actions", key: "actions", sortable: false });
   }
   return baseHeaders;
@@ -140,7 +140,7 @@ onMounted(fetchLeakageReports);
       <VCardText class="d-flex flex-wrap gap-4 align-center">
         <VTextField v-model="searchQuery" placeholder="Search Report" density="compact" />
         <VSpacer />
-        <VBtn v-if="role === 'admin' || role === 'team_leader'" @click="openDrawer">
+        <VBtn v-if="role === 'admin' || role === 'team_leader' || role === 'supervisor' || role === 'teknisi'" @click="openDrawer">
           Add New Leakage Report
         </VBtn>
       </VCardText>
@@ -174,8 +174,8 @@ onMounted(fetchLeakageReports);
           <span v-else>No Files</span>
         </template>
 
-        <!-- Actions (hanya admin/team_leader) -->
-        <template v-if="role === 'admin' || role === 'team_leader'" #item.actions="{ item }">
+        <!-- Actions -->
+        <template #item.actions="{ item }">
           <IconBtn size="small" @click="deleteLeakageReport(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>

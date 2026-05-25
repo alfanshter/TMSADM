@@ -96,6 +96,22 @@ const deleteUser = async (id) => {
   }
 };
 
+// CONFIRM DELETE DIALOG
+const isConfirmDeleteDialogVisible = ref(false);
+const itemToDeleteId = ref(null);
+
+const openDeleteConfirm = (id) => {
+  itemToDeleteId.value = id;
+  isConfirmDeleteDialogVisible.value = true;
+};
+
+const handleConfirmDelete = async () => {
+  if (!itemToDeleteId.value) return;
+  isConfirmDeleteDialogVisible.value = false;
+  await deleteUser(itemToDeleteId.value);
+  itemToDeleteId.value = null;
+};
+
 // Dummy resolveRole
 const resolveUserRoleVariant = (role) => {
   return {
@@ -261,7 +277,7 @@ const isAddNewUserDrawerVisible = ref(false);
         <!-- Actions -->
         <template #item.actions="{ item }">
           <!-- Delete button -->
-          <IconBtn size="small" @click="deleteUser(item.id)">
+          <IconBtn size="small" @click="openDeleteConfirm(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>
 
@@ -359,6 +375,26 @@ const isAddNewUserDrawerVisible = ref(false);
       :user="editedUser"
       @update-user="updateUser"
     />
+
+    <!-- Confirm Delete Dialog -->
+    <VDialog v-model="isConfirmDeleteDialogVisible" max-width="450px">
+      <VCard>
+        <VCardTitle class="text-h5 text-center pa-6">
+          Hapus User?
+        </VCardTitle>
+        <VCardText class="text-center pb-6">
+          Apakah Anda yakin ingin menghapus user ini dari sistem?
+        </VCardText>
+        <VCardActions class="d-flex justify-center pb-6 gap-3">
+          <VBtn color="secondary" variant="outlined" @click="isConfirmDeleteDialogVisible = false">
+            Batal
+          </VBtn>
+          <VBtn color="error" variant="flat" @click="handleConfirmDelete">
+            Ya, Hapus
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </section>
 </template>
 

@@ -105,6 +105,22 @@ const deleteItemMachine = async (id) => {
   }
 };
 
+// CONFIRM DELETE DIALOG
+const isConfirmDeleteDialogVisible = ref(false);
+const itemToDeleteId = ref(null);
+
+const openDeleteConfirm = (id) => {
+  itemToDeleteId.value = id;
+  isConfirmDeleteDialogVisible.value = true;
+};
+
+const handleConfirmDelete = async () => {
+  if (!itemToDeleteId.value) return;
+  isConfirmDeleteDialogVisible.value = false;
+  await deleteItemMachine(itemToDeleteId.value);
+  itemToDeleteId.value = null;
+};
+
 // Dummy resolveRole
 const resolveUserRoleVariant = (role) => {
   return {
@@ -291,7 +307,7 @@ watch(selectedScopeOfWork, () => {
         <!-- Actions -->
         <template #item.actions="{ item }">
           <!-- Delete button -->
-          <IconBtn size="small" @click="deleteItemMachine(item.id)">
+          <IconBtn size="small" @click="openDeleteConfirm(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>
 
@@ -389,6 +405,26 @@ watch(selectedScopeOfWork, () => {
       :itemMachines="editedItemMachine"
       @update-itemMachines="updateItemMachine"
     />
+
+    <!-- Confirm Delete Dialog -->
+    <VDialog v-model="isConfirmDeleteDialogVisible" max-width="450px">
+      <VCard>
+        <VCardTitle class="text-h5 text-center pa-6">
+          Hapus Item Machine?
+        </VCardTitle>
+        <VCardText class="text-center pb-6">
+          Apakah Anda yakin ingin menghapus data mesin ini?
+        </VCardText>
+        <VCardActions class="d-flex justify-center pb-6 gap-3">
+          <VBtn color="secondary" variant="outlined" @click="isConfirmDeleteDialogVisible = false">
+            Batal
+          </VBtn>
+          <VBtn color="error" variant="flat" @click="handleConfirmDelete">
+            Ya, Hapus
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </section>
 </template>
 

@@ -76,7 +76,6 @@ const fetchLeakageReports = async () => {
 
 // Delete report
 const deleteLeakageReport = async (id) => {
-  if (!confirm("Yakin ingin menghapus report ini?")) return;
   try {
     globalLoading?.show();
     await axios.delete(`${ENDPOINTS.leakageReports}/${id}`);
@@ -90,6 +89,22 @@ const deleteLeakageReport = async (id) => {
   } finally {
     globalLoading?.hide();
   }
+};
+
+// CONFIRM DELETE DIALOG
+const isConfirmDeleteDialogVisible = ref(false);
+const itemToDeleteId = ref(null);
+
+const openDeleteConfirm = (id) => {
+  itemToDeleteId.value = id;
+  isConfirmDeleteDialogVisible.value = true;
+};
+
+const handleConfirmDelete = async () => {
+  if (!itemToDeleteId.value) return;
+  isConfirmDeleteDialogVisible.value = false;
+  await deleteLeakageReport(itemToDeleteId.value);
+  itemToDeleteId.value = null;
 };
 
 // Open drawer untuk edit
@@ -176,7 +191,7 @@ onMounted(fetchLeakageReports);
 
         <!-- Actions -->
         <template #item.actions="{ item }">
-          <IconBtn size="small" @click="deleteLeakageReport(item.id)">
+          <IconBtn size="small" @click="openDeleteConfirm(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>
 
@@ -198,5 +213,25 @@ onMounted(fetchLeakageReports);
       :edited-report="editedLeakageReport"
       @report-data="fetchLeakageReports"
     />
+
+    <!-- Confirm Delete Dialog -->
+    <VDialog v-model="isConfirmDeleteDialogVisible" max-width="450px">
+      <VCard>
+        <VCardTitle class="text-h5 text-center pa-6">
+          Hapus Leakage Report?
+        </VCardTitle>
+        <VCardText class="text-center pb-6">
+          Apakah Anda yakin ingin menghapus laporan kebocoran (leakage) ini?
+        </VCardText>
+        <VCardActions class="d-flex justify-center pb-6 gap-3">
+          <VBtn color="secondary" variant="outlined" @click="isConfirmDeleteDialogVisible = false">
+            Batal
+          </VBtn>
+          <VBtn color="error" variant="flat" @click="handleConfirmDelete">
+            Ya, Hapus
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </section>
 </template>

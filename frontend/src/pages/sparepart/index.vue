@@ -184,6 +184,22 @@ const deleteSparepart = async (id) => {
   }
 };
 
+// CONFIRM DELETE DIALOG
+const isConfirmDeleteDialogVisible = ref(false);
+const itemToDeleteId = ref(null);
+
+const openDeleteConfirm = (id) => {
+  itemToDeleteId.value = id;
+  isConfirmDeleteDialogVisible.value = true;
+};
+
+const handleConfirmDelete = async () => {
+  if (!itemToDeleteId.value) return;
+  isConfirmDeleteDialogVisible.value = false;
+  await deleteSparepart(itemToDeleteId.value);
+  itemToDeleteId.value = null;
+};
+
 // FILTER + SEARCH
 const filteredSpareparts = computed(() => {
   return spareparts.value.filter((item) => {
@@ -286,7 +302,7 @@ watch(selectedCategory, () => {
           <IconBtn size="small" @click="openAddStokDrawer(item)">
             <VIcon icon="ri-add-line" />
           </IconBtn>
-          <IconBtn size="small" @click="deleteSparepart(item.id)">
+          <IconBtn size="small" @click="openDeleteConfirm(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>
           <IconBtn size="small" @click="openEditDrawer(item)">
@@ -313,6 +329,26 @@ watch(selectedCategory, () => {
       :sparepart="editedSparepart"
       @sparepart-updated="updateSparepart"
     />
+
+    <!-- Confirm Delete Dialog -->
+    <VDialog v-model="isConfirmDeleteDialogVisible" max-width="450px">
+      <VCard>
+        <VCardTitle class="text-h5 text-center pa-6">
+          Hapus Sparepart?
+        </VCardTitle>
+        <VCardText class="text-center pb-6">
+          Apakah Anda yakin ingin menghapus sparepart ini dari list?
+        </VCardText>
+        <VCardActions class="d-flex justify-center pb-6 gap-3">
+          <VBtn color="secondary" variant="outlined" @click="isConfirmDeleteDialogVisible = false">
+            Batal
+          </VBtn>
+          <VBtn color="error" variant="flat" @click="handleConfirmDelete">
+            Ya, Hapus
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </section>
 </template>
 

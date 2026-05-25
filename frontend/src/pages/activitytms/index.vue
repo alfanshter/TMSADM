@@ -338,6 +338,22 @@ const deleteActivityTms = async (id) => {
   }
 };
 
+// CONFIRM DELETE DIALOG
+const isConfirmDeleteDialogVisible = ref(false);
+const itemToDeleteId = ref(null);
+
+const openDeleteConfirm = (id) => {
+  itemToDeleteId.value = id;
+  isConfirmDeleteDialogVisible.value = true;
+};
+
+const handleConfirmDelete = async () => {
+  if (!itemToDeleteId.value) return;
+  isConfirmDeleteDialogVisible.value = false;
+  await deleteActivityTms(itemToDeleteId.value);
+  itemToDeleteId.value = null;
+};
+
 const resolveUserStatusVariant = (status) => {
   return status ? "success" : "error";
 };
@@ -483,7 +499,7 @@ watch(selectedScopeOfWork, () => {
             <VIcon icon="ri-eye-line" />
           </IconBtn>
 
-          <IconBtn size="small" @click="deleteActivityTms(item.id)">
+          <IconBtn size="small" @click="openDeleteConfirm(item.id)">
             <VIcon icon="ri-delete-bin-7-line" />
           </IconBtn>
 
@@ -626,6 +642,26 @@ watch(selectedScopeOfWork, () => {
           </VBtn>
           <VBtn color="primary" variant="flat" rounded="lg" @click="saveNote">
             Simpan
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
+
+    <!-- Confirm Delete Dialog -->
+    <VDialog v-model="isConfirmDeleteDialogVisible" max-width="450px">
+      <VCard>
+        <VCardTitle class="text-h5 text-center pa-6">
+          Hapus Activity TMS?
+        </VCardTitle>
+        <VCardText class="text-center pb-6">
+          Apakah Anda yakin ingin menghapus data Activity TMS ini?
+        </VCardText>
+        <VCardActions class="d-flex justify-center pb-6 gap-3">
+          <VBtn color="secondary" variant="outlined" @click="isConfirmDeleteDialogVisible = false">
+            Batal
+          </VBtn>
+          <VBtn color="error" variant="flat" @click="handleConfirmDelete">
+            Ya, Hapus
           </VBtn>
         </VCardActions>
       </VCard>

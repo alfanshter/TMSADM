@@ -56,57 +56,55 @@ const jsaFile = ref(null);
 // catatan
 const isNotesDialogVisible = ref(false);
 const selectedActivity = ref(null);
-const activeMaintenanceType = ref(null);
 
-// field catatan
-const teamLeaderNote = ref("");
-const supervisorNote = ref("");
-const teknisiNote = ref("");
+// field catatan untuk semua maintenance types
+const catatanTeamleaderCleaningCritical = ref("");
+const catatanSupervisorCleaningCritical = ref("");
+const catatanTeknisiCleaningCritical = ref("");
+
+const catatanTeamleaderJustCleaning = ref("");
+const catatanSupervisorJustCleaning = ref("");
+const catatanTeknisiJustCleaning = ref("");
+
+const catatanTeamleaderReplacementPart = ref("");
+const catatanSupervisorReplacementPart = ref("");
+const catatanTeknisiReplacementPart = ref("");
+
+const catatanTeamleaderPreventivePm = ref("");
+const catatanSupervisorPreventivePm = ref("");
+const catatanTeknisiPreventivePm = ref("");
+
+// track yang active
+const hasCleaningCritical = ref(false);
+const hasJustCleaning = ref(false);
+const hasReplacementPart = ref(false);
+const hasPreventivePm = ref(false);
 
 function openNotes(activity) {
   selectedActivity.value = activity;
 
-  // Determine which maintenance type is active
-  if (activity.catatan_teamleader_cleaning_criticals || activity.catatan_supervisor_cleaning_criticals || activity.catatan_teknisi_cleaning_criticals) {
-    activeMaintenanceType.value = 'cleaning_critical';
-  } else if (activity.catatan_teamleader_just_cleaning || activity.catatan_supervisor_justcleaning || activity.catatan_teknisi_just_cleaning) {
-    activeMaintenanceType.value = 'just_cleaning';
-  } else if (activity.catatan_teamleader_replacement_part || activity.catatan_supervisor_replacement_part || activity.catatan_teknisi_replacement_part) {
-    activeMaintenanceType.value = 'replacement_part';
-  } else if (activity.catatan_teamleader_preventive_pm || activity.catatan_supervisor_preventive_pm || activity.catatan_teknisi_preventive_pm) {
-    activeMaintenanceType.value = 'preventive_pm';
-  } else {
-    // Detect by photos
-    if (activity.cleaning_criticals?.length) activeMaintenanceType.value = 'cleaning_critical';
-    else if (activity.just_cleaning?.length) activeMaintenanceType.value = 'just_cleaning';
-    else if (activity.replacement_part?.length) activeMaintenanceType.value = 'replacement_part';
-    else if (activity.preventive?.length) activeMaintenanceType.value = 'preventive_pm';
-    else activeMaintenanceType.value = null;
-  }
+  // Reset semua catatan
+  catatanTeamleaderCleaningCritical.value = activity.catatan_teamleader_cleaning_criticals || "";
+  catatanSupervisorCleaningCritical.value = activity.catatan_supervisor_cleaning_criticals || "";
+  catatanTeknisiCleaningCritical.value = activity.catatan_teknisi_cleaning_criticals || "";
 
-  // ambil supervisor note
-  supervisorNote.value =
-    activity.catatan_supervisor_cleaning_criticals ||
-    activity.catatan_supervisor_justcleaning ||
-    activity.catatan_supervisor_replacement_part ||
-    activity.catatan_supervisor_preventive_pm ||
-    "";
+  catatanTeamleaderJustCleaning.value = activity.catatan_teamleader_just_cleaning || "";
+  catatanSupervisorJustCleaning.value = activity.catatan_supervisor_justcleaning || "";
+  catatanTeknisiJustCleaning.value = activity.catatan_teknisi_just_cleaning || "";
 
-  // ambil team leader note
-  teamLeaderNote.value =
-    activity.catatan_teamleader_cleaning_criticals ||
-    activity.catatan_teamleader_just_cleaning ||
-    activity.catatan_teamleader_replacement_part ||
-    activity.catatan_teamleader_preventive_pm ||
-    "";
+  catatanTeamleaderReplacementPart.value = activity.catatan_teamleader_replacement_part || "";
+  catatanSupervisorReplacementPart.value = activity.catatan_supervisor_replacement_part || "";
+  catatanTeknisiReplacementPart.value = activity.catatan_teknisi_replacement_part || "";
 
-  // ambil teknisi note
-  teknisiNote.value =
-    activity.catatan_teknisi_cleaning_criticals ||
-    activity.catatan_teknisi_just_cleaning ||
-    activity.catatan_teknisi_replacement_part ||
-    activity.catatan_teknisi_preventive_pm ||
-    "";
+  catatanTeamleaderPreventivePm.value = activity.catatan_teamleader_preventive_pm || "";
+  catatanSupervisorPreventivePm.value = activity.catatan_supervisor_preventive_pm || "";
+  catatanTeknisiPreventivePm.value = activity.catatan_teknisi_preventive_pm || "";
+
+  // Tentukan yang aktif
+  hasCleaningCritical.value = activity.cleaning_criticals?.length > 0;
+  hasJustCleaning.value = activity.just_cleaning?.length > 0;
+  hasReplacementPart.value = activity.replacement_part?.length > 0;
+  hasPreventivePm.value = activity.preventive?.length > 0;
 
   isNotesDialogVisible.value = true;
 }
@@ -115,30 +113,20 @@ async function saveNote() {
   try {
     globalLoading?.show();
 
-    const payload = {};
-
-    if (activeMaintenanceType.value === 'cleaning_critical') {
-      payload.catatan_teamleader_cleaning_criticals = teamLeaderNote.value;
-      payload.catatan_supervisor_cleaning_criticals = supervisorNote.value;
-      payload.catatan_teknisi_cleaning_criticals    = teknisiNote.value;
-    } else if (activeMaintenanceType.value === 'just_cleaning') {
-      payload.catatan_teamleader_just_cleaning = teamLeaderNote.value;
-      payload.catatan_supervisor_justcleaning  = supervisorNote.value;
-      payload.catatan_teknisi_just_cleaning    = teknisiNote.value;
-    } else if (activeMaintenanceType.value === 'replacement_part') {
-      payload.catatan_teamleader_replacement_part = teamLeaderNote.value;
-      payload.catatan_supervisor_replacement_part = supervisorNote.value;
-      payload.catatan_teknisi_replacement_part    = teknisiNote.value;
-    } else if (activeMaintenanceType.value === 'preventive_pm') {
-      payload.catatan_teamleader_preventive_pm = teamLeaderNote.value;
-      payload.catatan_supervisor_preventive_pm = supervisorNote.value;
-      payload.catatan_teknisi_preventive_pm    = teknisiNote.value;
-    } else {
-      // fallback — kirim semua field
-      payload.catatan_teamleader_cleaning_criticals = teamLeaderNote.value;
-      payload.catatan_supervisor_cleaning_criticals = supervisorNote.value;
-      payload.catatan_teknisi_cleaning_criticals    = teknisiNote.value;
-    }
+    const payload = {
+      catatan_teamleader_cleaning_criticals: catatanTeamleaderCleaningCritical.value,
+      catatan_supervisor_cleaning_criticals: catatanSupervisorCleaningCritical.value,
+      catatan_teknisi_cleaning_criticals: catatanTeknisiCleaningCritical.value,
+      catatan_teamleader_just_cleaning: catatanTeamleaderJustCleaning.value,
+      catatan_supervisor_justcleaning: catatanSupervisorJustCleaning.value,
+      catatan_teknisi_just_cleaning: catatanTeknisiJustCleaning.value,
+      catatan_teamleader_replacement_part: catatanTeamleaderReplacementPart.value,
+      catatan_supervisor_replacement_part: catatanSupervisorReplacementPart.value,
+      catatan_teknisi_replacement_part: catatanTeknisiReplacementPart.value,
+      catatan_teamleader_preventive_pm: catatanTeamleaderPreventivePm.value,
+      catatan_supervisor_preventive_pm: catatanSupervisorPreventivePm.value,
+      catatan_teknisi_preventive_pm: catatanTeknisiPreventivePm.value,
+    };
 
     const response = await axios.put(
       ENDPOINTS.updateSupervisorNote(selectedActivity.value.id),
@@ -148,24 +136,18 @@ async function saveNote() {
     // Update selectedActivity dengan data terbaru dari API
     if (response.data.data) {
       selectedActivity.value = response.data.data;
-      teamLeaderNote.value =
-        selectedActivity.value.catatan_teamleader_cleaning_criticals ||
-        selectedActivity.value.catatan_teamleader_just_cleaning ||
-        selectedActivity.value.catatan_teamleader_replacement_part ||
-        selectedActivity.value.catatan_teamleader_preventive_pm ||
-        "";
-      supervisorNote.value =
-        selectedActivity.value.catatan_supervisor_cleaning_criticals ||
-        selectedActivity.value.catatan_supervisor_justcleaning ||
-        selectedActivity.value.catatan_supervisor_replacement_part ||
-        selectedActivity.value.catatan_supervisor_preventive_pm ||
-        "";
-      teknisiNote.value =
-        selectedActivity.value.catatan_teknisi_cleaning_criticals ||
-        selectedActivity.value.catatan_teknisi_just_cleaning ||
-        selectedActivity.value.catatan_teknisi_replacement_part ||
-        selectedActivity.value.catatan_teknisi_preventive_pm ||
-        "";
+      catatanTeamleaderCleaningCritical.value = response.data.data.catatan_teamleader_cleaning_criticals || "";
+      catatanSupervisorCleaningCritical.value = response.data.data.catatan_supervisor_cleaning_criticals || "";
+      catatanTeknisiCleaningCritical.value = response.data.data.catatan_teknisi_cleaning_criticals || "";
+      catatanTeamleaderJustCleaning.value = response.data.data.catatan_teamleader_just_cleaning || "";
+      catatanSupervisorJustCleaning.value = response.data.data.catatan_supervisor_justcleaning || "";
+      catatanTeknisiJustCleaning.value = response.data.data.catatan_teknisi_just_cleaning || "";
+      catatanTeamleaderReplacementPart.value = response.data.data.catatan_teamleader_replacement_part || "";
+      catatanSupervisorReplacementPart.value = response.data.data.catatan_supervisor_replacement_part || "";
+      catatanTeknisiReplacementPart.value = response.data.data.catatan_teknisi_replacement_part || "";
+      catatanTeamleaderPreventivePm.value = response.data.data.catatan_teamleader_preventive_pm || "";
+      catatanSupervisorPreventivePm.value = response.data.data.catatan_supervisor_preventive_pm || "";
+      catatanTeknisiPreventivePm.value = response.data.data.catatan_teknisi_preventive_pm || "";
     }
 
     // Update activity dalam list
@@ -582,8 +564,8 @@ watch(selectedScopeOfWork, () => {
       </VCard>
     </VDialog>
 
-    <!-- Dialog Notes — semua role bisa edit semua catatan -->
-    <VDialog v-model="isNotesDialogVisible" max-width="650px">
+    <!-- Dialog Notes — tampilkan semua maintenance types -->
+    <VDialog v-model="isNotesDialogVisible" max-width="700px">
       <VCard>
         <VCardTitle class="bg-primary text-white">
           Catatan Activity
@@ -592,47 +574,150 @@ watch(selectedScopeOfWork, () => {
           <div v-if="selectedActivity" class="mb-3">
             <p><strong>Mesin:</strong> {{ selectedActivity.item_machine?.name }}</p>
             <p><strong>Kode:</strong> {{ selectedActivity.item_machine?.code }}</p>
-            <p class="text-caption text-medium-emphasis">
-              Tipe:
-              <VChip size="x-small" color="primary">
-                {{ activeMaintenanceType ?? 'Umum' }}
-              </VChip>
-            </p>
           </div>
 
           <VDivider class="mb-4" />
 
-          <!-- Catatan Team Leader -->
-          <VLabel class="mb-1 font-weight-bold">Catatan Team Leader</VLabel>
-          <VTextarea
-            v-model="teamLeaderNote"
-            placeholder="Tulis catatan Team Leader..."
-            rows="3"
-            auto-grow
-            variant="outlined"
-            class="mb-4"
-          />
+          <!-- Cleaning Critical -->
+          <div v-if="hasCleaningCritical">
+            <h4 class="text-h6 mb-3 text-primary font-weight-bold">Cleaning Critical</h4>
+            <VLabel class="mb-1 font-weight-bold">Catatan Team Leader</VLabel>
+            <VTextarea
+              v-model="catatanTeamleaderCleaningCritical"
+              placeholder="Tulis catatan Team Leader..."
+              rows="2"
+              auto-grow
+              variant="outlined"
+              class="mb-3"
+            />
 
-          <!-- Catatan Supervisor -->
-          <VLabel class="mb-1 font-weight-bold">Catatan Supervisor</VLabel>
-          <VTextarea
-            v-model="supervisorNote"
-            placeholder="Tulis catatan Supervisor..."
-            rows="3"
-            auto-grow
-            variant="outlined"
-            class="mb-4"
-          />
+            <VLabel class="mb-1 font-weight-bold">Catatan Supervisor</VLabel>
+            <VTextarea
+              v-model="catatanSupervisorCleaningCritical"
+              placeholder="Tulis catatan Supervisor..."
+              rows="2"
+              auto-grow
+              variant="outlined"
+              class="mb-3"
+            />
 
-          <!-- Catatan Teknisi -->
-          <VLabel class="mb-1 font-weight-bold">Catatan Teknisi</VLabel>
-          <VTextarea
-            v-model="teknisiNote"
-            placeholder="Tulis catatan Teknisi..."
-            rows="3"
-            auto-grow
-            variant="outlined"
-          />
+            <VLabel class="mb-1 font-weight-bold">Catatan Teknisi</VLabel>
+            <VTextarea
+              v-model="catatanTeknisiCleaningCritical"
+              placeholder="Tulis catatan Teknisi..."
+              rows="2"
+              auto-grow
+              variant="outlined"
+              class="mb-4"
+            />
+
+            <VDivider class="mb-4" />
+          </div>
+
+          <!-- Just Cleaning -->
+          <div v-if="hasJustCleaning">
+            <h4 class="text-h6 mb-3 text-primary font-weight-bold">Just Cleaning</h4>
+            <VLabel class="mb-1 font-weight-bold">Catatan Team Leader</VLabel>
+            <VTextarea
+              v-model="catatanTeamleaderJustCleaning"
+              placeholder="Tulis catatan Team Leader..."
+              rows="2"
+              auto-grow
+              variant="outlined"
+              class="mb-3"
+            />
+
+            <VLabel class="mb-1 font-weight-bold">Catatan Supervisor</VLabel>
+            <VTextarea
+              v-model="catatanSupervisorJustCleaning"
+              placeholder="Tulis catatan Supervisor..."
+              rows="2"
+              auto-grow
+              variant="outlined"
+              class="mb-3"
+            />
+
+            <VLabel class="mb-1 font-weight-bold">Catatan Teknisi</VLabel>
+            <VTextarea
+              v-model="catatanTeknisiJustCleaning"
+              placeholder="Tulis catatan Teknisi..."
+              rows="2"
+              auto-grow
+              variant="outlined"
+              class="mb-4"
+            />
+
+            <VDivider class="mb-4" />
+          </div>
+
+          <!-- Replacement Part -->
+          <div v-if="hasReplacementPart">
+            <h4 class="text-h6 mb-3 text-primary font-weight-bold">Replacement Part</h4>
+            <VLabel class="mb-1 font-weight-bold">Catatan Team Leader</VLabel>
+            <VTextarea
+              v-model="catatanTeamleaderReplacementPart"
+              placeholder="Tulis catatan Team Leader..."
+              rows="2"
+              auto-grow
+              variant="outlined"
+              class="mb-3"
+            />
+
+            <VLabel class="mb-1 font-weight-bold">Catatan Supervisor</VLabel>
+            <VTextarea
+              v-model="catatanSupervisorReplacementPart"
+              placeholder="Tulis catatan Supervisor..."
+              rows="2"
+              auto-grow
+              variant="outlined"
+              class="mb-3"
+            />
+
+            <VLabel class="mb-1 font-weight-bold">Catatan Teknisi</VLabel>
+            <VTextarea
+              v-model="catatanTeknisiReplacementPart"
+              placeholder="Tulis catatan Teknisi..."
+              rows="2"
+              auto-grow
+              variant="outlined"
+              class="mb-4"
+            />
+
+            <VDivider class="mb-4" />
+          </div>
+
+          <!-- Preventive PM -->
+          <div v-if="hasPreventivePm">
+            <h4 class="text-h6 mb-3 text-primary font-weight-bold">Preventive PM</h4>
+            <VLabel class="mb-1 font-weight-bold">Catatan Team Leader</VLabel>
+            <VTextarea
+              v-model="catatanTeamleaderPreventivePm"
+              placeholder="Tulis catatan Team Leader..."
+              rows="2"
+              auto-grow
+              variant="outlined"
+              class="mb-3"
+            />
+
+            <VLabel class="mb-1 font-weight-bold">Catatan Supervisor</VLabel>
+            <VTextarea
+              v-model="catatanSupervisorPreventivePm"
+              placeholder="Tulis catatan Supervisor..."
+              rows="2"
+              auto-grow
+              variant="outlined"
+              class="mb-3"
+            />
+
+            <VLabel class="mb-1 font-weight-bold">Catatan Teknisi</VLabel>
+            <VTextarea
+              v-model="catatanTeknisiPreventivePm"
+              placeholder="Tulis catatan Teknisi..."
+              rows="2"
+              auto-grow
+              variant="outlined"
+            />
+          </div>
         </VCardText>
 
         <VCardActions>

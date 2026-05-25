@@ -2,6 +2,7 @@
 import { useGenerateImageVariant } from "@/@core/composable/useGenerateImageVariant";
 import { ENDPOINTS } from "@/config/api";
 import AuthProvider from "@/views/pages/authentication/AuthProvider.vue";
+import { useUserStore } from "@/stores/user";
 import authV2LoginIllustrationBorderedDark from "@images/pages/auth-v2-login-illustration-bordered-dark.png";
 import authV2LoginIllustrationBorderedLight from "@images/pages/auth-v2-login-illustration-bordered-light.png";
 import authV2LoginIllustrationDark from "@images/pages/auth-v2-login-illustration-dark.png";
@@ -21,6 +22,7 @@ definePage({
 });
 
 const router = useRouter();
+const userStore = useUserStore();
 const form = ref({
   email: "",
   password: "",
@@ -45,23 +47,17 @@ const handleLogin = async () => {
     useCookie('userData').value = userData
     useCookie('accessToken').value = token
 
+    // Update Pinia store reactively
+    userStore.setUser(userData)
+
     // Set header default
     axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
     alert("Login berhasil!")
 
-    // Daftar role yang boleh masuk dashboard
-    const allowedRoles = ['admin', 'team_leader', 'supervisor']
-
-    if (allowedRoles.includes(userData.role)) {
-      await nextTick(() => {
-        router.push('/dashboard')
-      })
-    } else {
-      await nextTick(() => {
-        router.push('/')
-      })
-    }
+    await nextTick(() => {
+      router.push('/')
+    })
 
   } catch (error) {
     console.error("Login error:", error)

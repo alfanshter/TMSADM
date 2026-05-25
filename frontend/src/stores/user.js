@@ -15,10 +15,13 @@ export const useUserStore = defineStore("user", {
     setUser(userData) {
       // simpan ke cookies
       Cookies.set("userData", JSON.stringify(userData))
-      this.user = userData
+      this.user = userData?.user || userData
     },
     logout() {
       Cookies.remove("userData")
+      Cookies.remove("accessToken")
+      localStorage.removeItem("userData")
+      localStorage.removeItem("token")
       this.user = null
     },
   },

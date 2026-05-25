@@ -1,8 +1,10 @@
 <script setup>
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import avatar1 from '@images/avatars/avatar-1.png'
+import { useUserStore } from "@/stores/user"
 
 const router = useRouter()
+const userStore = useUserStore()
 const userData = useCookie('userData')
 
 // Ambil data user dari cookie (pastikan ada user di dalamnya)
@@ -13,6 +15,9 @@ const userProfileList = [
 ]
 
 const logout = async () => {
+  // Hapus reactive state di Pinia & cookies/localStorage
+  userStore.logout()
+
   // Hapus token & user data
   useCookie('accessToken').value = null
   userData.value = null

@@ -15,7 +15,7 @@ const items = [
     title: "User",
     to: { name: "user" },
     icon: { icon: "ri-user-line" },
-    role: ["admin", "supervisor", "teknisi"],
+    role: ["admin", "supervisor", "teknisi","team_leader"],
   },
 
   {

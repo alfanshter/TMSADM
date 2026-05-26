@@ -5,8 +5,10 @@ import AddNewStokDrawer from "@/views/apps/sparepart/AddStokDrawer.vue";
 import EditSparepartDrawer from "@/views/apps/sparepart/EditSparepartDrawer.vue";
 import axios from "axios";
 import { computed, inject, onMounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 
 const globalLoading = inject("globalLoading");
+const router = useRouter();
 
 // STATE
 const spareparts = ref([]);
@@ -299,15 +301,34 @@ watch(selectedCategory, () => {
       >
         <!-- Custom cell templates... (sama seperti punya Anda) -->
         <template #item.actions="{ item }">
-          <IconBtn size="small" @click="openAddStokDrawer(item)">
-            <VIcon icon="ri-add-line" />
-          </IconBtn>
-          <IconBtn size="small" @click="openDeleteConfirm(item.id)">
-            <VIcon icon="ri-delete-bin-7-line" />
-          </IconBtn>
-          <IconBtn size="small" @click="openEditDrawer(item)">
-            <VIcon icon="ri-edit-box-line" />
-          </IconBtn>
+          <VTooltip text="Lihat Detail" location="top">
+            <template #activator="{ props }">
+              <IconBtn v-bind="props" size="small" @click="router.push(`/sparepart/detail?id=${item.id}`)">
+                <VIcon icon="ri-eye-line" />
+              </IconBtn>
+            </template>
+          </VTooltip>
+          <VTooltip text="Tambah Stok" location="top">
+            <template #activator="{ props }">
+              <IconBtn v-bind="props" size="small" @click="openAddStokDrawer(item)">
+                <VIcon icon="ri-add-line" />
+              </IconBtn>
+            </template>
+          </VTooltip>
+          <VTooltip text="Edit" location="top">
+            <template #activator="{ props }">
+              <IconBtn v-bind="props" size="small" @click="openEditDrawer(item)">
+                <VIcon icon="ri-edit-box-line" />
+              </IconBtn>
+            </template>
+          </VTooltip>
+          <VTooltip text="Hapus" location="top">
+            <template #activator="{ props }">
+              <IconBtn v-bind="props" size="small" @click="openDeleteConfirm(item.id)">
+                <VIcon icon="ri-delete-bin-7-line" />
+              </IconBtn>
+            </template>
+          </VTooltip>
         </template>
 
         <!-- Pagination (sama seperti kode Anda) -->

@@ -97,7 +97,14 @@ class StockSparepartController extends Controller
 
     public function show($id)
     {
-        $sparepart = StockSparepart::withSum('usages', 'qty')->find($id);
+        $sparepart = StockSparepart::withSum('usages', 'qty')
+            ->with([
+                'activities' => function ($q) {
+                    $q->with('itemMachine:id,name,code,location,scope_of_work')
+                      ->orderBy('date', 'desc');
+                }
+            ])
+            ->find($id);
 
         if (!$sparepart) {
             return response()->json([
@@ -109,6 +116,21 @@ class StockSparepartController extends Controller
 
         $sparepart['usage'] = $sparepart->usages_sum_qty ?? 0;
         $sparepart['end_month_stock'] = $sparepart['stok'] + $sparepart['incoming'] - $sparepart['usage'];
+
+        // Format activities untuk frontend
+        $sparepart['activity_usages'] = $sparepart->activities->map(function ($act) {
+            return [
+                'id'           => $act->id,
+                'date'         => $act->date,
+                'qty'          => $act->pivot->qty,
+                'item_machine' => $act->itemMachine ? [
+                    'name'          => $act->itemMachine->name,
+                    'code'          => $act->itemMachine->code,
+                    'location'      => $act->itemMachine->location,
+                    'scope_of_work' => $act->itemMachine->scope_of_work,
+                ] : null,
+            ];
+        });
 
         return response()->json([
             'status' => true,

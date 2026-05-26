@@ -28,7 +28,15 @@ class StockSparepart extends Model
 
     public function activities()
     {
-        return $this->belongsToMany(ActivityTms::class, 'activity_tms_spareparts')
+        // Pivot table: tms_spareparts
+        // FK di pivot untuk StockSparepart : stock_sparepart_id
+        // FK di pivot untuk ActivityTms    : activity_tms_id
+        return $this->belongsToMany(
+                ActivityTms::class,
+                'tms_spareparts',       // nama tabel pivot yang benar
+                'stock_sparepart_id',   // FK kolom untuk model ini (StockSparepart)
+                'activity_tms_id'       // FK kolom untuk model target (ActivityTms)
+            )
             ->withPivot('qty')
             ->withTimestamps();
     }

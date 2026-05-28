@@ -74,7 +74,7 @@ const catatanTeamleaderPreventivePm = ref("");
 const catatanSupervisorPreventivePm = ref("");
 const catatanTeknisiPreventivePm = ref("");
 
-// track yang active
+// track yang active (ditentukan saat openNotes)
 const hasCleaningCritical = ref(false);
 const hasJustCleaning = ref(false);
 const hasReplacementPart = ref(false);
@@ -100,11 +100,35 @@ function openNotes(activity) {
   catatanSupervisorPreventivePm.value = activity.catatan_supervisor_preventive_pm || "";
   catatanTeknisiPreventivePm.value = activity.catatan_teknisi_preventive_pm || "";
 
-  // Tentukan yang aktif
-  hasCleaningCritical.value = activity.cleaning_criticals?.length > 0;
-  hasJustCleaning.value = activity.just_cleaning?.length > 0;
-  hasReplacementPart.value = activity.replacement_part?.length > 0;
-  hasPreventivePm.value = activity.preventive?.length > 0;
+  // Tentukan section yang aktif:
+  // cek foto ATAU JSA ATAU catatan yg sudah diisi (menangani kasus tanpa gambar)
+  hasCleaningCritical.value =
+    (activity.cleaning_criticals?.length > 0) ||
+    !!activity.jsa_file_cleaning_criticals ||
+    !!(activity.catatan_teamleader_cleaning_criticals?.trim()) ||
+    !!(activity.catatan_supervisor_cleaning_criticals?.trim()) ||
+    !!(activity.catatan_teknisi_cleaning_criticals?.trim());
+
+  hasJustCleaning.value =
+    (activity.just_cleaning?.length > 0) ||
+    !!activity.jsa_file_just_cleaning ||
+    !!(activity.catatan_teamleader_just_cleaning?.trim()) ||
+    !!(activity.catatan_supervisor_justcleaning?.trim()) ||
+    !!(activity.catatan_teknisi_just_cleaning?.trim());
+
+  hasReplacementPart.value =
+    (activity.replacement_part?.length > 0) ||
+    !!activity.jsa_file_replacement_part ||
+    !!(activity.catatan_teamleader_replacement_part?.trim()) ||
+    !!(activity.catatan_supervisor_replacement_part?.trim()) ||
+    !!(activity.catatan_teknisi_replacement_part?.trim());
+
+  hasPreventivePm.value =
+    (activity.preventive?.length > 0) ||
+    !!activity.jsa_file_preventive ||
+    !!(activity.catatan_teamleader_preventive_pm?.trim()) ||
+    !!(activity.catatan_supervisor_preventive_pm?.trim()) ||
+    !!(activity.catatan_teknisi_preventive_pm?.trim());
 
   isNotesDialogVisible.value = true;
 }

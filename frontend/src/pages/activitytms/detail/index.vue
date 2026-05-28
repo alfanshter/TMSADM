@@ -168,25 +168,57 @@ const fetchActivityDetail = async () => {
     preventiveJsa_filename.value = data.jsa_filename_preventive ?? "";
     preventiveJsa_old.value = data.jsa_file_preventive ?? "";
 
-    if (data.cleaning_criticals && data.cleaning_criticals.length > 0) {
-      cleaningCriticalBeforeFiles.value = data.cleaning_criticals.filter(i => i.status === "before");
-      cleaningCriticalAfterFiles.value = data.cleaning_criticals.filter(i => i.status === "after");
+    // Cleaning Critical: tampil jika ada foto, JSA, atau catatan
+    if (
+      (data.cleaning_criticals?.length > 0) ||
+      !!data.jsa_file_cleaning_criticals ||
+      !!(data.catatan_teamleader_cleaning_criticals?.trim()) ||
+      !!(data.catatan_supervisor_cleaning_criticals?.trim()) ||
+      !!(data.catatan_teknisi_cleaning_criticals?.trim())
+    ) {
+      cleaningCriticalBeforeFiles.value = data.cleaning_criticals?.filter(i => i.status === "before") ?? [];
+      cleaningCriticalAfterFiles.value = data.cleaning_criticals?.filter(i => i.status === "after") ?? [];
       selectedMaintenanceTypesCleaningCritical.value = ["cleaning_critical"];
     }
-    if (data.just_cleaning && data.just_cleaning.length > 0) {
-      justCleaningBeforeFiles.value = data.just_cleaning.filter(i => i.status === "before");
-      justCleaningAfterFiles.value = data.just_cleaning.filter(i => i.status === "after");
+
+    // Just Cleaning: tampil jika ada foto, JSA, atau catatan
+    if (
+      (data.just_cleaning?.length > 0) ||
+      !!data.jsa_file_just_cleaning ||
+      !!(data.catatan_teamleader_just_cleaning?.trim()) ||
+      !!(data.catatan_supervisor_justcleaning?.trim()) ||
+      !!(data.catatan_teknisi_just_cleaning?.trim())
+    ) {
+      justCleaningBeforeFiles.value = data.just_cleaning?.filter(i => i.status === "before") ?? [];
+      justCleaningAfterFiles.value = data.just_cleaning?.filter(i => i.status === "after") ?? [];
       selectedMaintenanceTypesJustCleaning.value = ["just_cleaning"];
     }
-    if ((data.replacement_part && data.replacement_part.length > 0) || (data.spareparts && data.spareparts.length > 0)) {
-      replacementPartBeforeFiles.value = data.replacement_part.filter(i => i.status === "before");
-      replacementPartAfterFiles.value = data.replacement_part.filter(i => i.status === "after");
-      spareparts.value = data.spareparts;
+
+    // Replacement Part: tampil jika ada foto, sparepart, JSA, atau catatan
+    if (
+      (data.replacement_part?.length > 0) ||
+      (data.spareparts?.length > 0) ||
+      !!data.jsa_file_replacement_part ||
+      !!(data.catatan_teamleader_replacement_part?.trim()) ||
+      !!(data.catatan_supervisor_replacement_part?.trim()) ||
+      !!(data.catatan_teknisi_replacement_part?.trim())
+    ) {
+      replacementPartBeforeFiles.value = data.replacement_part?.filter(i => i.status === "before") ?? [];
+      replacementPartAfterFiles.value = data.replacement_part?.filter(i => i.status === "after") ?? [];
+      spareparts.value = data.spareparts ?? [];
       selectedMaintenanceTypesReplacementPart.value = ["replacement_part"];
     }
-    if (data.preventive && data.preventive.length > 0) {
-      preventivePmBeforeFiles.value = data.preventive.filter(i => i.status === "before");
-      preventivePmAfterFiles.value = data.preventive.filter(i => i.status === "after");
+
+    // Preventive PM: tampil jika ada foto, JSA, atau catatan
+    if (
+      (data.preventive?.length > 0) ||
+      !!data.jsa_file_preventive ||
+      !!(data.catatan_teamleader_preventive_pm?.trim()) ||
+      !!(data.catatan_supervisor_preventive_pm?.trim()) ||
+      !!(data.catatan_teknisi_preventive_pm?.trim())
+    ) {
+      preventivePmBeforeFiles.value = data.preventive?.filter(i => i.status === "before") ?? [];
+      preventivePmAfterFiles.value = data.preventive?.filter(i => i.status === "after") ?? [];
       selectedMaintenanceTypesPreventivePM.value = ["preventive_pm"];
     }
 

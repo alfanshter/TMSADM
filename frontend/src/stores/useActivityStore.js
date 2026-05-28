@@ -9,6 +9,8 @@ export const useActivityStore = defineStore("activity", {
     // Filter yang persisten saat navigasi ke detail dan kembali
     selectedYear: currentYear,
     selectedMonth: currentMonth,
+    // Halaman tabel yang persisten
+    page: 1,
   }),
   actions: {
     setCurrentItem(item) {
@@ -20,6 +22,9 @@ export const useActivityStore = defineStore("activity", {
     setFilter(year, month) {
       this.selectedYear = year;
       this.selectedMonth = month;
+    },
+    setPage(page) {
+      this.page = page;
     },
   },
 });

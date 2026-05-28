@@ -2,8 +2,8 @@
 import { ENDPOINTS } from "@/config/api";
 import { useActivityStore } from "@/stores/useActivityStore";
 import axios from "axios";
-import { computed, inject, onMounted, ref, watch } from "vue";
-import { useRouter } from "vue-router";
+import { computed, inject, onMounted, ref, watch, nextTick } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import Cookies from "js-cookie";
 
 
@@ -247,8 +247,16 @@ const activityTms = ref([]);
 const totalActivityTms = ref(0);
 const searchQuery = ref("");
 const itemsPerPage = ref(10);
-const page = ref(1);
+const route = useRoute();
+const page = ref(Number(route.query.page) || activityStore.page || 1);
 const isLoading = ref(false);
+
+// Sync page ke URL query param dan store
+watch(page, (val) => {
+  if (isLoading.value) return; // Prevent overwriting stored page during automatic resets by VDataTable when loading
+  activityStore.setPage(val);
+  router.replace({ query: { ...route.query, page: val } });
+});
 
 // Ambil role dari cookie
 const userData = Cookies.get("userData")
@@ -277,12 +285,20 @@ const scope_of_work = [
 const fetchActivityTms = async () => {
   try {
     isLoading.value = true;
+    
+    // Save target page before fetch begins to restore it later
+    const targetPage = Number(route.query.page) || activityStore.page || 1;
+
     const res = await axios.get(
       `${ENDPOINTS.activityTms}?month=${selectedYear.value}-${selectedMonth.value}`,
     );
     const result = res.data.data ?? res.data;
     activityTms.value = result;
     totalActivityTms.value = Array.isArray(result) ? result.length : 0;
+
+    // Wait for VDataTable to render new items
+    await nextTick();
+    page.value = targetPage;
   } catch (error) {
     console.error("Error fetching activity TMS:", error);
     activityTms.value = [];
@@ -318,6 +334,8 @@ const exportToExcel = async () => {
 // --- Simpan filter ke store saat berubah agar persisten ---
 watch([selectedYear, selectedMonth], ([year, month]) => {
   activityStore.setFilter(year, month);
+  page.value = 1;
+  router.replace({ query: { ...route.query, page: 1 } });
   fetchActivityTms();
 });
 
@@ -384,6 +402,12 @@ const filteredActivityTms = computed(() => {
 
 watch(selectedScopeOfWork, () => {
   page.value = 1;
+  router.replace({ query: { ...route.query, page: 1 } });
+});
+
+watch(searchQuery, () => {
+  page.value = 1;
+  router.replace({ query: { ...route.query, page: 1 } });
 });
 </script>
 

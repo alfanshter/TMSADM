@@ -6,12 +6,6 @@ node_modules/
 .env.local
 .env.*.local
 
-<<<<<<< HEAD
-# Env files
-.env
-.env.local
-.env.*.local
-=======
 # Build output
 dist/
 build/
@@ -54,13 +48,8 @@ coverage/
 .cache/
 .eslintcache
 .stylelintcache
->>>>>>> temp-main
 
 # Public folder
 public/
 vendor/
-<<<<<<< HEAD
-
-=======
 storage/
->>>>>>> temp-main

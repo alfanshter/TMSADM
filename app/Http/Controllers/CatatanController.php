@@ -20,16 +20,6 @@ class CatatanController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-<<<<<<< HEAD
-            'catatan_teamleader_cleaning_criticals' => 'nullable|string|max:255',
-            'catatan_supervisor_cleaning_criticals' => 'nullable|string|max:255',
-            'catatan_teamleader_just_cleaning' => 'nullable|string|max:255',
-            'catatan_supervisor_justcleaning' => 'nullable|string|max:255',
-            'catatan_teamleader_replacement_part' => 'nullable|string|max:255',
-            'catatan_supervisor_replacement_part' => 'nullable|string|max:255',
-            'catatan_teamleader_preventive_pm' => 'nullable|string|max:255',
-            'catatan_supervisor_preventive_pm' => 'nullable|string|max:255',
-=======
             // Team Leader
             'catatan_teamleader_cleaning_criticals' => 'nullable|string',
             'catatan_supervisor_cleaning_criticals' => 'nullable|string',
@@ -43,7 +33,6 @@ class CatatanController extends Controller
             'catatan_teamleader_preventive_pm'      => 'nullable|string',
             'catatan_supervisor_preventive_pm'      => 'nullable|string',
             'catatan_teknisi_preventive_pm'         => 'nullable|string',
->>>>>>> temp-main
         ]);
 
         if ($validator->fails()) {
@@ -56,19 +45,6 @@ class CatatanController extends Controller
         $activity->update($request->only([
             'catatan_teamleader_cleaning_criticals',
             'catatan_supervisor_cleaning_criticals',
-<<<<<<< HEAD
-            'catatan_teamleader_just_cleaning',
-            'catatan_supervisor_justcleaning',
-            'catatan_teamleader_replacement_part',
-            'catatan_supervisor_replacement_part',
-            'catatan_teamleader_preventive_pm',
-            'catatan_supervisor_preventive_pm',
-        ]));
-
-        return response()->json([
-            'status' => 1,
-            'message' => 'Catatan berhasil diperbarui.',
-=======
             'catatan_teknisi_cleaning_criticals',
             'catatan_teamleader_just_cleaning',
             'catatan_supervisor_justcleaning',
@@ -96,7 +72,6 @@ class CatatanController extends Controller
             'status' => 1,
             'message' => 'Catatan berhasil diperbarui.',
             'data' => $activity,
->>>>>>> temp-main
         ], 200);
     }
 }

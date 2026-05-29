@@ -113,4 +113,3 @@ Route::prefix('picas')->group(function () {
 
 // Monitoring dashboard
 Route::get('/dashboard-statistics', [DashboardController::class, 'index']);
-

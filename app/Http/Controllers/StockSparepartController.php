@@ -3,15 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Exports\StockSparepartsExport;
-<<<<<<< HEAD
-use App\Models\StockSparepart;
-use Illuminate\Http\Request;
-=======
 use App\Models\SparepartLog;
 use App\Models\StockSparepart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
->>>>>>> temp-main
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -76,11 +71,7 @@ class StockSparepartController extends Controller
 
         $validated = $validator->validated();
 
-<<<<<<< HEAD
-        if ($request->stok!=null) {
-=======
         if ($request->stok != null) {
->>>>>>> temp-main
             $validated['stok'] = $request->stok;
         }
 
@@ -88,8 +79,6 @@ class StockSparepartController extends Controller
         $validated['incoming'] = 0;
         $sparepart = StockSparepart::create($validated);
 
-<<<<<<< HEAD
-=======
         // Log penambahan sparepart baru
         SparepartLog::create([
             'stock_sparepart_id' => $sparepart->id,
@@ -99,7 +88,6 @@ class StockSparepartController extends Controller
             'keterangan'         => 'Sparepart baru ditambahkan. Stok awal: ' . ($sparepart->stok ?? 0),
         ]);
 
->>>>>>> temp-main
         return response()->json([
             'status' => true,
             'data' => $sparepart,
@@ -109,9 +97,6 @@ class StockSparepartController extends Controller
 
     public function show($id)
     {
-<<<<<<< HEAD
-        $sparepart = StockSparepart::withSum('usages', 'qty')->find($id);
-=======
         $sparepart = StockSparepart::withSum('usages', 'qty')
             ->with([
                 'activities' => function ($q) {
@@ -120,7 +105,6 @@ class StockSparepartController extends Controller
                 }
             ])
             ->find($id);
->>>>>>> temp-main
 
         if (!$sparepart) {
             return response()->json([
@@ -133,8 +117,6 @@ class StockSparepartController extends Controller
         $sparepart['usage'] = $sparepart->usages_sum_qty ?? 0;
         $sparepart['end_month_stock'] = $sparepart['stok'] + $sparepart['incoming'] - $sparepart['usage'];
 
-<<<<<<< HEAD
-=======
         // Format activities untuk frontend
         $sparepart['activity_usages'] = $sparepart->activities->map(function ($act) {
             return [
@@ -150,7 +132,6 @@ class StockSparepartController extends Controller
             ];
         });
 
->>>>>>> temp-main
         return response()->json([
             'status' => true,
             'data' => $sparepart,
@@ -194,14 +175,6 @@ class StockSparepartController extends Controller
             ], 422);
         }
 
-<<<<<<< HEAD
-        
-
-        $validated = $validator->validated();
-
-        $sparepart->update($validated);
-        
-=======
         // Simpan nilai lama sebelum update untuk log
         $oldStok     = $sparepart->stok;
         $oldIncoming = $sparepart->incoming;
@@ -233,7 +206,6 @@ class StockSparepartController extends Controller
             ]);
         }
 
->>>>>>> temp-main
         // Re-fetch dengan withSum untuk mendapatkan data terbaru termasuk usages_sum_qty
         $sparepart = StockSparepart::withSum('usages', 'qty')->find($id);
         $sparepart['usage'] = $sparepart->usages_sum_qty ?? 0;
@@ -258,8 +230,6 @@ class StockSparepartController extends Controller
             ], 404);
         }
 
-<<<<<<< HEAD
-=======
         // Log sebelum dihapus
         SparepartLog::create([
             'stock_sparepart_id' => $sparepart->id,
@@ -269,7 +239,6 @@ class StockSparepartController extends Controller
             'keterangan'         => 'Sparepart "' . $sparepart->nama_sparepart . '" dihapus. Stok terakhir: ' . $sparepart->stok,
         ]);
 
->>>>>>> temp-main
         $sparepart->delete();
 
         return response()->json([
@@ -308,8 +277,6 @@ class StockSparepartController extends Controller
             ]
         ]);
     }
-<<<<<<< HEAD
-=======
 
     /**
      * Ambil riwayat/log untuk satu sparepart
@@ -395,5 +362,4 @@ class StockSparepartController extends Controller
             'data'    => $logs,
         ]);
     }
->>>>>>> temp-main
 }

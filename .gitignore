@@ -3,4 +3,7 @@ frontend/node_modules/
 
 # Kalau ada node_modules di backend juga
 backend/node_modules/
+backend/vendor/
+backend/storage/
+backend/public/
 

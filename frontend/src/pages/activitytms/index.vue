@@ -74,11 +74,59 @@ const catatanTeamleaderPreventivePm = ref("");
 const catatanSupervisorPreventivePm = ref("");
 const catatanTeknisiPreventivePm = ref("");
 
-// track yang active (ditentukan saat openNotes)
-const hasCleaningCritical = ref(false);
-const hasJustCleaning = ref(false);
-const hasReplacementPart = ref(false);
-const hasPreventivePm = ref(false);
+// selalu tampilkan semua section catatan
+const hasCleaningCritical = ref(true);
+const hasJustCleaning = ref(true);
+const hasReplacementPart = ref(true);
+const hasPreventivePm = ref(true);
+
+// ── Computed: daftar section diurutkan — yang ada isian (minimal 1 field) naik ke atas ──
+const maintenanceSections = computed(() => {
+  const sections = [
+    {
+      key: "cleaningCritical",
+      label: "Cleaning Critical",
+      fields: [
+        { key: "teamleader", label: "Catatan Team Leader", model: catatanTeamleaderCleaningCritical },
+        { key: "supervisor", label: "Catatan Supervisor",  model: catatanSupervisorCleaningCritical },
+        { key: "teknisi",    label: "Catatan Teknisi",     model: catatanTeknisiCleaningCritical },
+      ],
+    },
+    {
+      key: "justCleaning",
+      label: "Just Cleaning",
+      fields: [
+        { key: "teamleader", label: "Catatan Team Leader", model: catatanTeamleaderJustCleaning },
+        { key: "supervisor", label: "Catatan Supervisor",  model: catatanSupervisorJustCleaning },
+        { key: "teknisi",    label: "Catatan Teknisi",     model: catatanTeknisiJustCleaning },
+      ],
+    },
+    {
+      key: "replacementPart",
+      label: "Replacement Part",
+      fields: [
+        { key: "teamleader", label: "Catatan Team Leader", model: catatanTeamleaderReplacementPart },
+        { key: "supervisor", label: "Catatan Supervisor",  model: catatanSupervisorReplacementPart },
+        { key: "teknisi",    label: "Catatan Teknisi",     model: catatanTeknisiReplacementPart },
+      ],
+    },
+    {
+      key: "preventivePm",
+      label: "Preventive PM",
+      fields: [
+        { key: "teamleader", label: "Catatan Team Leader", model: catatanTeamleaderPreventivePm },
+        { key: "supervisor", label: "Catatan Supervisor",  model: catatanSupervisorPreventivePm },
+        { key: "teknisi",    label: "Catatan Teknisi",     model: catatanTeknisiPreventivePm },
+      ],
+    },
+  ];
+
+  return [...sections].sort((a, b) => {
+    const aHasValue = a.fields.some(f => f.model.value?.trim());
+    const bHasValue = b.fields.some(f => f.model.value?.trim());
+    return (bHasValue ? 1 : 0) - (aHasValue ? 1 : 0);
+  });
+});
 
 function openNotes(activity) {
   selectedActivity.value = activity;
@@ -99,36 +147,6 @@ function openNotes(activity) {
   catatanTeamleaderPreventivePm.value = activity.catatan_teamleader_preventive_pm || "";
   catatanSupervisorPreventivePm.value = activity.catatan_supervisor_preventive_pm || "";
   catatanTeknisiPreventivePm.value = activity.catatan_teknisi_preventive_pm || "";
-
-  // Tentukan section yang aktif:
-  // cek foto ATAU JSA ATAU catatan yg sudah diisi (menangani kasus tanpa gambar)
-  hasCleaningCritical.value =
-    (activity.cleaning_criticals?.length > 0) ||
-    !!activity.jsa_file_cleaning_criticals ||
-    !!(activity.catatan_teamleader_cleaning_criticals?.trim()) ||
-    !!(activity.catatan_supervisor_cleaning_criticals?.trim()) ||
-    !!(activity.catatan_teknisi_cleaning_criticals?.trim());
-
-  hasJustCleaning.value =
-    (activity.just_cleaning?.length > 0) ||
-    !!activity.jsa_file_just_cleaning ||
-    !!(activity.catatan_teamleader_just_cleaning?.trim()) ||
-    !!(activity.catatan_supervisor_justcleaning?.trim()) ||
-    !!(activity.catatan_teknisi_just_cleaning?.trim());
-
-  hasReplacementPart.value =
-    (activity.replacement_part?.length > 0) ||
-    !!activity.jsa_file_replacement_part ||
-    !!(activity.catatan_teamleader_replacement_part?.trim()) ||
-    !!(activity.catatan_supervisor_replacement_part?.trim()) ||
-    !!(activity.catatan_teknisi_replacement_part?.trim());
-
-  hasPreventivePm.value =
-    (activity.preventive?.length > 0) ||
-    !!activity.jsa_file_preventive ||
-    !!(activity.catatan_teamleader_preventive_pm?.trim()) ||
-    !!(activity.catatan_supervisor_preventive_pm?.trim()) ||
-    !!(activity.catatan_teknisi_preventive_pm?.trim());
 
   isNotesDialogVisible.value = true;
 }
@@ -612,7 +630,7 @@ watch(searchQuery, () => {
       </VCard>
     </VDialog>
 
-    <!-- Dialog Notes — tampilkan semua maintenance types -->
+    <!-- Dialog Notes — semua section tampil, section yang ada isian naik ke atas -->
     <VDialog v-model="isNotesDialogVisible" max-width="700px">
       <VCard>
         <VCardTitle class="bg-primary text-white">
@@ -626,146 +644,25 @@ watch(searchQuery, () => {
 
           <VDivider class="mb-4" />
 
-          <!-- Cleaning Critical -->
-          <div v-if="hasCleaningCritical">
-            <h4 class="text-h6 mb-3 text-primary font-weight-bold">Cleaning Critical</h4>
-            <VLabel class="mb-1 font-weight-bold">Catatan Team Leader</VLabel>
-            <VTextarea
-              v-model="catatanTeamleaderCleaningCritical"
-              placeholder="Tulis catatan Team Leader..."
-              rows="2"
-              auto-grow
-              variant="outlined"
-              class="mb-3"
-            />
+          <!-- Loop section — diurutkan: yang ada isian di atas -->
+          <template v-for="(section, sIndex) in maintenanceSections" :key="section.key">
+            <h4 class="text-h6 mb-3 text-primary font-weight-bold">{{ section.label }}</h4>
 
-            <VLabel class="mb-1 font-weight-bold">Catatan Supervisor</VLabel>
-            <VTextarea
-              v-model="catatanSupervisorCleaningCritical"
-              placeholder="Tulis catatan Supervisor..."
-              rows="2"
-              auto-grow
-              variant="outlined"
-              class="mb-3"
-            />
+            <template v-for="field in section.fields" :key="section.key + '-' + field.key">
+              <VLabel class="mb-1 font-weight-bold">{{ field.label }}</VLabel>
+              <VTextarea
+                :model-value="field.model.value"
+                @update:model-value="val => field.model.value = val"
+                :placeholder="`Tulis catatan ${field.label.replace('Catatan ', '').toLowerCase()}...`"
+                rows="2"
+                auto-grow
+                variant="outlined"
+                class="mb-3"
+              />
+            </template>
 
-            <VLabel class="mb-1 font-weight-bold">Catatan Teknisi</VLabel>
-            <VTextarea
-              v-model="catatanTeknisiCleaningCritical"
-              placeholder="Tulis catatan Teknisi..."
-              rows="2"
-              auto-grow
-              variant="outlined"
-              class="mb-4"
-            />
-
-            <VDivider class="mb-4" />
-          </div>
-
-          <!-- Just Cleaning -->
-          <div v-if="hasJustCleaning">
-            <h4 class="text-h6 mb-3 text-primary font-weight-bold">Just Cleaning</h4>
-            <VLabel class="mb-1 font-weight-bold">Catatan Team Leader</VLabel>
-            <VTextarea
-              v-model="catatanTeamleaderJustCleaning"
-              placeholder="Tulis catatan Team Leader..."
-              rows="2"
-              auto-grow
-              variant="outlined"
-              class="mb-3"
-            />
-
-            <VLabel class="mb-1 font-weight-bold">Catatan Supervisor</VLabel>
-            <VTextarea
-              v-model="catatanSupervisorJustCleaning"
-              placeholder="Tulis catatan Supervisor..."
-              rows="2"
-              auto-grow
-              variant="outlined"
-              class="mb-3"
-            />
-
-            <VLabel class="mb-1 font-weight-bold">Catatan Teknisi</VLabel>
-            <VTextarea
-              v-model="catatanTeknisiJustCleaning"
-              placeholder="Tulis catatan Teknisi..."
-              rows="2"
-              auto-grow
-              variant="outlined"
-              class="mb-4"
-            />
-
-            <VDivider class="mb-4" />
-          </div>
-
-          <!-- Replacement Part -->
-          <div v-if="hasReplacementPart">
-            <h4 class="text-h6 mb-3 text-primary font-weight-bold">Replacement Part</h4>
-            <VLabel class="mb-1 font-weight-bold">Catatan Team Leader</VLabel>
-            <VTextarea
-              v-model="catatanTeamleaderReplacementPart"
-              placeholder="Tulis catatan Team Leader..."
-              rows="2"
-              auto-grow
-              variant="outlined"
-              class="mb-3"
-            />
-
-            <VLabel class="mb-1 font-weight-bold">Catatan Supervisor</VLabel>
-            <VTextarea
-              v-model="catatanSupervisorReplacementPart"
-              placeholder="Tulis catatan Supervisor..."
-              rows="2"
-              auto-grow
-              variant="outlined"
-              class="mb-3"
-            />
-
-            <VLabel class="mb-1 font-weight-bold">Catatan Teknisi</VLabel>
-            <VTextarea
-              v-model="catatanTeknisiReplacementPart"
-              placeholder="Tulis catatan Teknisi..."
-              rows="2"
-              auto-grow
-              variant="outlined"
-              class="mb-4"
-            />
-
-            <VDivider class="mb-4" />
-          </div>
-
-          <!-- Preventive PM -->
-          <div v-if="hasPreventivePm">
-            <h4 class="text-h6 mb-3 text-primary font-weight-bold">Preventive PM</h4>
-            <VLabel class="mb-1 font-weight-bold">Catatan Team Leader</VLabel>
-            <VTextarea
-              v-model="catatanTeamleaderPreventivePm"
-              placeholder="Tulis catatan Team Leader..."
-              rows="2"
-              auto-grow
-              variant="outlined"
-              class="mb-3"
-            />
-
-            <VLabel class="mb-1 font-weight-bold">Catatan Supervisor</VLabel>
-            <VTextarea
-              v-model="catatanSupervisorPreventivePm"
-              placeholder="Tulis catatan Supervisor..."
-              rows="2"
-              auto-grow
-              variant="outlined"
-              class="mb-3"
-            />
-
-            <VLabel class="mb-1 font-weight-bold">Catatan Teknisi</VLabel>
-            <VTextarea
-              v-model="catatanTeknisiPreventivePm"
-              placeholder="Tulis catatan Teknisi..."
-              rows="2"
-              auto-grow
-              variant="outlined"
-            />
-          </div>
+            <VDivider v-if="sIndex < maintenanceSections.length - 1" class="mb-4" />
+          </template>
         </VCardText>
 
         <VCardActions>

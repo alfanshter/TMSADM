@@ -20,6 +20,7 @@ class CatatanController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
+<<<<<<< HEAD
             'catatan_teamleader_cleaning_criticals' => 'nullable|string|max:255',
             'catatan_supervisor_cleaning_criticals' => 'nullable|string|max:255',
             'catatan_teamleader_just_cleaning' => 'nullable|string|max:255',
@@ -28,6 +29,21 @@ class CatatanController extends Controller
             'catatan_supervisor_replacement_part' => 'nullable|string|max:255',
             'catatan_teamleader_preventive_pm' => 'nullable|string|max:255',
             'catatan_supervisor_preventive_pm' => 'nullable|string|max:255',
+=======
+            // Team Leader
+            'catatan_teamleader_cleaning_criticals' => 'nullable|string',
+            'catatan_supervisor_cleaning_criticals' => 'nullable|string',
+            'catatan_teknisi_cleaning_criticals'    => 'nullable|string',
+            'catatan_teamleader_just_cleaning'      => 'nullable|string',
+            'catatan_supervisor_justcleaning'       => 'nullable|string',
+            'catatan_teknisi_just_cleaning'         => 'nullable|string',
+            'catatan_teamleader_replacement_part'   => 'nullable|string',
+            'catatan_supervisor_replacement_part'   => 'nullable|string',
+            'catatan_teknisi_replacement_part'      => 'nullable|string',
+            'catatan_teamleader_preventive_pm'      => 'nullable|string',
+            'catatan_supervisor_preventive_pm'      => 'nullable|string',
+            'catatan_teknisi_preventive_pm'         => 'nullable|string',
+>>>>>>> temp-main
         ]);
 
         if ($validator->fails()) {
@@ -40,6 +56,7 @@ class CatatanController extends Controller
         $activity->update($request->only([
             'catatan_teamleader_cleaning_criticals',
             'catatan_supervisor_cleaning_criticals',
+<<<<<<< HEAD
             'catatan_teamleader_just_cleaning',
             'catatan_supervisor_justcleaning',
             'catatan_teamleader_replacement_part',
@@ -51,6 +68,35 @@ class CatatanController extends Controller
         return response()->json([
             'status' => 1,
             'message' => 'Catatan berhasil diperbarui.',
+=======
+            'catatan_teknisi_cleaning_criticals',
+            'catatan_teamleader_just_cleaning',
+            'catatan_supervisor_justcleaning',
+            'catatan_teknisi_just_cleaning',
+            'catatan_teamleader_replacement_part',
+            'catatan_supervisor_replacement_part',
+            'catatan_teknisi_replacement_part',
+            'catatan_teamleader_preventive_pm',
+            'catatan_supervisor_preventive_pm',
+            'catatan_teknisi_preventive_pm',
+        ]));
+
+        // Reload activity dengan relasi terbaru
+        $activity = $activity->fresh();
+        $activity->load([
+            'itemMachine',
+            'cleaningCriticals',
+            'justCleaning',
+            'preventive',
+            'replacementPart',
+            'spareparts'
+        ]);
+
+        return response()->json([
+            'status' => 1,
+            'message' => 'Catatan berhasil diperbarui.',
+            'data' => $activity,
+>>>>>>> temp-main
         ], 200);
     }
 }

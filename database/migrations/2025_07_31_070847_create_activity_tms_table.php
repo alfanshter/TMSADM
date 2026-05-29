@@ -37,6 +37,17 @@ return new class extends Migration
             $table->string('safety_scan')->nullable();
             $table->string('safety_scan_filename')->nullable();
             $table->timestamps();
+<<<<<<< HEAD
+=======
+            $table->string('catatan_teamleader_cleaning_criticals')->nullable();
+            $table->string('catatan_supervisor_cleaning_criticals')->nullable();
+            $table->string('catatan_teamleader_just_cleaning')->nullable();
+            $table->string('catatan_supervisor_justcleaning')->nullable();
+            $table->string('catatan_teamleader_replacement_part')->nullable();
+            $table->string('catatan_supervisor_replacement_part')->nullable();
+            $table->string('catatan_teamleader_preventive_pm')->nullable();
+            $table->string('catatan_supervisor_preventive_pm')->nullable();
+>>>>>>> temp-main
         });
     }
 

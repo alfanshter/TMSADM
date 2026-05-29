@@ -1,15 +1,66 @@
-# Jangan upload node_modules di frontend
-frontend/node_modules/
-
-# Kalau ada node_modules di backend juga
-backend/node_modules/
+# Dependency directories
+node_modules/
 
 # Env files
 .env
 .env.local
 .env.*.local
 
+<<<<<<< HEAD
+# Env files
+.env
+.env.local
+.env.*.local
+=======
+# Build output
+dist/
+build/
+.next/
+.nuxt/
+out/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# IDE / Editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Lock files (optional, kalau tidak mau di commit)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Cache
+.cache/
+.eslintcache
+.stylelintcache
+>>>>>>> temp-main
+
 # Public folder
 public/
 vendor/
+<<<<<<< HEAD
 
+=======
+storage/
+>>>>>>> temp-main

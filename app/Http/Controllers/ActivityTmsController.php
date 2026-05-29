@@ -7,7 +7,13 @@ use App\Models\ActivityTms;
 use App\Models\CleaningCritical;
 use App\Models\ItemMachine;
 use App\Models\TmsSparepart;
+<<<<<<< HEAD
 use Illuminate\Http\Request;
+=======
+use App\Models\SparepartLog;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+>>>>>>> temp-main
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -64,12 +70,25 @@ class ActivityTmsController extends Controller
                 // 👉 catatan
                 'catatan_teamleader_cleaning_criticals' => $activity->catatan_teamleader_cleaning_criticals,
                 'catatan_supervisor_cleaning_criticals' => $activity->catatan_supervisor_cleaning_criticals,
+<<<<<<< HEAD
                 'catatan_teamleader_just_cleaning' => $activity->catatan_teamleader_just_cleaning,
                 'catatan_supervisor_justcleaning' => $activity->catatan_supervisor_justcleaning,
                 'catatan_teamleader_replacement_part' => $activity->catatan_teamleader_replacement_part,
                 'catatan_supervisor_replacement_part' => $activity->catatan_supervisor_replacement_part,
                 'catatan_teamleader_preventive_pm' => $activity->catatan_teamleader_preventive_pm,
                 'catatan_supervisor_preventive_pm' => $activity->catatan_supervisor_preventive_pm,
+=======
+                'catatan_teknisi_cleaning_criticals'    => $activity->catatan_teknisi_cleaning_criticals,
+                'catatan_teamleader_just_cleaning' => $activity->catatan_teamleader_just_cleaning,
+                'catatan_supervisor_justcleaning' => $activity->catatan_supervisor_justcleaning,
+                'catatan_teknisi_just_cleaning'    => $activity->catatan_teknisi_just_cleaning,
+                'catatan_teamleader_replacement_part' => $activity->catatan_teamleader_replacement_part,
+                'catatan_supervisor_replacement_part' => $activity->catatan_supervisor_replacement_part,
+                'catatan_teknisi_replacement_part'    => $activity->catatan_teknisi_replacement_part,
+                'catatan_teamleader_preventive_pm' => $activity->catatan_teamleader_preventive_pm,
+                'catatan_supervisor_preventive_pm' => $activity->catatan_supervisor_preventive_pm,
+                'catatan_teknisi_preventive_pm'    => $activity->catatan_teknisi_preventive_pm,
+>>>>>>> temp-main
 
             ];
         });
@@ -154,6 +173,7 @@ class ActivityTmsController extends Controller
             'replacement_part.*.foto_before' => 'nullable|file|mimes:jpg,jpeg,png',
             'replacement_part.*.foto_after' => 'nullable|file|mimes:jpg,jpeg,png',
             //catatan
+<<<<<<< HEAD
             'catatan_teamleader_cleaning_criticals' => 'nullable|string|max:255',
             'catatan_supervisor_cleaning_criticals' => 'nullable|string|max:255',
             'catatan_teamleader_just_cleaning' => 'nullable|string|max:255',
@@ -162,6 +182,20 @@ class ActivityTmsController extends Controller
             'catatan_supervisor_replacement_part' => 'nullable|string|max:255',
             'catatan_teamleader_preventive_pm' => 'nullable|string|max:255',
             'catatan_supervisor_preventive_pm' => 'nullable|string|max:255',
+=======
+            'catatan_teamleader_cleaning_criticals' => 'nullable|string',
+            'catatan_supervisor_cleaning_criticals' => 'nullable|string',
+            'catatan_teknisi_cleaning_criticals'    => 'nullable|string',
+            'catatan_teamleader_just_cleaning' => 'nullable|string',
+            'catatan_supervisor_justcleaning' => 'nullable|string',
+            'catatan_teknisi_just_cleaning'    => 'nullable|string',
+            'catatan_teamleader_replacement_part' => 'nullable|string',
+            'catatan_supervisor_replacement_part' => 'nullable|string',
+            'catatan_teknisi_replacement_part'    => 'nullable|string',
+            'catatan_teamleader_preventive_pm' => 'nullable|string',
+            'catatan_supervisor_preventive_pm' => 'nullable|string',
+            'catatan_teknisi_preventive_pm'    => 'nullable|string',
+>>>>>>> temp-main
 
             // ⏱️ Downtime
             'start_downtime' => 'nullable|date_format:H:i',
@@ -252,12 +286,25 @@ class ActivityTmsController extends Controller
             // 👉 catatan
             'catatan_teamleader_cleaning_criticals' => $request->catatan_teamleader_cleaning_criticals,
             'catatan_supervisor_cleaning_criticals' => $request->catatan_supervisor_cleaning_criticals,
+<<<<<<< HEAD
             'catatan_teamleader_just_cleaning' => $request->catatan_teamleader_just_cleaning,
             'catatan_supervisor_justcleaning' => $request->catatan_supervisor_justcleaning,
             'catatan_teamleader_replacement_part' => $request->catatan_teamleader_replacement_part,
             'catatan_supervisor_replacement_part' => $request->catatan_supervisor_replacement_part,
             'catatan_teamleader_preventive_pm' => $request->catatan_teamleader_preventive_pm,
             'catatan_supervisor_preventive_pm' => $request->catatan_supervisor_preventive_pm,
+=======
+            'catatan_teknisi_cleaning_criticals'    => $request->catatan_teknisi_cleaning_criticals,
+            'catatan_teamleader_just_cleaning' => $request->catatan_teamleader_just_cleaning,
+            'catatan_supervisor_justcleaning' => $request->catatan_supervisor_justcleaning,
+            'catatan_teknisi_just_cleaning'    => $request->catatan_teknisi_just_cleaning,
+            'catatan_teamleader_replacement_part' => $request->catatan_teamleader_replacement_part,
+            'catatan_supervisor_replacement_part' => $request->catatan_supervisor_replacement_part,
+            'catatan_teknisi_replacement_part'    => $request->catatan_teknisi_replacement_part,
+            'catatan_teamleader_preventive_pm' => $request->catatan_teamleader_preventive_pm,
+            'catatan_supervisor_preventive_pm' => $request->catatan_supervisor_preventive_pm,
+            'catatan_teknisi_preventive_pm'    => $request->catatan_teknisi_preventive_pm,
+>>>>>>> temp-main
             //downtime
             'start_downtime' => $request->start_downtime,
             'end_downtime' => $request->end_downtime,
@@ -276,6 +323,18 @@ class ActivityTmsController extends Controller
                     'stock_sparepart_id' => $sp['id'],
                     'qty' => $sp['qty'],
                 ]);
+<<<<<<< HEAD
+=======
+
+                // ✅ Catat log pemakaian (usage)
+                SparepartLog::create([
+                    'stock_sparepart_id' => $sp['id'],
+                    'user_id'            => Auth::id(),
+                    'action'             => 'usage',
+                    'qty'                => $sp['qty'],
+                    'keterangan'         => 'Digunakan pada Activity TMS #' . $activity->id,
+                ]);
+>>>>>>> temp-main
             }
         }
 
@@ -359,12 +418,25 @@ class ActivityTmsController extends Controller
             // ✅ Catatan baru
             'catatan_teamleader_cleaning_criticals' => 'nullable|string',
             'catatan_supervisor_cleaning_criticals' => 'nullable|string',
+<<<<<<< HEAD
             'catatan_teamleader_just_cleaning' => 'nullable|string',
             'catatan_supervisor_justcleaning' => 'nullable|string',
             'catatan_teamleader_replacement_part' => 'nullable|string',
             'catatan_supervisor_replacement_part' => 'nullable|string',
             'catatan_teamleader_preventive_pm' => 'nullable|string',
             'catatan_supervisor_preventive_pm' => 'nullable|string',
+=======
+            'catatan_teknisi_cleaning_criticals'    => 'nullable|string',
+            'catatan_teamleader_just_cleaning' => 'nullable|string',
+            'catatan_supervisor_justcleaning' => 'nullable|string',
+            'catatan_teknisi_just_cleaning'    => 'nullable|string',
+            'catatan_teamleader_replacement_part' => 'nullable|string',
+            'catatan_supervisor_replacement_part' => 'nullable|string',
+            'catatan_teknisi_replacement_part'    => 'nullable|string',
+            'catatan_teamleader_preventive_pm' => 'nullable|string',
+            'catatan_supervisor_preventive_pm' => 'nullable|string',
+            'catatan_teknisi_preventive_pm'    => 'nullable|string',
+>>>>>>> temp-main
 
             // ⏱️ Downtime
             'start_downtime' => 'nullable|date_format:H:i',
@@ -656,12 +728,25 @@ class ActivityTmsController extends Controller
         // ✅ Update catatan
         $activity->catatan_teamleader_cleaning_criticals = $request->catatan_teamleader_cleaning_criticals;
         $activity->catatan_supervisor_cleaning_criticals = $request->catatan_supervisor_cleaning_criticals;
+<<<<<<< HEAD
         $activity->catatan_teamleader_just_cleaning = $request->catatan_teamleader_just_cleaning;
         $activity->catatan_supervisor_justcleaning = $request->catatan_supervisor_justcleaning;
         $activity->catatan_teamleader_replacement_part = $request->catatan_teamleader_replacement_part;
         $activity->catatan_supervisor_replacement_part = $request->catatan_supervisor_replacement_part;
         $activity->catatan_teamleader_preventive_pm = $request->catatan_teamleader_preventive_pm;
         $activity->catatan_supervisor_preventive_pm = $request->catatan_supervisor_preventive_pm;
+=======
+        $activity->catatan_teknisi_cleaning_criticals    = $request->catatan_teknisi_cleaning_criticals;
+        $activity->catatan_teamleader_just_cleaning = $request->catatan_teamleader_just_cleaning;
+        $activity->catatan_supervisor_justcleaning = $request->catatan_supervisor_justcleaning;
+        $activity->catatan_teknisi_just_cleaning    = $request->catatan_teknisi_just_cleaning;
+        $activity->catatan_teamleader_replacement_part = $request->catatan_teamleader_replacement_part;
+        $activity->catatan_supervisor_replacement_part = $request->catatan_supervisor_replacement_part;
+        $activity->catatan_teknisi_replacement_part    = $request->catatan_teknisi_replacement_part;
+        $activity->catatan_teamleader_preventive_pm = $request->catatan_teamleader_preventive_pm;
+        $activity->catatan_supervisor_preventive_pm = $request->catatan_supervisor_preventive_pm;
+        $activity->catatan_teknisi_preventive_pm    = $request->catatan_teknisi_preventive_pm;
+>>>>>>> temp-main
 
         //update downtime
         $activity->start_downtime = $request->start_downtime;
@@ -689,6 +774,21 @@ class ActivityTmsController extends Controller
             ], 404);
         }
 
+<<<<<<< HEAD
+=======
+        // ✅ Catat log pembatalan pemakaian sparepart sebelum activity dihapus
+        $tmsSpareparts = TmsSparepart::where('activity_tms_id', $activity->id)->get();
+        foreach ($tmsSpareparts as $tmsSp) {
+            SparepartLog::create([
+                'stock_sparepart_id' => $tmsSp->stock_sparepart_id,
+                'user_id'            => Auth::id(),
+                'action'             => 'usage_cancelled',
+                'qty'                => $tmsSp->qty,
+                'keterangan'         => 'Pemakaian dibatalkan karena Activity TMS #' . $activity->id . ' dihapus',
+            ]);
+        }
+
+>>>>>>> temp-main
         // -----------------------------
         // Hapus file JSA jika ada
         // -----------------------------

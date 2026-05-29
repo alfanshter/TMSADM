@@ -36,6 +36,7 @@ return array(
     'App\\Models\\LeakageReport' => $baseDir . '/app/Models/LeakageReport.php',
     'App\\Models\\Preventive' => $baseDir . '/app/Models/Preventive.php',
     'App\\Models\\ReplacementPart' => $baseDir . '/app/Models/ReplacementPart.php',
+    'App\\Models\\SparepartLog' => $baseDir . '/app/Models/SparepartLog.php',
     'App\\Models\\StockSparepart' => $baseDir . '/app/Models/StockSparepart.php',
     'App\\Models\\TmpPhotos' => $baseDir . '/app/Models/TmpPhotos.php',
     'App\\Models\\TmsSparepart' => $baseDir . '/app/Models/TmsSparepart.php',

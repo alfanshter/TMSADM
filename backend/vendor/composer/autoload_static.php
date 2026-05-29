@@ -601,6 +601,7 @@ class ComposerStaticInitc7846695e316e8adffb3e9eaf1b37dc4
         'App\\Models\\LeakageReport' => __DIR__ . '/../..' . '/app/Models/LeakageReport.php',
         'App\\Models\\Preventive' => __DIR__ . '/../..' . '/app/Models/Preventive.php',
         'App\\Models\\ReplacementPart' => __DIR__ . '/../..' . '/app/Models/ReplacementPart.php',
+        'App\\Models\\SparepartLog' => __DIR__ . '/../..' . '/app/Models/SparepartLog.php',
         'App\\Models\\StockSparepart' => __DIR__ . '/../..' . '/app/Models/StockSparepart.php',
         'App\\Models\\TmpPhotos' => __DIR__ . '/../..' . '/app/Models/TmpPhotos.php',
         'App\\Models\\TmsSparepart' => __DIR__ . '/../..' . '/app/Models/TmsSparepart.php',

@@ -32,9 +32,12 @@ class PicaController extends Controller
             'cause' => 'required|string',
             'corrective_action' => 'required|string',
             'date' => 'required|date',
-            'pic' => 'required|string',
+            'pic' => 'required|max:255',
             'status' => 'required|string',
         ]);
+
+        // Pastikan pic selalu disimpan sebagai string
+        $validated['pic'] = (string) $validated['pic'];
 
         $pica = Pica::create($validated);
 
@@ -82,9 +85,12 @@ class PicaController extends Controller
             'cause' => 'required|string',
             'corrective_action' => 'required|string',
             'date' => 'required|date',
-            'pic' => 'required|string',
+            'pic' => 'required|max:255',
             'status' => 'required|string',
         ]);
+
+        // Pastikan pic selalu disimpan sebagai string
+        $validated['pic'] = (string) $validated['pic'];
 
         $pica->update($validated);
 

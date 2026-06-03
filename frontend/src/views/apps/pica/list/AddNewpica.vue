@@ -137,7 +137,7 @@ const closeNavigationDrawer = () => {
         <VTextField
           v-model="form.pic"
           label="PIC"
-          placeholder="Enter PIC"
+          placeholder="Enter"
           class="mb-4"
           required
         />

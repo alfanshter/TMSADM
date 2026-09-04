@@ -21,12 +21,14 @@ class StockSparepartsExport implements FromCollection, WithHeadings, WithEvents,
 
     public function collection()
     {
+        $counter = 1;
         return StockSparepart::withSum('usages', 'qty')
             ->whereYear('created_at', $this->year)
             ->orderBy('nama_sparepart', 'ASC')
             ->get()
-            ->map(function ($item) {
+            ->map(function ($item) use (&$counter) {
                 return [
+                    $counter++,
                     $item->nama_sparepart,
                     $item->type,
                     $item->loc,

@@ -86,11 +86,20 @@ const exportToExcel = async (year) => {
   try {
     const res = await axios.get(ENDPOINTS.exportSpareparts(year));
     
-    if (res.data && res.data.file) {
-      // Buka URL file di tab baru
-      window.open(res.data.file, "_blank");
+    // axios returns response in res.data, backend returns { status, data: { download_link: ... } }
+    const responseData = res.data;
+    const downloadLink = responseData?.data?.download_link;
+
+    if (downloadLink) {
+      // Gunakan anchor tag untuk menghindari pemblokiran popup dari browser
+      const link = document.createElement("a");
+      link.href = downloadLink;
+      link.setAttribute("download", "");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } else {
-      console.error("Response tidak mengandung file URL");
+      console.error("Response tidak mengandung file URL", responseData);
     }
 
   } catch (err) {

@@ -3,6 +3,7 @@ import { ENDPOINTS } from "@/config/api";
 import AddNewpicaDrawer from "@/views/apps/pica/list/AddNewpica.vue";
 import axios from "axios";
 import { onMounted, ref } from "vue";
+import * as XLSX from "xlsx";
 
 
 
@@ -171,6 +172,37 @@ const openEditDrawer = (item) => {
   editData.value = { ...item };
   isAddNewpicaDrawerVisible.value = true;
 };
+
+// Export ke Excel
+const exportToExcel = () => {
+  const exportData = data.value.map((item, index) => ({
+    No: index + 1,
+    Problem: item.problem,
+    Cause: item.cause,
+    "Corrective Action": item.corrective_action,
+    Date: item.date,
+    PIC: item.pic,
+    Status: item.status,
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "PICA");
+
+  // Auto column width
+  const colWidths = [
+    { wch: 5 },   // No
+    { wch: 30 },  // Problem
+    { wch: 30 },  // Cause
+    { wch: 35 },  // Corrective Action
+    { wch: 15 },  // Date
+    { wch: 20 },  // PIC
+    { wch: 12 },  // Status
+  ];
+  worksheet["!cols"] = colWidths;
+
+  XLSX.writeFile(workbook, `PICA_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+};
 </script>
 <template>
   <section>
@@ -251,6 +283,7 @@ const openEditDrawer = (item) => {
           variant="outlined"
           color="secondary"
           prepend-icon="ri-upload-2-line"
+          @click="exportToExcel"
         >
           Export
         </VBtn>

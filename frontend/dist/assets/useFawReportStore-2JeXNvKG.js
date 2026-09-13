@@ -1,0 +1,1 @@
+import{aE as e}from"./index-BX7tQPBS.js";const n=e("fawReport",{state:()=>({currentItem:null}),actions:{setCurrentItem(t){this.currentItem=t},clearCurrentItem(){this.currentItem=null}}});export{n as u};

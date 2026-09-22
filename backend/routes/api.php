@@ -76,7 +76,7 @@ Route::prefix('leakage-reports')->group(function () {
 // Schedule
 Route::get('/activity-summary', [ScheduleController::class, 'index']);
 Route::get('/export-pm-schedule', [ScheduleController::class, 'export']);
-Route::post('/getActivityByScheduleList', [ActivityTMSController::class, 'getActivityByScheduleList']);
+Route::post('/getActivityByScheduleList', [ActivityTmsController::class, 'getActivityByScheduleList']);
 
 // Sparepart & logs endpoints requiring authentication
 Route::middleware(['auth:sanctum'])->group(function () {
